@@ -1,7 +1,7 @@
 /**
  * Metrolist Project (C) 2026
  * Licensed under GPL-3.0 | See git history for contributors
- *
+ * MiniPlayer.kt
  * Performance optimized MiniPlayer - prevents unnecessary recomposition
  */
 
@@ -287,12 +287,21 @@ private fun NewMiniPlayer(
 
     // Memoize colors
     val backgroundColor = when (miniPlayerBackground) {
-        MiniPlayerBackgroundStyle.DEFAULT    -> MaterialTheme.colorScheme.surfaceContainer
-        MiniPlayerBackgroundStyle.TRANSPARENT -> Color.Black.copy(alpha = 0.25f)
-        MiniPlayerBackgroundStyle.BLUR       -> MaterialTheme.colorScheme.surfaceContainer
-        MiniPlayerBackgroundStyle.GRADIENT   -> MaterialTheme.colorScheme.surfaceContainer
-        MiniPlayerBackgroundStyle.PURE_BLACK -> Color.Black
-    }
+    MiniPlayerBackgroundStyle.DEFAULT ->
+        MaterialTheme.colorScheme.surfaceContainerHigh
+
+    MiniPlayerBackgroundStyle.TRANSPARENT ->
+        Color.Black.copy(alpha = 0.25f)
+
+    MiniPlayerBackgroundStyle.BLUR ->
+        MaterialTheme.colorScheme.surfaceContainerHigh
+
+    MiniPlayerBackgroundStyle.GRADIENT ->
+        MaterialTheme.colorScheme.surfaceContainerHigh
+
+    MiniPlayerBackgroundStyle.PURE_BLACK ->
+        Color.Black
+}
     val forceLightColors = !useDarkTheme && (miniPlayerBackground == MiniPlayerBackgroundStyle.PURE_BLACK ||
             miniPlayerBackground == MiniPlayerBackgroundStyle.BLUR ||
             miniPlayerBackground == MiniPlayerBackgroundStyle.GRADIENT)
@@ -381,8 +390,11 @@ private fun NewMiniPlayer(
                     .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
                     .clip(RoundedCornerShape(32.dp))
                     .background(color = backgroundColor)
-                    .border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp))
-                    .clickable(
+                    .border(
+    1.dp,
+    MaterialTheme.colorScheme.primary.copy(alpha = 0.24f),
+    RoundedCornerShape(32.dp),
+).clickable(
                         interactionSource = interactionSource,
                         indication = LocalIndication.current,
                         onClick = onClick

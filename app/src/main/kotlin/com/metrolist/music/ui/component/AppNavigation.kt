@@ -15,6 +15,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -58,7 +60,16 @@ fun AppNavigationRail(
     onHomeLongHold: (() -> Unit)? = null,
 ) {
     val containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
-    val haptics = LocalHapticFeedback.current
+    val selectedIconColor =
+    if (pureBlack) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.onPrimaryContainer
+val unselectedIconColor =
+    if (pureBlack) Color.White.copy(alpha = 0.72f)
+    else MaterialTheme.colorScheme.onSurfaceVariant
+val indicatorColor =
+    if (pureBlack) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
+    else MaterialTheme.colorScheme.primaryContainer
+	val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
 
     NavigationRail(
@@ -107,6 +118,23 @@ fun AppNavigationRail(
             }
 
             NavigationRailItem(
+colors = NavigationRailItemDefaults.colors(
+    selectedIconColor = if (pureBlack) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    },
+    unselectedIconColor = if (pureBlack) {
+        Color.White.copy(alpha = 0.72f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    },
+    indicatorColor = if (pureBlack) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    },
+),
                 selected = isSelected,
                 onClick = {
                     if (!isSearchItem && !isHomeHoldItem) {
@@ -189,6 +217,29 @@ fun AppNavigationBar(
             }
 
             NavigationBarItem(
+			colors = NavigationBarItemDefaults.colors(
+    selectedIconColor = if (pureBlack) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    },
+    selectedTextColor = if (pureBlack) {
+        Color.White
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    },
+    unselectedIconColor = if (pureBlack) {
+        Color.White.copy(alpha = 0.72f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    },
+    unselectedTextColor = contentColor.copy(alpha = 0.8f),
+    indicatorColor = if (pureBlack) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    },
+),
                 selected = isSelected,
                 onClick = {
                     if (!isSearchItem && !isHomeHoldItem) {

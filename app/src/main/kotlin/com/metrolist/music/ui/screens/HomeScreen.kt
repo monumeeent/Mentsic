@@ -4,7 +4,10 @@
  */
 
 package com.metrolist.music.ui.screens
-
+import java.util.Calendar
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.Surface
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -1189,6 +1192,65 @@ fun HomeScreen(
                 state = lazylistState,
                 contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
             ) {
+                // MIDNIGHT EDITORIAL: Header Section
+                item(key = "midnight_editorial_header") {
+                    val greeting = remember {
+                        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+                            in 5..11 -> "Good morning"
+                            in 12..16 -> "Good afternoon"
+                            else -> "Good evening"
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = greeting,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = if (isLoggedIn && accountName.isNotBlank()) accountName else "Your Sanctuary",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+
+                        // Profile / Avatar Anchor
+                        if (url != null) {
+                            AsyncImage(
+                                model = url,
+                                contentDescription = "Profile",
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.size(42.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Profile",
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 item {
                     ChipsRow(
                         chips = homePage?.chips?.map { it to it.title } ?: emptyList(),
@@ -1765,22 +1827,56 @@ fun HomeScreen(
                             quickPicks?.takeIf { it.isNotEmpty() }?.let { quickPicks ->
                                 item(key = "quick_picks_title") {
                                     val quickPicksTitle = stringResource(R.string.quick_picks)
-                                    NavigationTitle(
-                                        title = quickPicksTitle,
-                                        onPlayAllClick =
-                                            if (!isListenTogetherGuest) {
-                                                {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = quickPicksTitle,
+                                            style = MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                            ),
+                                            color = MaterialTheme.colorScheme.onBackground
+                                        )
+
+                                        // Play All Expressive Pill Button
+                                        Surface(
+                                            onClick = {
+                                                if (!isListenTogetherGuest) {
                                                     playerConnection.playQueue(
                                                         ListQueue(
                                                             title = quickPicksTitle,
                                                             items = quickPicks.distinctBy { it.id }.map { it.toMediaItem() },
-                                                        ),
+                                                        )
                                                     )
                                                 }
-                                            } else {
-                                                null
                                             },
-                                    )
+                                            shape = RoundedCornerShape(20.dp),
+                                            color = MaterialTheme.colorScheme.primaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.PlayArrow,
+                                                    contentDescription = "Play All",
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Text(
+                                                    text = "Play All",
+                                                    style = MaterialTheme.typography.labelMedium.copy(
+                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
 
                                 item(key = "quick_picks_list") {
@@ -1984,9 +2080,20 @@ fun HomeScreen(
                         HomeSection.KeepListening -> {
                             keepListening?.takeIf { it.isNotEmpty() }?.let { keepListening ->
                                 item(key = "keep_listening_title") {
-                                    NavigationTitle(
-                                        title = stringResource(R.string.keep_listening),
-                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.keep_listening),
+                                            style = MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                            ),
+                                            color = MaterialTheme.colorScheme.onBackground
+                                        )
+                                    }
                                 }
 
                                 item(key = "keep_listening_list") {
@@ -2083,22 +2190,56 @@ fun HomeScreen(
                             forgottenFavorites?.takeIf { it.isNotEmpty() }?.let { forgottenFavorites ->
                                 item(key = "forgotten_favorites_title") {
                                     val forgottenFavoritesTitle = stringResource(R.string.forgotten_favorites)
-                                    NavigationTitle(
-                                        title = forgottenFavoritesTitle,
-                                        onPlayAllClick =
-                                            if (!isListenTogetherGuest) {
-                                                {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = forgottenFavoritesTitle,
+                                            style = MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                            ),
+                                            color = MaterialTheme.colorScheme.onBackground
+                                        )
+
+                                        // Play All Pill Action
+                                        Surface(
+                                            onClick = {
+                                                if (!isListenTogetherGuest) {
                                                     playerConnection.playQueue(
                                                         ListQueue(
                                                             title = forgottenFavoritesTitle,
                                                             items = forgottenFavorites.distinctBy { it.id }.map { it.toMediaItem() },
-                                                        ),
+                                                        )
                                                     )
                                                 }
-                                            } else {
-                                                null
                                             },
-                                    )
+                                            shape = RoundedCornerShape(20.dp),
+                                            color = MaterialTheme.colorScheme.primaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.PlayArrow,
+                                                    contentDescription = "Play All",
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Text(
+                                                    text = "Play All",
+                                                    style = MaterialTheme.typography.labelMedium.copy(
+                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
 
                                 item(key = "forgotten_favorites_list") {
