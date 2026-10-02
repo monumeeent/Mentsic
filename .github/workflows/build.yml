@@ -2,11 +2,10 @@ name: Build Mentsic APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, redesign/mentsic ]
   pull_request:
-    branches: [ main, master ]
-  workflow_dispatch: # Allows manually clicking "Run workflow" in GitHub UI
-
+    branches: [ main, master, redesign/mentsic ]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
