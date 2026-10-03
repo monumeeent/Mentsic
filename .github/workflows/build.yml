@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ main, master, redesign/mentsic ]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,6 +26,11 @@ jobs:
 
     - name: Make Gradlew Executable
       run: chmod +x gradlew
+
+    - name: Generate Debug Keystore
+      run: |
+        mkdir -p ~/.android
+        keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
     - name: Build FOSS Debug APK
       run: ./gradlew :app:assembleFossDebug --stacktrace
