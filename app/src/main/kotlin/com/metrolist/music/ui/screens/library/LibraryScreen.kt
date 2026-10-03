@@ -72,3 +72,42 @@ fun LibraryScreen() {
             }
         }
     }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (filterType) {
+            LibraryFilter.LIBRARY -> LibraryMixScreen(
+                navController = navController,
+                filterContent = filterContent,
+                viewType = libraryViewType,
+                onViewTypeChange = { libraryViewType = it },
+            )
+
+            LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(
+                navController = navController,
+                filterContent = filterContent,
+                viewType = playlistViewType,
+                onViewTypeChange = { playlistViewType = it },
+            )
+
+            LibraryFilter.SONGS -> LibrarySongsScreen(
+                navController,
+                { filterType = LibraryFilter.LIBRARY },
+            )
+
+            LibraryFilter.ALBUMS -> LibraryAlbumsScreen(
+                navController,
+                { filterType = LibraryFilter.LIBRARY },
+            )
+
+            LibraryFilter.ARTISTS -> LibraryArtistsScreen(
+                navController,
+                { filterType = LibraryFilter.LIBRARY },
+            )
+
+            LibraryFilter.PODCASTS -> LibraryPodcastsScreen(
+                navController,
+                { filterType = LibraryFilter.LIBRARY },
+            )
+        }
+    }
+}
