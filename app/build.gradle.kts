@@ -267,8 +267,9 @@ dependencies {
 
     implementation(libs.viewmodel.compose)
     implementation(libs.lifecycle.process)
-
-    implementation(libs.material3)
+	
+	implementation(libs.material3)
+	implementation("androidx.compose.material:material-icons-core:1.12.1")
     implementation(libs.palette)
     implementation(libs.materialKolor)
 
