@@ -109,10 +109,13 @@ android {
             keyPassword = System.getenv("KEY_PASSWORD")
         }
         getByName("debug") {
+            val defaultDebugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            if (defaultDebugKeystore.exists()) {
+                storeFile = defaultDebugKeystore
+            }
             keyAlias = "androiddebugkey"
             keyPassword = "android"
             storePassword = "android"
-            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
         }
     }
 
