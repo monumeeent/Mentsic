@@ -560,7 +560,7 @@ fun DailyDiscoverSection(
                         }
                     }
                 },
-                modifier = modifier.maskClip(MaterialTheme.shapes.extraLarge),
+                modifier = modifier.clip(MaterialTheme.shapes.extraLarge),
             )
         }
     }

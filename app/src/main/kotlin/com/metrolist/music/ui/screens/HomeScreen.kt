@@ -113,9 +113,7 @@ import com.metrolist.music.constants.SmallGridThumbnailHeight
 import com.metrolist.music.constants.ThumbnailCornerRadius
 import com.metrolist.music.db.entities.Album
 import com.metrolist.music.db.entities.Artist
-import com.metrolist.music.db.entities.LocalItem
-import com.metrolist.music.db.entities.Playlist
-import com.metrolist.music.db.entities.PlaylistEntity
+import com.metrolist.music.db.entities.SpeedDialItem
 import com.metrolist.music.db.entities.Song
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.toMediaMetadata
@@ -1465,7 +1463,7 @@ fun HomeScreen(
                                 item(key = "speed_dial_list") {
                                     SpeedDialSection(
                                         speedDialItems = items,
-                                        pinnedSpeedDialItems = pinnedSpeedDialItems,
+                                        pinnedSpeedDialItems = pinnedSpeedDialItems.map { it.toYTItem() },
                                         isRandomizing = isRandomizing,
                                         onRandomizeClick = {
                                             if (isRandomizing) {
@@ -1589,7 +1587,7 @@ fun HomeScreen(
                                         playerConnection = playerConnection,
                                         isListenTogetherGuest = isListenTogetherGuest,
                                         autoRadioQueue = autoRadioQueue,
-                                        modifier = Modifier.maskClip(MaterialTheme.shapes.extraLarge),
+                                        modifier = Modifier.clip(MaterialTheme.shapes.extraLarge),
                                     )
                                 }
                             }
@@ -1599,7 +1597,7 @@ fun HomeScreen(
                             keepListening?.takeIf { it.isNotEmpty() }?.let { keepListening ->
                                 item(key = "keep_listening_content") {
                                     KeepListeningSection(
-                                        keepListening = keepListening,
+                                        keepListening = keepListening.filterIsInstance<Song>(),
                                         localGridItem = localGridItem,
                                         currentGridHeight = currentGridHeight,
                                     )
