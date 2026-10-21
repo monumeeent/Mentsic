@@ -121,6 +121,7 @@ import kotlin.math.min
 fun SpeedDialSection(
     speedDialItems: List<YTItem>,
     pinnedSpeedDialItems: List<YTItem>,
+    pinnedSpeedDialItemTypes: List<String>,
     isRandomizing: Boolean,
     onRandomizeClick: () -> Unit,
     scope: CoroutineScope,
@@ -236,7 +237,8 @@ fun SpeedDialSection(
                                                             is PlaylistItem -> {
                                                                 val rawType =
                                                                     pinnedSpeedDialItems
-                                                                        .find { it.id == item.id }?.type
+                                                                        .indexOfFirst { it.id == item.id }
+                                                                        .let { idx -> if (idx >= 0) pinnedSpeedDialItemTypes[idx] else null }
                                                                 val route = if (rawType == "LOCAL_PLAYLIST") "local_playlist" else "online_playlist"
                                                                 navController.navigate("$route/${item.id}")
                                                             }

@@ -1467,6 +1467,7 @@ fun HomeScreen(
                                     SpeedDialSection(
                                         speedDialItems = items,
                                         pinnedSpeedDialItems = pinnedSpeedDialItems.map { it.toYTItem() },
+                                        pinnedSpeedDialItemTypes = pinnedSpeedDialItems.map { it.type },
                                         isRandomizing = isRandomizing,
                                         onRandomizeClick = {
                                             if (isRandomizing) {
