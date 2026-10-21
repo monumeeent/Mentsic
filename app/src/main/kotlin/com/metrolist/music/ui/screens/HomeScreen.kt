@@ -981,7 +981,7 @@ fun HomeScreen(
         )
     }
 
-    val homeSections =
+    val homeSections: List<HomeSection> =
         remember(
             randomizeHomeOrder,
             randomSeed,
@@ -1073,7 +1073,7 @@ fun HomeScreen(
                     base + modifier
                 }
             } else {
-                val defaultOrder =
+                val defaultOrder: Map<HomeSection, Int> =
                     mapOf(
                         HomeSection.SpeedDial to 100,
                         HomeSection.QuickPicks to 90,
