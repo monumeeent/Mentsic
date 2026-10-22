@@ -79,6 +79,7 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.ListItemHeight
 import com.metrolist.music.constants.ListThumbnailSize
 import com.metrolist.music.constants.ThumbnailCornerRadius
+import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.Album
 import com.metrolist.music.db.entities.Artist
 import com.metrolist.music.db.entities.LocalItem
@@ -87,9 +88,11 @@ import com.metrolist.music.db.entities.Song
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.SimilarRecommendation
 import com.metrolist.music.models.toMediaMetadata
+import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.LocalMenuState
+import com.metrolist.music.ui.component.MenuState
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.RandomizeGridItem
 import com.metrolist.music.ui.component.SongListItem
@@ -130,10 +133,10 @@ fun SpeedDialSection(
     mediaMetadataId: String?,
     albumId: String?,
     isPlaying: Boolean,
-    playerConnection: LocalPlayerConnection,
+    playerConnection: PlayerConnection?,
     navController: NavController,
-    database: LocalDatabase,
-    menuState: LocalMenuState,
+    database: MusicDatabase,
+    menuState: MenuState,
     haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
     maxWidth: Dp,
 ) {
@@ -320,10 +323,10 @@ fun QuickPicksSection(
     mediaMetadataId: String?,
     isListenTogetherGuest: Boolean,
     autoRadioQueue: Boolean,
-    database: LocalDatabase,
-    menuState: LocalMenuState,
+    database: MusicDatabase,
+    menuState: MenuState,
     haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    playerConnection: LocalPlayerConnection,
+    playerConnection: PlayerConnection?,
 ) {
     val quickPicksTitle = stringResource(R.string.quick_picks)
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -460,7 +463,7 @@ fun QuickPicksSection(
 fun FromTheCommunitySection(
     playlists: List<CommunityPlaylistItem>,
     navController: NavController,
-    playerConnection: LocalPlayerConnection,
+    playerConnection: PlayerConnection?,
     isListenTogetherGuest: Boolean,
 ) {
     NavigationTitle(
@@ -495,7 +498,7 @@ fun FromTheCommunitySection(
 @Composable
 fun DailyDiscoverSection(
     discoverList: List<DailyDiscoverItem>,
-    playerConnection: LocalPlayerConnection,
+    playerConnection: PlayerConnection?,
     isListenTogetherGuest: Boolean,
     autoRadioQueue: Boolean,
     modifier: Modifier = Modifier,
@@ -692,10 +695,10 @@ fun ForgottenFavoritesSection(
     mediaMetadataId: String?,
     isListenTogetherGuest: Boolean,
     autoRadioQueue: Boolean,
-    database: LocalDatabase,
-    menuState: LocalMenuState,
+    database: MusicDatabase,
+    menuState: MenuState,
     haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    playerConnection: LocalPlayerConnection,
+    playerConnection: PlayerConnection?,
     forgottenFavoritesLazyGridState: LazyGridState,
     forgottenFavoritesSnapLayoutInfoProvider: SnapLayoutInfoProvider,
     horizontalLazyGridItemWidth: Dp,
@@ -894,14 +897,14 @@ fun HomePageSection(
     isPodcastChipActive: Boolean,
     ytGridItem: @Composable (YTItem) -> Unit,
     navController: NavController,
-    playerConnection: LocalPlayerConnection,
+    playerConnection: PlayerConnection?,
     isListenTogetherGuest: Boolean,
     mediaMetadataId: String?,
     isPlaying: Boolean,
     autoRadioQueue: Boolean,
-    menuState: LocalMenuState,
+    menuState: MenuState,
     haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    database: LocalDatabase,
+    database: MusicDatabase,
     scope: CoroutineScope,
     currentGridHeight: Dp,
     horizontalLazyGridItemWidth: Dp,
