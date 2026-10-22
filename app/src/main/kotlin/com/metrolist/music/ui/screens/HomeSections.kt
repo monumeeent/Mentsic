@@ -103,7 +103,7 @@ import com.metrolist.music.ui.menu.YouTubeAlbumMenu
 import com.metrolist.music.ui.menu.YouTubeArtistMenu
 import com.metrolist.music.ui.menu.YouTubePlaylistMenu
 import com.metrolist.music.ui.menu.YouTubeSongMenu
-import com.metrolist.music.ui.utils.SnapLayoutInfoProvider
+import com.metrolist.music.ui.utils.SnapLayoutInfoProvider as SnapLayoutInfoProviderFactory
 import com.metrolist.music.viewmodels.CommunityPlaylistItem
 import com.metrolist.music.viewmodels.DailyDiscoverItem
 import com.metrolist.innertube.pages.ExplorePage
@@ -217,7 +217,7 @@ fun SpeedDialSection(
                                                         when (item) {
                                                             is SongItem -> {
                                                                 if (!isListenTogetherGuest) {
-                                                                    playerConnection.playQueue(
+                                                                    playerConnection?.playQueue(
                                                                         if (autoRadioQueue) {
                                                                             YouTubeQueue(
                                                                                 item.endpoint
@@ -248,7 +248,7 @@ fun SpeedDialSection(
                                                             is PodcastItem -> navController.navigate("online_podcast/${item.id}")
                                                             is EpisodeItem -> {
                                                                 if (!isListenTogetherGuest) {
-                                                                    playerConnection.playQueue(
+                                                                    playerConnection?.playQueue(
                                                                         ListQueue(
                                                                             title = item.title,
                                                                             items = listOf(item.toMediaMetadata().toMediaItem()),
@@ -317,7 +317,7 @@ fun SpeedDialSection(
 fun QuickPicksSection(
     quickPicks: List<Song>,
     quickPicksLazyGridState: LazyGridState,
-    quickPicksSnapLayoutInfoProvider: SnapLayoutInfoProvider,
+    quickPicksSnapLayoutInfoProvider: androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider,
     horizontalLazyGridItemWidth: Dp,
     isPlaying: Boolean,
     mediaMetadataId: String?,
@@ -347,7 +347,7 @@ fun QuickPicksSection(
             Surface(
                 onClick = {
                     if (!isListenTogetherGuest) {
-                        playerConnection.playQueue(
+                        playerConnection?.playQueue(
                             ListQueue(
                                 title = quickPicksTitle,
                                 items = quickPicks.distinctBy { it.id }.map { it.toMediaItem() },
@@ -428,9 +428,9 @@ fun QuickPicksSection(
                                 onClick = {
                                     if (!isListenTogetherGuest) {
                                         if (song!!.id == mediaMetadataId) {
-                                            playerConnection.togglePlayPause()
+                                            playerConnection?.togglePlayPause()
                                         } else {
-                                            playerConnection.playQueue(
+                                            playerConnection?.playQueue(
                                                 if (autoRadioQueue) {
                                                     YouTubeQueue.radio(song!!.toMediaMetadata())
                                                 } else {
@@ -482,7 +482,7 @@ fun FromTheCommunitySection(
                 },
                 onSongClick = { song ->
                     if (!isListenTogetherGuest) {
-                        playerConnection.playQueue(
+                        playerConnection?.playQueue(
                             YouTubeQueue(
                                 song.endpoint ?: WatchEndpoint(videoId = song.id),
                                 song.toMediaMetadata(),
@@ -513,7 +513,7 @@ fun DailyDiscoverSection(
                 }
 
             if (queueItems.isNotEmpty()) {
-                playerConnection.playQueue(
+                playerConnection?.playQueue(
                     ListQueue(
                         title = title,
                         items = queueItems.map { it.toMediaItem() },
@@ -549,7 +549,7 @@ fun DailyDiscoverSection(
                         val song = item.recommendation as? SongItem
                         val mediaMetadata = song?.toMediaMetadata()
                         if (mediaMetadata != null) {
-                            playerConnection.playQueue(
+                            playerConnection?.playQueue(
                                 if (autoRadioQueue) {
                                     YouTubeQueue(
                                         song.endpoint ?: WatchEndpoint(videoId = song.id),
@@ -700,7 +700,7 @@ fun ForgottenFavoritesSection(
     haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
     playerConnection: PlayerConnection?,
     forgottenFavoritesLazyGridState: LazyGridState,
-    forgottenFavoritesSnapLayoutInfoProvider: SnapLayoutInfoProvider,
+    forgottenFavoritesSnapLayoutInfoProvider: androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider,
     horizontalLazyGridItemWidth: Dp,
     modifier: Modifier = Modifier,
 ) {
@@ -723,7 +723,7 @@ fun ForgottenFavoritesSection(
             Surface(
                 onClick = {
                     if (!isListenTogetherGuest) {
-                        playerConnection.playQueue(
+                        playerConnection?.playQueue(
                             ListQueue(
                                 title = forgottenFavoritesTitle,
                                 items = forgottenFavorites.distinctBy { it.id }.map { it.toMediaItem() },
@@ -807,9 +807,9 @@ fun ForgottenFavoritesSection(
                                 onClick = {
                                     if (!isListenTogetherGuest) {
                                         if (song!!.id == mediaMetadataId) {
-                                            playerConnection.togglePlayPause()
+                                            playerConnection?.togglePlayPause()
                                         } else {
-                                            playerConnection.playQueue(
+                                            playerConnection?.playQueue(
                                                 if (autoRadioQueue) {
                                                     YouTubeQueue.radio(song!!.toMediaMetadata())
                                                 } else {
@@ -970,7 +970,7 @@ fun HomePageSection(
             onPlayAllClick =
                 if (hasPlayableSongs && !isListenTogetherGuest) {
                     {
-                        playerConnection.playQueue(
+                        playerConnection?.playQueue(
                             ListQueue(
                                 title = sectionData.title,
                                 items = sectionSongs.map { it.toMediaMetadata().toMediaItem() },
@@ -1027,7 +1027,7 @@ fun HomePageSection(
                                 .combinedClickable(
                                     onClick = {
                                         if (!isListenTogetherGuest) {
-                                            playerConnection.playQueue(
+                                            playerConnection?.playQueue(
                                                 if (autoRadioQueue) {
                                                     YouTubeQueue(
                                                         song.endpoint ?: WatchEndpoint(videoId = song.id),
