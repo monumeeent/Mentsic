@@ -1062,7 +1062,7 @@ fun HomePageSection(
                         .only(WindowInsetsSides.Horizontal)
                         .asPaddingValues(),
             ) {
-                items<List<YTItem>>(
+                items(
                     items = sectionData.items.distinctBy { it.id },
                     key = { "home_section_${sectionIndex}_item_${it.id}" },
                 ) { item: YTItem ->
