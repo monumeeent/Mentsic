@@ -1,0 +1,325 @@
+build	Build FOSS Debug APK	﻿2026-10-03T08:53:26.6973385Z ##[group]Run ./gradlew :app:assembleFossDebug --stacktrace
+build	Build FOSS Debug APK	2026-10-03T08:53:26.6974189Z ^[[36;1m./gradlew :app:assembleFossDebug --stacktrace^[[0m
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7036227Z shell: /usr/bin/bash -e {0}
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7036491Z env:
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7036793Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7037288Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7037701Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7038016Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7038312Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7038748Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7039254Z   DEVELOCITY_AUTO_INJECTION_CUSTOM_VALUE: gradle-actions
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7039583Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+build	Build FOSS Debug APK	2026-10-03T08:53:26.7039848Z ##[endgroup]
+build	Build FOSS Debug APK	2026-10-03T08:53:27.1906221Z Fetching distribution.
+build	Build FOSS Debug APK	2026-10-03T08:53:27.1907360Z Downloading https://services.gradle.org/distributions/gradle-9.7.1-bin.zip
+build	Build FOSS Debug APK	2026-10-03T08:53:29.7522391Z ..............10%..............20%...............30%..............40%...............50%..............60%...............70%..............80%..............90%...............100%
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3214131Z 
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3231683Z Welcome to Gradle 9.7.1!
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3232386Z 
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3232920Z Here are the highlights of this release:
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3234224Z  - Isolated Projects graduates to incubating
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3235102Z  - Broader Configuration Cache compatibility
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3235950Z  - Resilient Sync helps you fix broken builds
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3236754Z  - More source locations in problem reports
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3237342Z 
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3238190Z For more details see https://docs.gradle.org/9.7.1/release-notes.html
+build	Build FOSS Debug APK	2026-10-03T08:53:31.3244716Z 
+build	Build FOSS Debug APK	2026-10-03T08:53:31.5209509Z Starting a Gradle Daemon (subsequent builds will be faster)
+build	Build FOSS Debug APK	2026-10-03T08:54:39.0220785Z > Task :app:cleanLegacyProtoSources UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:54:39.0221747Z > Task :app:preBuild UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:54:39.0222618Z > Task :app:preFossDebugBuild UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:54:39.0224200Z > Task :app:mergeFossDebugNativeDebugMetadata NO-SOURCE
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1214460Z > Task :app:generateFossDebugBuildConfig
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1215188Z > Task :app:protobufDummy UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1225837Z > Task :app:extractDebugProto
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1226617Z > Task :app:extractFossDebugProto
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1227151Z > Task :app:extractFossProto
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1227600Z > Task :innertube:preBuild UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1232117Z > Task :innertube:preDebugBuild UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:54:39.1232710Z > Task :innertube:generateDebugResources
+build	Build FOSS Debug APK	2026-10-03T08:54:39.2214896Z > Task :innertube:packageDebugResources
+build	Build FOSS Debug APK	2026-10-03T08:54:39.2215980Z > Task :innertube:processDebugNavigationResources
+build	Build FOSS Debug APK	2026-10-03T08:54:39.5234731Z > Task :innertube:parseDebugLocalResources
+build	Build FOSS Debug APK	2026-10-03T08:54:39.6210508Z > Task :innertube:generateDebugRFile
+build	Build FOSS Debug APK	2026-10-03T08:55:09.6216255Z > Task :innertube:compileDebugKotlin
+build	Build FOSS Debug APK	2026-10-03T08:55:20.3208629Z > Task :innertube:javaPreCompileDebug
+build	Build FOSS Debug APK	2026-10-03T08:55:20.3234904Z > Task :innertube:compileDebugJavaWithJavac NO-SOURCE
+build	Build FOSS Debug APK	2026-10-03T08:55:20.5214807Z > Task :innertube:bundleLibRuntimeToJarDebug
+build	Build FOSS Debug APK	2026-10-03T08:55:20.5218721Z > Task :innertube:processDebugJavaRes
+build	Build FOSS Debug APK	2026-10-03T08:55:20.6374692Z > Task :innertube:createFullJarDebug
+build	Build FOSS Debug APK	2026-10-03T08:55:41.3208816Z > Task :app:extractIncludeFossDebugProto
+build	Build FOSS Debug APK	2026-10-03T08:55:41.3213330Z > Task :app:extractProto
+build	Build FOSS Debug APK	2026-10-03T08:55:41.7208338Z > Task :app:generateFossDebugProto
+build	Build FOSS Debug APK	2026-10-03T08:55:41.7209087Z > Task :app:generateFossDebugResValues
+build	Build FOSS Debug APK	2026-10-03T08:55:41.8208190Z > Task :app:extractFossDebugSupportedLocales
+build	Build FOSS Debug APK	2026-10-03T08:55:41.8209038Z > Task :app:mapFossDebugSourceSetPaths
+build	Build FOSS Debug APK	2026-10-03T08:55:41.8209684Z > Task :innertube:extractDebugSupportedLocales
+build	Build FOSS Debug APK	2026-10-03T08:55:46.7210669Z > Task :app:generateFossDebugLocaleConfig
+build	Build FOSS Debug APK	2026-10-03T08:55:46.7211655Z > Task :app:generateFossDebugResources
+build	Build FOSS Debug APK	2026-10-03T08:55:48.4219656Z > Task :app:packageFossDebugResources
+build	Build FOSS Debug APK	2026-10-03T08:55:49.4208844Z > Task :app:processFossDebugNavigationResources
+build	Build FOSS Debug APK	2026-10-03T08:55:49.6208652Z > Task :app:parseFossDebugLocalResources
+build	Build FOSS Debug APK	2026-10-03T08:55:49.6262877Z > Task :app:generateFossDebugRFile
+build	Build FOSS Debug APK	2026-10-03T08:55:49.7208335Z > Task :innertube:bundleLibCompileToJarDebug
+build	Build FOSS Debug APK	2026-10-03T08:56:19.7234758Z > Task :app:kspFossDebugKotlin
+build	Build FOSS Debug APK	2026-10-03T08:57:00.5234651Z > Task :app:compileFossDebugKotlin
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2235468Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/api/DeepLService.kt:82:49 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2265250Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/eq/data/GitHubAutoEqSearch.kt:178:41 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2295013Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/eq/data/GitHubAutoEqSearch.kt:214:41 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2327058Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/player/Player.kt:675:21 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2387034Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/player/Player.kt:1373:21 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2417036Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/player/Queue.kt:586:29 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2437642Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AndroidAutoSettings.kt:351:29 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2445413Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AppearanceSettings.kt:451:17 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2497228Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AppearanceSettings.kt:514:17 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2519375Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AppearanceSettings.kt:750:25 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2537219Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AppearanceSettings.kt:1328:21 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2567161Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/ContentSettings.kt:643:21 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2573996Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/PlayerSettings.kt:331:33 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2607201Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/PlayerSettings.kt:368:29 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2627028Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/StorageSettings.kt:359:29 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2634226Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/StorageSettings.kt:432:33 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2667294Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/integrations/LastFMSettings.kt:449:21 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2674281Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/integrations/LastFMSettings.kt:514:21 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2707186Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/screens/settings/integrations/LastFMSettings.kt:579:21 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2727182Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/ui/utils/ShowOffsetDialog.kt:204:13 'fun Slider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = ..., enabled: Boolean = ..., valueRange: ClosedFloatingPointRange<Float> = ..., steps: Int = ..., onValueChangeFinished: (() -> Unit)? = ..., colors: SliderColors = ..., interactionSource: MutableInteractionSource = ...): Unit' is deprecated. Use the Slider overload that accepts SliderState, onValueChange, and onValueChangeFinished instead.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2735027Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/utils/potoken/PoTokenWebView.kt:389:77 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+build	Build FOSS Debug APK	2026-10-03T08:58:26.2759179Z w: file:///home/runner/work/Mentsic/Mentsic/app/src/main/kotlin/com/metrolist/music/viewmodels/BackupRestoreViewModel.kt:461:45 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+build	Build FOSS Debug APK	2026-10-03T08:58:30.4216789Z 
+build	Build FOSS Debug APK	2026-10-03T08:58:30.4234677Z > Task :app:javaPreCompileFossDebug
+build	Build FOSS Debug APK	2026-10-03T08:58:46.8213960Z > Task :app:compileFossDebugJavaWithJavac
+build	Build FOSS Debug APK	2026-10-03T08:58:46.8215098Z > Task :app:generateFossDebugAssets UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:58:46.8216001Z > Task :innertube:generateDebugAssets UP-TO-DATE
+build	Build FOSS Debug APK	2026-10-03T08:58:46.9233505Z > Task :innertube:mergeDebugAssets
+build	Build FOSS Debug APK	2026-10-03T08:58:47.2214746Z > Task :app:mergeFossDebugAssets
+build	Build FOSS Debug APK	2026-10-03T08:58:47.2224317Z > Task :app:compressFossDebugAssets
+build	Build FOSS Debug APK	2026-10-03T08:58:49.7208100Z > Task :app:generateFossDebugGlobalSynthetics
+build	Build FOSS Debug APK	2026-10-03T08:58:51.7208037Z > Task :app:l8DexDesugarLibFossDebug
+build	Build FOSS Debug APK	2026-10-03T08:58:54.6207811Z > Task :app:checkFossDebugDuplicateClasses
+build	Build FOSS Debug APK	2026-10-03T08:58:54.6234540Z > Task :app:desugarFossDebugFileDependencies
+build	Build FOSS Debug APK	2026-10-03T08:59:24.6208739Z > Task :app:mergeExtDexFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:30.9212317Z > Task :app:processFossDebugJavaRes
+build	Build FOSS Debug APK	2026-10-03T09:00:36.0224647Z > Task :app:mergeFossDebugJavaResource
+build	Build FOSS Debug APK	2026-10-03T09:00:36.3208126Z > Task :innertube:bundleLibRuntimeToDirDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:40.6208388Z > Task :app:mergeLibDexFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:40.7208036Z > Task :app:hiltCollectClassesFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:42.6217227Z > Task :app:hiltAggregateDepsFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:50.8219414Z > Task :app:hiltJavaCompileFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:50.9208448Z > Task :innertube:writeDebugAarMetadata
+build	Build FOSS Debug APK	2026-10-03T09:00:51.1211672Z > Task :app:checkFossDebugAarMetadata
+build	Build FOSS Debug APK	2026-10-03T09:00:51.1212362Z > Task :app:compileFossDebugNavigationResources
+build	Build FOSS Debug APK	2026-10-03T09:00:56.7234712Z > Task :app:mergeFossDebugResources
+build	Build FOSS Debug APK	2026-10-03T09:00:56.7274373Z > Task :app:createFossDebugCompatibleScreenManifests
+build	Build FOSS Debug APK	2026-10-03T09:00:56.7275939Z > Task :app:extractDeepLinksFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:56.7276595Z > Task :innertube:extractDeepLinksDebug
+build	Build FOSS Debug APK	2026-10-03T09:00:56.8217290Z > Task :innertube:processDebugManifest
+build	Build FOSS Debug APK	2026-10-03T09:00:57.2214768Z > Task :app:processFossDebugMainManifest
+build	Build FOSS Debug APK	2026-10-03T09:00:57.4244845Z > Task :app:processFossDebugManifest
+build	Build FOSS Debug APK	2026-10-03T09:00:57.4264730Z > Task :app:processFossDebugManifestForPackage
+build	Build FOSS Debug APK	2026-10-03T09:00:57.4274259Z > Task :innertube:mapDebugSourceSetPaths
+build	Build FOSS Debug APK	2026-10-03T09:00:57.4334620Z > Task :innertube:compileDebugLibraryResources
+build	Build FOSS Debug APK	2026-10-03T09:00:58.9235189Z warn: removing resource com.metrolist.music.debug:string/discord_information without required default value.
+build	Build FOSS Debug APK	2026-10-03T09:00:58.9258511Z 
+build	Build FOSS Debug APK	2026-10-03T09:00:59.3232018Z > Task :app:processFossDebugResources
+build	Build FOSS Debug APK	2026-10-03T09:01:02.3224784Z > Task :app:transformFossDebugClassesWithAsm
+build	Build FOSS Debug APK	2026-10-03T09:01:32.3234921Z > Task :app:dexBuilderFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:01:36.9232353Z > Task :app:mergeProjectDexFossDebug
+build	Build FOSS Debug APK	2026-10-03T09:01:36.9244299Z > Task :app:mergeFossDebugJniLibFolders
+build	Build FOSS Debug APK	2026-10-03T09:01:36.9244897Z > Task :innertube:mergeDebugJniLibFolders
+build	Build FOSS Debug APK	2026-10-03T09:01:36.9245498Z > Task :innertube:mergeDebugNativeLibs NO-SOURCE
+build	Build FOSS Debug APK	2026-10-03T09:01:36.9246125Z > Task :innertube:copyDebugJniLibsProjectOnly
+build	Build FOSS Debug APK	2026-10-03T09:01:37.5208113Z > Task :app:mergeFossDebugNativeLibs
+build	Build FOSS Debug APK	2026-10-03T09:01:37.9208793Z > Task :app:stripFossDebugDebugSymbols
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0225039Z 
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0225577Z > Task :app:validateSigningFossDebug FAILED
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0271128Z FAILURE: Build failed with an exception.
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0271533Z 
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0274031Z 
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0284086Z [Incubating] Problems report is available at: file:///home/runner/work/Mentsic/Mentsic/build/reports/problems/problems-report.html
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0287156Z * What went wrong:
+build	Build FOSS Debug APK	2026-10-03T09:01:38.0288304Z Execution failed for task ':app:validateSigningFossDebug' (registered by plugin 'com.android.internal.application').
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1215420Z > Keystore file '/home/runner/.android/debug.keystore' not found for signing config 'debug'.
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1264243Z 
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1264889Z * Try:
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1265647Z > Run with --info or --debug option to get more log output.
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1266619Z > Run with --scan to get full insights from a Build Scan (powered by Develocity).
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1268089Z > Get more help at https://help.gradle.org.
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1268652Z 
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1269029Z * Exception is:
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1270383Z org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:validateSigningFossDebug' (registered by plugin 'com.android.internal.application').
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1272547Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1275479Z 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1276968Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1279573Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1281470Z 	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1283469Z 	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1285650Z 	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1287456Z 	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1289129Z 	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1290752Z 	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1292461Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1294758Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1296252Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1297998Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1300003Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1301748Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1303302Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1305093Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1306810Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1308519Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1310622Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1312458Z 	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1314386Z 	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1316450Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1318398Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1320387Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1322419Z 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1324850Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1326803Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1328851Z 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1330231Z 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1331739Z 	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1333284Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:146)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1335129Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:131)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1336910Z 	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1338532Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1340365Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1342204Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1344356Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1347103Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1348673Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1350250Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1351802Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1353305Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1355777Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1357620Z 	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$0(DefaultBuildLifecycleController.java:323)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1359201Z 	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:324)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1360762Z 	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$0(StateTransitionController.java:235)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1362183Z 	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:45)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1363580Z 	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:235)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1365560Z 	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:314)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1367355Z 	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1369160Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:302)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1370649Z 	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1372396Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:300)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1374253Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:296)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1375213Z 70 actionable tasks: 69 executed, 1 up-to-date
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1376250Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:288)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1377684Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:131)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1379103Z 	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:182)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1380661Z 	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:199)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1382322Z 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1383933Z 	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:199)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1385411Z 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:65)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1386833Z 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1388386Z Caused by: org.gradle.api.InvalidUserDataException: Keystore file '/home/runner/.android/debug.keystore' not found for signing config 'debug'.
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1389995Z 	at com.android.build.gradle.internal.tasks.ValidateSigningTask.doTaskAction(ValidateSigningTask.kt:100)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1391561Z 	at com.android.build.gradle.internal.tasks.NonIncrementalTask$taskAction$$inlined$recordTaskAction$1.invoke(BaseTask.kt:72)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1392945Z 	at com.android.build.gradle.internal.tasks.Blocks.recordSpan(Blocks.java:51)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1394446Z 	at com.android.build.gradle.internal.tasks.NonIncrementalTask.taskAction(NonIncrementalTask.kt:71)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1395667Z 	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1396903Z 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1398358Z 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1399793Z 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1401088Z 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:259)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1402443Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1404152Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1405636Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1407148Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1408622Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1410137Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1411600Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1412994Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1414527Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1416063Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1417690Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1418958Z 	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1420154Z 	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1421268Z 	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1422347Z 	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1424049Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1426143Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1428250Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1429867Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1431498Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1433132Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1434946Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1437892Z 	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1444648Z 	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1446355Z 	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1447907Z 	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1449300Z 	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1450834Z 	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1452600Z 	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1454656Z 	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1456570Z 	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1458186Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1459782Z 	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1461663Z 	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1464278Z 	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1466232Z 	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1470437Z 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1472289Z 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1474376Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1475773Z 	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1477329Z 	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1478801Z 	at org.gradle.internal.Either$Right.fold(Either.java:176)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1479893Z 	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1481268Z 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1482611Z 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1484546Z 	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1486297Z 	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1487853Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1489436Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1490953Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1492453Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1494073Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1495855Z 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1498084Z 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1500321Z 	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1502483Z 	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1504793Z 	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1506673Z 	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1508448Z 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1510048Z 	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1511480Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1512946Z 	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1514828Z 	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1516362Z 	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:105)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1517830Z 	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1519867Z 	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1522246Z 	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1524788Z 	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1526915Z 	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1528872Z 	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:85)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1530736Z 	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1532568Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1535018Z 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1537224Z 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1539227Z 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1540850Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1542303Z 	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1544398Z 	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1574571Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1608240Z 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1624906Z 	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1634392Z 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1648900Z 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1665112Z 	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1666607Z 	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1668166Z 	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1670172Z 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1672522Z 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1674942Z 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1676783Z 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1678254Z 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1679618Z 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1680895Z 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1682392Z 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1684424Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1685767Z 	... 61 more
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1686123Z 
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1686278Z 
+build	Build FOSS Debug APK	2026-10-03T09:01:38.1686585Z BUILD FAILED in 8m 11s
+build	Build FOSS Debug APK	2026-10-03T09:01:38.5519633Z ##[error]Process completed with exit code 1.
