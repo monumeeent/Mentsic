@@ -6,6 +6,7 @@
 package com.metrolist.music.ui.component
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -76,7 +77,7 @@ fun AudioVisualizer(
                     // Traveling sine wave for animation
                     val wave = 0.2f * (kotlin.math.sin(t * 10f + currentTime * 0.004f) + 1f) * 0.5f
                     // Random noise for organic feel
-                    val noise = 0.08f * (Math.random() - 0.5f)
+                    val noise = ((Math.random() - 0.5) * 0.08).toFloat()
                     min(1.0f, max(0.05f, base + wave + noise))
                 }
                 amplitudes = newAmplitudes
@@ -91,7 +92,10 @@ fun AudioVisualizer(
     LaunchedEffect(amplitudes) {
         amplitudes.forEachIndexed { i, amp ->
             if (i < barAnimatables.size) {
-                barAnimatables[i].animateTo(amp, animationSpec = tween(durationMillis = 80, easing = androidx.compose.animation.core.fastOutSlowInEasing))
+                barAnimatables[i].animateTo(
+    amp,
+    animationSpec = tween(durationMillis = 80, easing = FastOutSlowInEasing)
+)
             }
         }
     }
