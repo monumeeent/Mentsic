@@ -8,12 +8,18 @@ package com.metrolist.music.ui.theme
 import android.graphics.Bitmap
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.palette.graphics.Palette
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -55,9 +61,28 @@ fun MetrolistTheme(
 
     MaterialTheme(
         colorScheme = finalColorScheme,
+        typography = if (enableOrbitTheme) orbitTypography else MaterialTheme.typography,
         content = content,
     )
 }
+
+val orbitTypography = Typography(
+    displayLarge = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W700, fontSize = 57.sp),
+    displayMedium = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W400, fontSize = 45.sp),
+    displaySmall = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W400, fontSize = 36.sp),
+    headlineLarge = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W700, fontSize = 32.sp),
+    headlineMedium = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W400, fontSize = 28.sp),
+    headlineSmall = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W400, fontSize = 24.sp),
+    titleLarge = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W700, fontSize = 22.sp),
+    titleMedium = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W400, fontSize = 18.sp),
+    titleSmall = TextStyle(fontFamily = orbitDoto, fontWeight = FontWeight.W400, fontSize = 14.sp),
+    bodyLarge = TextStyle(fontFamily = orbitInter, fontWeight = FontWeight.W400, fontSize = 16.sp),
+    bodyMedium = TextStyle(fontFamily = orbitInter, fontWeight = FontWeight.W400, fontSize = 14.sp),
+    bodySmall = TextStyle(fontFamily = orbitInter, fontWeight = FontWeight.W400, fontSize = 12.sp),
+    labelLarge = TextStyle(fontFamily = orbitInter, fontWeight = FontWeight.W500, fontSize = 14.sp),
+    labelMedium = TextStyle(fontFamily = orbitInter, fontWeight = FontWeight.W500, fontSize = 12.sp),
+    labelSmall = TextStyle(fontFamily = orbitInter, fontWeight = FontWeight.W500, fontSize = 11.sp),
+)
 
 fun Bitmap.extractThemeColor(): Color = Color(
     Palette.from(this)
