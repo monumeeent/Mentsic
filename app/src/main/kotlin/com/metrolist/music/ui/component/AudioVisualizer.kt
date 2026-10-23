@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatArrayStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -53,7 +56,7 @@ fun AudioVisualizer(
     val spacingPx = with(density) { barSpacing.toPx() }
     val radiusPx = with(density) { barRadius.toPx() }
 
-    var amplitudes by remember { mutableFloatArrayStateOf(FloatArray(barCount) { 0.1f }) }
+    var amplitudes by remember { mutableStateOf(FloatArray(barCount) { 0.1f }) }
     val barAnimatables = remember(barCount) {
         Array(barCount) { i ->
             Animatable(0.1f)
@@ -111,9 +114,9 @@ fun AudioVisualizer(
 
             drawRoundRect(
                 color = color,
-                topLeft = androidx.compose.ui.geometry.Offset(x, y),
-                size = androidx.compose.ui.geometry.Size(barWidth, max(height, 2f)),
-                radius = androidx.compose.ui.geometry.CornerRadius(radiusPx, radiusPx),
+                topLeft = Offset(x, y),
+                size = Size(barWidth, max(height, 2f)),
+                cornerRadius = CornerRadius(radiusPx, radiusPx),
             )
         }
     }
