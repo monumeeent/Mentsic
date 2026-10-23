@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Orbit Music Theme - Light Mode Colors -->
+    <!-- Primary - muted purple for light mode -->
+    <color name="orbit_primary">#FF6750A4</color>
+    <color name="orbit_on_primary">#FFEDE9FE</color>
+    <color name="orbit_primary_container">#FF4F378B</color>
+    <color name="orbit_on_primary_container">#FFEDE9FE</color>
+
+    <!-- Secondary - neutral gray-purple -->
+    <color name="orbit_secondary">#FF625B71</color>
+    <color name="orbit_on_secondary">#FFEDE9FE</color>
+    <color name="orbit_secondary_container">#FF7E748B</color>
+    <color name="orbit_on_secondary_container">#FFEDE9FE</color>
+
+    <!-- Surface - dark near-black background -->
+    <color name="orbit_surface">#FF0E0E12</color>
+    <color name="orbit_on_surface">#FFE6E1E5</color>
+    <color name="orbit_surface_variant">#FF49454F</color>
+    <color name="orbit_on_surface_variant">#CAC4D0</color>
+
+    <!-- Background - same as surface for minimalist look -->
+    <color name="orbit_background">#FF0E0E12</color>
+    <color name="orbit_on_background">#FFE6E1E5</color>
+
+    <!-- Accent - bold pink for highlights -->
+    <color name="orbit_accent">#FFC8007C</color>
+    <color name="orbit_on_accent">#FF18181C</color>
+    <color name="orbit_accent_container">#FFC8007C</color>
+
+    <!-- Error states -->
+    <color name="orbit_error">#FFB00020</color>
+    <color name="orbit_on_error">#FFEDE9FE</color>
+
+    <!-- Outline and variant colors -->
+    <color name="orbit_outline">#FF79747E</color>
+    <color name="orbit_outline_variant">#FF49454F</color>
+
+    <!-- Inverse colors -->
+    <color name="orbit_inverse_surface">#FFE6E1E5</color>
+    <color name="orbit_inverse_on_surface">#FF0E0E12</color>
+    <color name="orbit_inverse_primary">#FFB825FF</color>
+</resources>

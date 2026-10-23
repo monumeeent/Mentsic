@@ -44,6 +44,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -75,11 +77,13 @@ import com.materialkolor.rememberDynamicColorScheme
 import com.metrolist.music.R
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DynamicThemeKey
+import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.PureBlackMiniPlayerKey
 import com.metrolist.music.constants.SelectedThemeColorKey
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.theme.OrbitColors
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 
@@ -122,6 +126,10 @@ fun ThemeScreen(
         PureBlackMiniPlayerKey,
         defaultValue = false
     )
+    val (enableOrbitTheme, onEnableOrbitThemeChange) = rememberPreference(
+        EnableOrbitThemeKey,
+        defaultValue = false
+    )
 
     val onPureBlackChange: (Boolean) -> Unit = { enabled ->
         onPureBlackChangeRaw(enabled)
@@ -154,7 +162,9 @@ fun ThemeScreen(
             pureBlack = pureBlack,
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = handleColorSelection
+            onSelectedThemeColorChange = handleColorSelection,
+            enableOrbitTheme = enableOrbitTheme,
+            onEnableOrbitThemeChange = onEnableOrbitThemeChange,
         )
     } else {
         PortraitThemeLayout(
@@ -164,7 +174,9 @@ fun ThemeScreen(
             pureBlack = pureBlack,
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = handleColorSelection
+            onSelectedThemeColorChange = handleColorSelection,
+            enableOrbitTheme = enableOrbitTheme,
+            onEnableOrbitThemeChange = onEnableOrbitThemeChange,
         )
     }
 
@@ -189,7 +201,9 @@ fun PortraitThemeLayout(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    enableOrbitTheme: Boolean,
+    onEnableOrbitThemeChange: (Boolean) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -220,7 +234,9 @@ fun PortraitThemeLayout(
             pureBlack = pureBlack,
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = onSelectedThemeColorChange
+            onSelectedThemeColorChange = onSelectedThemeColorChange,
+            enableOrbitTheme = enableOrbitTheme,
+            onEnableOrbitThemeChange = onEnableOrbitThemeChange,
         )
 
         Spacer(modifier = Modifier.height(120.dp))
@@ -235,7 +251,9 @@ fun LandscapeThemeLayout(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    enableOrbitTheme: Boolean,
+    onEnableOrbitThemeChange: (Boolean) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -277,7 +295,9 @@ fun LandscapeThemeLayout(
                 pureBlack = pureBlack,
                 onPureBlackChange = onPureBlackChange,
                 selectedThemeColor = selectedThemeColor,
-                onSelectedThemeColorChange = onSelectedThemeColorChange
+                onSelectedThemeColorChange = onSelectedThemeColorChange,
+                enableOrbitTheme = enableOrbitTheme,
+                onEnableOrbitThemeChange = onEnableOrbitThemeChange,
             )
 
             Spacer(modifier = Modifier.height(80.dp))
@@ -292,7 +312,9 @@ fun ThemeControls(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    enableOrbitTheme: Boolean,
+    onEnableOrbitThemeChange: (Boolean) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -397,16 +419,46 @@ fun ThemeControls(
                         } else {
                             selectedThemeColor == palette.seedColor
                         }
-                        
+
                         PaletteItem(
                             palette = palette,
                             isSelected = isSelected,
-                            onClick = { 
+                            onClick = {
                                 val colorToSave = if (isDynamicPalette) DefaultThemeColor else palette.seedColor
-                                onSelectedThemeColorChange(colorToSave) 
+                                onSelectedThemeColorChange(colorToSave)
                             }
                         )
                     }
+                }
+            }
+
+            // Orbit Theme Toggle
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.orbit_theme),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Switch(
+                        checked = enableOrbitTheme,
+                        onCheckedChange = { onEnableOrbitThemeChange(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = OrbitColors.accentDark,
+                            checkedTrackColor = OrbitColors.accentDark.copy(alpha = 0.5f),
+                        )
+                    )
+                }
+                if (enableOrbitTheme) {
+                    Text(
+                        text = stringResource(R.string.orbit_theme_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

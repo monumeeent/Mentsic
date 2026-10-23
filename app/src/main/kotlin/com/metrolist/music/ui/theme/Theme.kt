@@ -27,6 +27,7 @@ fun MetrolistTheme(
     darkTheme: Boolean = androidx.compose.foundation.isSystemInDarkTheme(),
     pureBlack: Boolean = false,
     themeColor: Color = DefaultThemeColor,
+    enableOrbitTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val baseColorScheme = rememberDynamicColorScheme(
@@ -44,8 +45,16 @@ fun MetrolistTheme(
         }
     }
 
+    val finalColorScheme = remember(colorScheme, enableOrbitTheme, darkTheme) {
+        if (enableOrbitTheme) {
+            colorScheme.applyOrbitTheme(darkTheme)
+        } else {
+            colorScheme
+        }
+    }
+
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = finalColorScheme,
         content = content,
     )
 }

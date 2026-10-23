@@ -145,6 +145,7 @@ import com.metrolist.music.constants.DisableScreenshotKey
 import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
+import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
@@ -620,6 +621,8 @@ class MainActivity : FragmentActivity() {
                 pureBlackEnabled && useDarkTheme
             }
 
+        val enableOrbitTheme by rememberPreference(EnableOrbitThemeKey, defaultValue = false)
+
         val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
         val selectedThemeColor = Color(selectedThemeColorInt)
 
@@ -687,6 +690,7 @@ class MainActivity : FragmentActivity() {
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
             themeColor = themeColor,
+            enableOrbitTheme = enableOrbitTheme,
         ) {
             val currentDensity = LocalDensity.current
             val windowInfo = LocalWindowInfo.current

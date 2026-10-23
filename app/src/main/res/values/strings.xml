@@ -239,6 +239,8 @@
     <string name="theme_colors">Theme &amp; Colors</string>
     <string name="theme_mode">Theme Mode</string>
     <string name="color_palette">Color Palette</string>
+    <string name="orbit_theme">Orbit Theme</string>
+    <string name="orbit_theme_desc">Apply Nothing OS-inspired color scheme</string>
     <string name="use_system_colors">Use system colors</string>
     <string name="enable_dynamic_theme">Enable dynamic theme</string>
     <string name="dark_theme">Dark theme</string>
