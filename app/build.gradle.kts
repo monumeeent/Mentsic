@@ -272,7 +272,6 @@ dependencies {
     implementation(libs.lifecycle.process)
 	
 	implementation(libs.material3)
-	implementation("androidx.compose.material:material-icons-core:1.7.8")
     implementation(libs.palette)
     implementation(libs.materialKolor)
 
