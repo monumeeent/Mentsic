@@ -137,7 +137,7 @@ fun ColorScheme.applyOrbitTheme(isDark: Boolean): ColorScheme {
 
 @Composable
 fun getOrbitColorResource(id: Int): Color {
-    return Color(colorResource(id))
+    return colorResource(id)
 }
 
 @Composable
