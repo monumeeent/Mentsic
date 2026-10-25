@@ -40,7 +40,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButton as Material3IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -104,7 +104,7 @@ import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.AlbumGridItem
 import com.metrolist.music.ui.component.ExpandableText
 import com.metrolist.music.ui.component.HideOnScrollFAB
-import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.IconButton as CustomIconButton
 import com.metrolist.music.ui.component.LinkSegment
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
@@ -423,7 +423,7 @@ fun ArtistScreen(
                                         // Shuffle Button
                                         if (!showLocal && !isGuest) {
                                             artistPage?.artist?.shuffleEndpoint?.let { shuffleEndpoint ->
-                                                IconButton(
+                                                Material3IconButton(
                                                     onClick = {
                                                         playerConnection.playQueue(YouTubeQueue(shuffleEndpoint))
                                                     },
@@ -693,7 +693,7 @@ fun ArtistScreen(
                                     isActive = mediaMetadata?.id == song.id,
                                     isPlaying = isPlaying,
                                     trailingContent = {
-                                        IconButton(
+                                        Material3IconButton(
                                             onClick = {
                                                 menuState.show {
                                                     YouTubeSongMenu(
