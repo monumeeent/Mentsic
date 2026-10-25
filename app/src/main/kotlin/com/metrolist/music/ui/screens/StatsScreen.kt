@@ -27,6 +27,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -669,7 +675,7 @@ fun StatsScreen(
                         )
                         Spacer(Modifier.height(16.dp))
                         Button(
-                            onClick = { query.value = TextFieldValue("") }
+                            onClick = { query = TextFieldValue("") }
                         ) {
                             Text(stringResource(R.string.clear))
                         }

@@ -24,7 +24,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButton as Material3IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -70,7 +70,7 @@ import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.ChipsRow
 import com.metrolist.music.ui.component.HideOnScrollFAB
-import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.IconButton as CustomIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.SongListItem
@@ -469,14 +469,14 @@ fun HistoryScreen(
         },
         navigationIcon = {
             if (inSelectMode) {
-                IconButton(onClick = onExitSelectionMode) {
+                Material3IconButton(onClick = onExitSelectionMode) {
                     Icon(
                         painter = painterResource(R.drawable.close),
                         contentDescription = null,
                     )
                 }
             } else {
-                IconButton(
+                CustomIconButton(
                     onClick = {
                         if (isSearching) {
                             isSearching = false
@@ -511,7 +511,7 @@ fun HistoryScreen(
                         }
                     },
                 )
-                IconButton(
+                CustomIconButton(
                     enabled = selection.isNotEmpty(),
                     onClick = {
                         menuState.show {
@@ -537,7 +537,7 @@ fun HistoryScreen(
                     )
                 }
             } else if (!isSearching) {
-                IconButton(
+                Material3IconButton(
                     onClick = { isSearching = true },
                 ) {
                     Icon(

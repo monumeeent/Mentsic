@@ -445,7 +445,7 @@ fun TopPlaylistScreen(
                 }
             },
             navigationIcon = {
-                Material3IconButton(
+                CustomIconButton(
                     onClick = {
                         when {
                             isSearching -> {
