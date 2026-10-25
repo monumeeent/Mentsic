@@ -30,7 +30,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButton as Material3IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -87,7 +87,7 @@ import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.DraggableScrollbar
 import com.metrolist.music.ui.component.EmptyPlaceholder
-import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.IconButton as CustomIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.SongListItem
 import com.metrolist.music.ui.component.SortHeader
@@ -445,7 +445,7 @@ fun TopPlaylistScreen(
                 }
             },
             navigationIcon = {
-                IconButton(
+                Material3IconButton(
                     onClick = {
                         when {
                             isSearching -> {
@@ -488,7 +488,7 @@ fun TopPlaylistScreen(
                             }
                         }
                     )
-                    IconButton(
+                    CustomIconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
                             menuState.show {
@@ -506,7 +506,7 @@ fun TopPlaylistScreen(
                         )
                     }
                 } else if (!isSearching) {
-                    IconButton(
+                    Material3IconButton(
                         onClick = { isSearching = true }
                     ) {
                         Icon(
