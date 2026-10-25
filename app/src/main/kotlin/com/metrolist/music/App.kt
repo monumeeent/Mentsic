@@ -103,11 +103,10 @@ class App :
 
             // Warm player config, cipher, and optional PO-token state off the first-play path.
             launch(Dispatchers.IO) {
-                delay(2500)
                 var waitedMs = 0
                 while (YouTube.visitorData == null && waitedMs < 12_000) {
-                    delay(500)
-                    waitedMs += 500
+                    delay(200)
+                    waitedMs += 200
                 }
                 runCatching { InnerTubeXPlayer.prewarm() }
             }

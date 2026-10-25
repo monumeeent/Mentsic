@@ -14,39 +14,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 
 object OrbitColors {
-    // Light theme colors
+    // Light theme colors - light surfaces, dark text
     val primaryLight = Color(0xFF6750A4)
-    val onPrimaryLight = Color(0xFFEDE9FE)
+    val onPrimaryLight = Color(0xFFFFFFFF)
     val primaryContainerLight = Color(0xFF4F378B)
     val onPrimaryContainerLight = Color(0xFFEDE9FE)
 
     val secondaryLight = Color(0xFF625B71)
-    val onSecondaryLight = Color(0xFFEDE9FE)
+    val onSecondaryLight = Color(0xFFFFFFFF)
     val secondaryContainerLight = Color(0xFF7E748B)
     val onSecondaryContainerLight = Color(0xFFEDE9FE)
 
-    val surfaceLight = Color(0xFF0E0E12)
-    val onSurfaceLight = Color(0xFFE6E1E5)
-    val surfaceVariantLight = Color(0xFF49454F)
-    val onSurfaceVariantLight = Color(0xFFCAC4D0)
+    val surfaceLight = Color(0xFFF8F7FA)
+    val onSurfaceLight = Color(0xFF1C1B1E)
+    val surfaceVariantLight = Color(0xFFE6E1E5)
+    val onSurfaceVariantLight = Color(0xFF49454F)
 
-    val backgroundLight = Color(0xFF0E0E12)
-    val onBackgroundLight = Color(0xFFE6E1E5)
+    val backgroundLight = Color(0xFFFFFFFF)
+    val onBackgroundLight = Color(0xFF1C1B1E)
 
     val accentLight = Color(0xFFC8007C)
-    val onAccentLight = Color(0xFF18181C)
+    val onAccentLight = Color(0xFFFFFFFF)
 
     val errorLight = Color(0xFFB00020)
-    val onErrorLight = Color(0xFFEDE9FE)
+    val onErrorLight = Color(0xFFFFFFFF)
 
     val outlineLight = Color(0xFF79747E)
-    val outlineVariantLight = Color(0xFF49454F)
+    val outlineVariantLight = Color(0xFFCAC4D0)
 
-    val inverseSurfaceLight = Color(0xFFE6E1E5)
-    val inverseOnSurfaceLight = Color(0xFF0E0E12)
+    val inverseSurfaceLight = Color(0xFF1C1B1E)
+    val inverseOnSurfaceLight = Color(0xFFF8F7FA)
     val inversePrimaryLight = Color(0xFFB825FF)
 
-    // Dark theme colors
+    // Dark theme colors - dark surfaces, light text
     val primaryDark = Color(0xFFB825FF)
     val onPrimaryDark = Color(0xFF18181C)
     val primaryContainerDark = Color(0xFF4F378B)
@@ -57,25 +57,25 @@ object OrbitColors {
     val secondaryContainerDark = Color(0xFF4F378B)
     val onSecondaryContainerDark = Color(0xFFEDE9FE)
 
-    val surfaceDark = Color(0xFF0E0E12)
+    val surfaceDark = Color(0xFF121212)
     val onSurfaceDark = Color(0xFFE6E1E5)
-    val surfaceVariantDark = Color(0xFF49454F)
+    val surfaceVariantDark = Color(0xFF2A2A2E)
     val onSurfaceVariantDark = Color(0xFFCAC4D0)
 
-    val backgroundDark = Color(0xFF0E0E12)
+    val backgroundDark = Color(0xFF000000)
     val onBackgroundDark = Color(0xFFE6E1E5)
 
     val accentDark = Color(0xFFC8007C)
     val onAccentDark = Color(0xFF18181C)
 
     val errorDark = Color(0xFFB00020)
-    val onErrorDark = Color(0xFFEDE9FE)
+    val onErrorDark = Color(0xFF18181C)
 
     val outlineDark = Color(0xFF79747E)
     val outlineVariantDark = Color(0xFF49454F)
 
     val inverseSurfaceDark = Color(0xFFE6E1E5)
-    val inverseOnSurfaceDark = Color(0xFF0E0E12)
+    val inverseOnSurfaceDark = Color(0xFF121212)
     val inversePrimaryDark = Color(0xFF6750A4)
 }
 
@@ -147,6 +147,7 @@ fun OrbitTheme(
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) orbitDarkColorScheme else orbitLightColorScheme,
+        typography = orbitTypography,
         content = content
     )
 }
