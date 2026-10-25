@@ -212,12 +212,15 @@ fun ListenTogetherSettings(navController: NavController) {
                     Icon(painterResource(R.drawable.person), contentDescription = null)
                 },
                 trailingIcon = {
-                    if (tempUsername.isNotBlank()) {
-                        IconButton(onClick = { tempUsername = "" }, onLongClick = null) {
-                            Icon(painterResource(R.drawable.close), contentDescription = stringResource(R.string.clear))
-                        }
-                    }
-                },
+    if (tempUsername.isNotBlank()) {
+        IconButton(onClick = { tempUsername = "" }) {
+            Icon(
+                painter = painterResource(R.drawable.close),
+                contentDescription = stringResource(R.string.clear),
+            )
+        }
+    }
+},
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -514,19 +517,18 @@ fun ListenTogetherSettings(navController: NavController) {
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.listen_together)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
+    title = { Text(stringResource(R.string.listen_together)) },
+    navigationIcon = {
+        IconButton(
+            onClick = navController::navigateUp,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.arrow_back),
+                contentDescription = null,
+            )
+        }
+    },
+)
 }
 
 @Composable
