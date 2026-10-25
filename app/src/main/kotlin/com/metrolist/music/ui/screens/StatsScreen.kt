@@ -30,13 +30,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton as Material3IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -756,7 +754,7 @@ fun StatsScreen(
                     )
                 }
             } else {
-                IconButton(
+                CustomIconButton(
                     onClick = {
                         if (isSearching) {
                             isSearching = false
@@ -804,7 +802,7 @@ fun StatsScreen(
                         contentDescription = "Search Button",
                     )
                 }
-                IconButton(
+                CustomIconButton(
                     onClick = { showTimeTransfer = true },
                     onLongClick = { showTimeTransfer = true },
                 ) {

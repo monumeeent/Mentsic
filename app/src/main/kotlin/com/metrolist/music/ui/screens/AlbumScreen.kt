@@ -34,7 +34,7 @@ import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButton as Material3IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -82,7 +82,7 @@ import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.db.entities.Album
 import com.metrolist.music.playback.queues.LocalAlbumRadio
 import com.metrolist.music.ui.component.ClickableArtistText
-import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.IconButton as CustomIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.SongListItem
@@ -418,7 +418,7 @@ fun AlbumScreen(
                                     onCheckedChange = onCheckedChange,
                                 )
                             } else {
-                                IconButton(
+                                Material3IconButton(
                                     onClick = {
                                         menuState.show {
                                             SongMenu(
