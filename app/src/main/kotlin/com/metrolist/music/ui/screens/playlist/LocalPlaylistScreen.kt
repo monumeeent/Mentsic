@@ -834,7 +834,7 @@ fun LocalPlaylistScreen(
                     }
                 } else if (!isSearching) {
                     // Only search button remains in TopAppBar
-                    IconButton(
+                    Material3IconButton(
                         onClick = { isSearching = true },
                     ) {
                         Icon(

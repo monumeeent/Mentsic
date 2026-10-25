@@ -566,7 +566,7 @@ fun AlbumScreen(
                         }
                     },
                 )
-                IconButton(
+                Material3IconButton(
                     enabled = selection.isNotEmpty(),
                     onClick = {
                         menuState.show {
