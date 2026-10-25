@@ -86,7 +86,7 @@ import com.metrolist.music.ui.component.ArtistListItem
 import com.metrolist.music.ui.component.ChoiceChipsRow
 import com.metrolist.music.ui.component.EmptyPlaceholder
 import com.metrolist.music.ui.component.HideOnScrollFAB
-import com.metrolist.music.ui.component.IconButton as CustomIconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalAlbumsGrid
 import com.metrolist.music.ui.component.LocalArtistsGrid
 import com.metrolist.music.ui.component.LocalMenuState
@@ -754,7 +754,7 @@ fun StatsScreen(
                     )
                 }
             } else {
-                CustomIconButton(
+                LongClickIconButton(
                     onClick = {
                         if (isSearching) {
                             isSearching = false
@@ -802,7 +802,7 @@ fun StatsScreen(
                         contentDescription = "Search Button",
                     )
                 }
-                CustomIconButton(
+                LongClickIconButton(
                     onClick = { showTimeTransfer = true },
                     onLongClick = { showTimeTransfer = true },
                 ) {

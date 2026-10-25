@@ -94,7 +94,7 @@ import com.metrolist.music.db.entities.PlaylistSongMap
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.queues.YouTubePlaylistQueue
 import com.metrolist.music.ui.component.ExpandableText
-import com.metrolist.music.ui.component.IconButton as CustomIconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.YouTubeListItem
 import com.metrolist.music.ui.menu.YouTubePlaylistMenu
@@ -402,7 +402,7 @@ fun OnlinePlaylistScreen(
                 }
             },
             navigationIcon = {
-                CustomIconButton(
+                LongClickIconButton(
                     onClick = {
                         if (isSearching) {
                             isSearching = false
@@ -441,7 +441,7 @@ fun OnlinePlaylistScreen(
                             }
                         },
                     )
-                    CustomIconButton(
+                    LongClickIconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
                             menuState.show {

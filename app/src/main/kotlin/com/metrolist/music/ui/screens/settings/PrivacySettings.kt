@@ -39,7 +39,7 @@ import com.metrolist.music.constants.DisableScreenshotKey
 import com.metrolist.music.constants.PauseListenHistoryKey
 import com.metrolist.music.constants.PauseSearchHistoryKey
 import com.metrolist.music.ui.component.DefaultDialog
-import com.metrolist.music.ui.component.IconButton
+import androidx.compose.material3.IconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.utils.backToMain

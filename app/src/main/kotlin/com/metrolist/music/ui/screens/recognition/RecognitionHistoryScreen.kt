@@ -56,7 +56,7 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.ThumbnailCornerRadius
 import com.metrolist.music.db.entities.RecognitionHistory
 import com.metrolist.music.ui.component.DefaultDialog
-import com.metrolist.music.ui.component.IconButton
+import androidx.compose.material3.IconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.SearchRoutes

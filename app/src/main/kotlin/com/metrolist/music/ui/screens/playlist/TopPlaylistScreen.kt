@@ -87,7 +87,7 @@ import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.DraggableScrollbar
 import com.metrolist.music.ui.component.EmptyPlaceholder
-import com.metrolist.music.ui.component.IconButton as CustomIconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.SongListItem
 import com.metrolist.music.ui.component.SortHeader
@@ -326,7 +326,7 @@ fun TopPlaylistScreen(
                                         onCheckedChange = onCheckedChange
                                     )
                                 } else {
-                                    CustomIconButton(
+                                    LongClickIconButton(
                                         onClick = {
                                             menuState.show {
                                                 SongMenu(
@@ -445,7 +445,7 @@ fun TopPlaylistScreen(
                 }
             },
             navigationIcon = {
-                CustomIconButton(
+                LongClickIconButton(
                     onClick = {
                         when {
                             isSearching -> {
@@ -488,7 +488,7 @@ fun TopPlaylistScreen(
                             }
                         }
                     )
-                    CustomIconButton(
+                    LongClickIconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
                             menuState.show {

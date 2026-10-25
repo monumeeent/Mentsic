@@ -98,7 +98,7 @@ import com.metrolist.music.listentogether.RoomRole
 import com.metrolist.music.listentogether.SuggestionReceivedPayload
 import com.metrolist.music.listentogether.UserInfo
 import com.metrolist.music.ui.component.DefaultDialog
-import com.metrolist.music.ui.component.IconButton
+import androidx.compose.material3.IconButton
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.launch

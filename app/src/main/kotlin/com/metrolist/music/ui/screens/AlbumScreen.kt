@@ -82,7 +82,7 @@ import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.db.entities.Album
 import com.metrolist.music.playback.queues.LocalAlbumRadio
 import com.metrolist.music.ui.component.ClickableArtistText
-import com.metrolist.music.ui.component.IconButton as CustomIconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.SongListItem
@@ -542,7 +542,7 @@ fun AlbumScreen(
                     )
                 }
             } else {
-                CustomIconButton(
+                LongClickIconButton(
                     onClick = { navController.navigateUp() },
                     onLongClick = { navController.backToMain() },
                 ) {

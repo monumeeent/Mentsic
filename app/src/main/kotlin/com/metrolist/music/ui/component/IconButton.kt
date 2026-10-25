@@ -62,7 +62,7 @@ fun ResizableIconButton(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun IconButton(
+fun LongClickIconButton(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,

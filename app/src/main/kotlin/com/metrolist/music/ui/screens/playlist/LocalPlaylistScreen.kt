@@ -127,7 +127,7 @@ import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.DraggableScrollbar
 import com.metrolist.music.ui.component.EmptyPlaceholder
 import com.metrolist.music.ui.component.ExpandableText
-import com.metrolist.music.ui.component.IconButton as CustomIconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.OverlayEditButton
 import com.metrolist.music.ui.component.SongListItem
@@ -529,7 +529,7 @@ fun LocalPlaylistScreen(
                                 modifier = Modifier.weight(1f),
                             )
                             if (editable) {
-                                CustomIconButton(
+                                LongClickIconButton(
                                     onClick = { locked = !locked },
                                     modifier = Modifier.padding(horizontal = 6.dp),
                                 ) {
