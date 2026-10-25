@@ -535,14 +535,14 @@ fun AlbumScreen(
         },
         navigationIcon = {
             if (inSelectMode) {
-                IconButton(onClick = onExitSelectionMode) {
+                Material3IconButton(onClick = onExitSelectionMode) {
                     Icon(
                         painter = painterResource(R.drawable.close),
                         contentDescription = null,
                     )
                 }
             } else {
-                IconButton(
+                CustomIconButton(
                     onClick = { navController.navigateUp() },
                     onLongClick = { navController.backToMain() },
                 ) {

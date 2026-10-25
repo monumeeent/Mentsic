@@ -330,7 +330,7 @@ fun OnlinePlaylistScreen(
                                         onCheckedChange = onCheckedChange,
                                     )
                                 } else {
-                                    IconButton(onClick = {
+                                    Material3IconButton(onClick = {
                                         menuState.show {
                                             YouTubeSongMenu(songItem, menuState::dismiss)
                                         }
