@@ -123,13 +123,13 @@ fun TopPlaylistScreen(
     var isSearching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf(TextFieldValue()) }
     val focusRequester = remember { FocusRequester() }
-    
+
     LaunchedEffect(isSearching) {
         if (isSearching) {
             focusRequester.requestFocus()
         }
     }
-    
+
     var inSelectMode by rememberSaveable { mutableStateOf(false) }
     val selection = rememberSaveable(
         saver = listSaver<MutableList<String>, String>(
@@ -326,7 +326,7 @@ fun TopPlaylistScreen(
                                         onCheckedChange = onCheckedChange
                                     )
                                 } else {
-                                    IconButton(
+                                    CustomIconButton(
                                         onClick = {
                                             menuState.show {
                                                 SongMenu(
@@ -488,7 +488,7 @@ fun TopPlaylistScreen(
                             }
                         }
                     )
-                    CustomIconButton(
+                    IconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
                             menuState.show {
