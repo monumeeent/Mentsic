@@ -488,7 +488,7 @@ fun TopPlaylistScreen(
                             }
                         }
                     )
-                    IconButton(
+                    CustomIconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
                             menuState.show {
