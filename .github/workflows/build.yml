@@ -28,9 +28,12 @@ jobs:
       run: chmod +x gradlew
 
     - name: Generate Debug Keystore
+      env:
+        METROLIST_DEBUG_KEYSTORE_PATH: ${{ github.workspace }}/app/debug.keystore
       run: |
-        mkdir -p ~/.android
-        keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        mkdir -p "$(dirname "$METROLIST_DEBUG_KEYSTORE_PATH")"
+        rm -f "$METROLIST_DEBUG_KEYSTORE_PATH"
+        keytool -genkey -v -keystore "$METROLIST_DEBUG_KEYSTORE_PATH" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
     - name: Build FOSS Debug APK
       run: ./gradlew :app:assembleFossDebug --stacktrace
