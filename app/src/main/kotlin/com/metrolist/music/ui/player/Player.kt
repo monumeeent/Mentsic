@@ -1725,6 +1725,7 @@ fun BottomSheetPlayer(
                                             Player.REPEAT_MODE_ONE -> R.drawable.repeat_one
                                             else -> throw IllegalStateException()
                                         },
+                                    contentDescription = stringResource(R.string.cd_toggle_repeat),
                                     color = TextBackgroundColor,
                                     modifier =
                                         Modifier
@@ -1744,6 +1745,7 @@ fun BottomSheetPlayer(
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
                                     icon = R.drawable.skip_previous,
+                                    contentDescription = stringResource(R.string.cd_skip_previous),
                                     enabled = canSkipPrevious && !isListenTogetherGuest,
                                     color = TextBackgroundColor,
                                     modifier =
@@ -1812,6 +1814,7 @@ fun BottomSheetPlayer(
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
                                     icon = R.drawable.skip_next,
+                                    contentDescription = stringResource(R.string.cd_skip_next),
                                     enabled = canSkipNext && !isListenTogetherGuest,
                                     color = TextBackgroundColor,
                                     modifier =
@@ -1829,6 +1832,7 @@ fun BottomSheetPlayer(
                                 val isFavorite = if (isEpisode) currentSong?.song?.inLibrary != null else currentSong?.song?.liked == true
                                 ResizableIconButton(
                                     icon = if (isFavorite) R.drawable.favorite else R.drawable.favorite_border,
+                                    contentDescription = stringResource(R.string.cd_toggle_like),
                                     color = if (isFavorite) MaterialTheme.colorScheme.error else TextBackgroundColor,
                                     modifier =
                                         Modifier

@@ -213,8 +213,8 @@ fun ListenTogetherSettings(navController: NavController) {
                 },
                 trailingIcon = {
                     if (tempUsername.isNotBlank()) {
-                        IconButton(onClick = { tempUsername = "" }, onLongClick = {}) {
-                            Icon(painterResource(R.drawable.close), contentDescription = null)
+                        IconButton(onClick = { tempUsername = "" }, onLongClick = null) {
+                            Icon(painterResource(R.drawable.close), contentDescription = stringResource(R.string.clear))
                         }
                     }
                 },
