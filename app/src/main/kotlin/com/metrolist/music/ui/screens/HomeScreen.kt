@@ -1172,7 +1172,7 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                             )
                             Text(
-                                text = if (isLoggedIn && accountName.isNotBlank()) accountName else "Your Sanctuary",
+                                text = if (isLoggedIn && accountName.isNotBlank()) accountName else "Connect with @monumeeent",
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 ),
