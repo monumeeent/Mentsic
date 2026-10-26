@@ -39,7 +39,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton as Material3IconButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -110,7 +110,7 @@ fun ChartsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.charts)) },
                 navigationIcon = {
-                    Material3IconButton(
+                    LongClickIconButton(
                         onClick = { navController.navigateUp() },
                         onLongClick = { navController.backToMain() },
                     ) {

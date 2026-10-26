@@ -40,8 +40,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import com.metrolist.music.ui.component.LongClickIconButton
-import androidx.compose.material3.IconButton as Material3IconButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -424,7 +423,7 @@ fun ArtistScreen(
                                         // Shuffle Button
                                         if (!showLocal && !isGuest) {
                                             artistPage?.artist?.shuffleEndpoint?.let { shuffleEndpoint ->
-                                                Material3IconButton(
+                                                IconButton(
                                                     onClick = {
                                                         playerConnection.playQueue(YouTubeQueue(shuffleEndpoint))
                                                     },
@@ -694,7 +693,7 @@ fun ArtistScreen(
                                     isActive = mediaMetadata?.id == song.id,
                                     isPlaying = isPlaying,
                                     trailingContent = {
-                                        Material3IconButton(
+                                        IconButton(
                                             onClick = {
                                                 menuState.show {
                                                     YouTubeSongMenu(

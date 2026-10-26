@@ -79,6 +79,7 @@ import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.playback.queues.ListQueue
 import androidx.compose.material3.IconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.YouTubeListItem
 import com.metrolist.music.ui.menu.YouTubeSongMenu
@@ -264,7 +265,7 @@ fun OnlinePodcastScreen(
                 }
             },
             navigationIcon = {
-                IconButton(
+                LongClickIconButton(
                     onClick = {
                         if (isSearching) {
                             isSearching = false

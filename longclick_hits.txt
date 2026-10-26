@@ -1,0 +1,7 @@
+app/src/main/kotlin/com/metrolist/music/ui/screens/ChartsScreen.kt:113:                    Material3IconButton(
+app/src/main/kotlin/com/metrolist/music/ui/screens/ChartsScreen.kt-114-                        onClick = { navController.navigateUp() },
+app/src/main/kotlin/com/metrolist/music/ui/screens/ChartsScreen.kt-115-                        onLongClick = { navController.backToMain() },
+--
+app/src/main/kotlin/com/metrolist/music/ui/screens/recognition/RecognitionHistoryScreen.kt:153:                    IconButton(
+app/src/main/kotlin/com/metrolist/music/ui/screens/recognition/RecognitionHistoryScreen.kt-154-                        onClick = { navController.navigateUp() },
+app/src/main/kotlin/com/metrolist/music/ui/screens/recognition/RecognitionHistoryScreen.kt-155-                        onLongClick = { navController.backToMain() },

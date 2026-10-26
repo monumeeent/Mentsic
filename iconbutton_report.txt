@@ -1,0 +1,329 @@
+### app/src/main/kotlin/com/metrolist/music/MainActivity.kt
+  IMPORT 61:import androidx.compose.material3.IconButton
+  BARE 1079:                                                IconButton(onClick = { navController.navigate("history") }) {
+  BARE 1086:                                            IconButton(onClick = { navController.navigate("stats") }) {
+  BARE 1093:                                                IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
+  BARE 1100:                                            IconButton(onClick = { showAccountDialog = true }) {
+### app/src/main/kotlin/com/metrolist/music/ui/component/DraggableLyricsProviderList.kt
+  IMPORT 18:import androidx.compose.material3.IconButton
+  BARE 93:                        IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/component/IconButton.kt
+  IMPORT 19:import androidx.compose.material3.IconButtonColors
+  IMPORT 20:import androidx.compose.material3.IconButtonDefaults
+  LONG 65:fun LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/component/Library.kt
+### app/src/main/kotlin/com/metrolist/music/ui/component/LibrarySearchHeader.kt
+  IMPORT 14:import androidx.compose.material3.IconButton
+  BARE 83:            IconButton(onClick = onBack) {
+### app/src/main/kotlin/com/metrolist/music/ui/component/SortHeader.kt
+### app/src/main/kotlin/com/metrolist/music/ui/menu/AlbumMenu.kt
+  IMPORT 32:import androidx.compose.material3.IconButton
+  BARE 265:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/menu/LyricsMenu.kt
+  IMPORT 37:import androidx.compose.material3.IconButton
+  BARE 327:                    IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/menu/PlayerMenu.kt
+  IMPORT 44:import androidx.compose.material3.IconButton
+  BARE 887:        IconButton(
+  BARE 906:        IconButton(
+  BARE 1689:                                    IconButton(
+  BARE 1699:                                    IconButton(
+  BARE 1776:                                    IconButton(
+  BARE 1786:                                    IconButton(
+  BARE 1880:                                    IconButton(onClick = { usernameInput = "" }) {
+### app/src/main/kotlin/com/metrolist/music/ui/menu/PlaylistMenu.kt
+  IMPORT 23:import androidx.compose.material3.IconButton
+  BARE 267:                IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/menu/QueueMenu.kt
+  IMPORT 29:import androidx.compose.material3.IconButton
+  BARE 185:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/menu/SongMenu.kt
+  IMPORT 31:import androidx.compose.material3.IconButton
+  BARE 427:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/menu/YouTubeAlbumMenu.kt
+  IMPORT 29:import androidx.compose.material3.IconButton
+  BARE 242:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/menu/YouTubePlaylistMenu.kt
+  IMPORT 31:import androidx.compose.material3.IconButton
+  BARE 158:                IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/menu/YouTubeSongMenu.kt
+  IMPORT 30:import androidx.compose.material3.IconButton
+  BARE 227:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/player/MiniPlayer.kt
+  IMPORT 45:import androidx.compose.material3.IconButton
+  BARE 872:            IconButton(
+  BARE 919:    IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/player/Player.kt
+  IMPORT 63:import androidx.compose.material3.FilledIconButton
+  IMPORT 65:import androidx.compose.material3.IconButtonDefaults
+  IMPORT 67:import androidx.compose.material3.OutlinedIconButton
+  IMPORT 175:import com.metrolist.music.ui.component.ResizableIconButton
+### app/src/main/kotlin/com/metrolist/music/ui/player/Queue.kt
+  IMPORT 52:import androidx.compose.material3.IconButton
+  BARE 849:                                                IconButton(
+  BARE 874:                                                IconButton(
+  BARE 972:                                        IconButton(
+  BARE 985:                                        IconButton(
+  BARE 1071:                        IconButton(
+  BARE 1126:                    IconButton(
+  BARE 1151:                    IconButton(
+  BARE 1204:            IconButton(
+  BARE 1234:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/AccountScreen.kt
+  IMPORT 57:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 324:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/AlbumScreen.kt
+  IMPORT 37:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 85:import com.metrolist.music.ui.component.LongClickIconButton
+  ALIAS 421:                                Material3IconButton(
+  ALIAS 538:                Material3IconButton(onClick = onExitSelectionMode) {
+  ALIAS 569:                Material3IconButton(
+  LONG 545:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/artist/ArtistAlbumsScreen.kt
+  IMPORT 56:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 147:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/artist/ArtistItemsScreen.kt
+  IMPORT 22:import androidx.compose.material3.IconButton
+  IMPORT 53:import androidx.compose.material3.IconButton
+  BARE 135:                        IconButton(
+  LONG 380:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/artist/ArtistScreen.kt
+  IMPORT 43:import com.metrolist.music.ui.component.LongClickIconButton
+  IMPORT 44:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 108:import com.metrolist.music.ui.component.LongClickIconButton
+  BARE 568:                                    IconButton(
+  BARE 1030:            IconButton(
+  ALIAS 427:                                                Material3IconButton(
+  ALIAS 697:                                        Material3IconButton(
+  LONG 1019:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/artist/ArtistSongsScreen.kt
+  IMPORT 22:import androidx.compose.material3.IconButton
+  IMPORT 51:import androidx.compose.material3.IconButton
+  BARE 138:                        IconButton(
+  LONG 188:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/BrowseScreen.kt
+  IMPORT 36:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 150:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/ChartsScreen.kt
+  IMPORT 42:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 71:import com.metrolist.music.ui.component.LongClickIconButton
+  BARE 271:                                                IconButton(
+  ALIAS 113:                    Material3IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/CrashActivity.kt
+  IMPORT 29:import androidx.compose.material3.IconButton
+  BARE 128:                    IconButton(onClick = onClose) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/equalizer/EqScreen.kt
+  IMPORT 25:import androidx.compose.material3.IconButton
+  BARE 192:                    IconButton(onClick = onNavigateBack) {
+  BARE 201:                        IconButton(onClick = onAddClicked) {
+  BARE 369:            IconButton(onClick = { showDeleteDialog = true }) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/equalizer/wizard/WizardScreen.kt
+  BARE 77:                    IconButton(onClick = if (state.canGoBack) onBackClicked else onNavigateBack) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/HistoryScreen.kt
+  IMPORT 27:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 73:import com.metrolist.music.ui.component.LongClickIconButton
+  BARE 267:                                IconButton(
+  BARE 351:                                    IconButton(
+  ALIAS 472:                Material3IconButton(onClick = onExitSelectionMode) {
+  ALIAS 540:                Material3IconButton(
+  LONG 479:                LongClickIconButton(
+  LONG 514:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/HomeScreen.kt
+  IMPORT 49:import androidx.compose.material3.IconButton
+  BARE 357:                IconButton(
+  BARE 378:                IconButton(
+  BARE 399:                IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/HomeSections.kt
+  IMPORT 41:import androidx.compose.material3.IconButton
+  BARE 408:                        IconButton(
+  BARE 786:                        IconButton(
+  BARE 1008:                            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/library/LibraryAlbumsScreen.kt
+  IMPORT 30:import androidx.compose.material3.IconButton
+  BARE 217:            IconButton(
+  BARE 227:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/library/LibraryArtistsScreen.kt
+  IMPORT 30:import androidx.compose.material3.IconButton
+  BARE 196:            IconButton(
+  BARE 206:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/library/LibraryMixScreen.kt
+  IMPORT 33:import androidx.compose.material3.IconButton
+  BARE 404:            IconButton(
+  BARE 414:            IconButton(
+  BARE 574:                                        IconButton(
+  BARE 625:                                        IconButton(
+  BARE 677:                                        IconButton(
+  BARE 721:                                        IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/library/LibraryPlaylistsScreen.kt
+  IMPORT 33:import androidx.compose.material3.IconButton
+  BARE 370:            IconButton(
+  BARE 380:            IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/library/LibraryPodcastsScreen.kt
+  IMPORT 32:import androidx.compose.material3.IconButton
+  BARE 412:                                IconButton(
+  BARE 628:        IconButton(onClick = onMenuClick) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/library/LibrarySongsScreen.kt
+  IMPORT 37:import androidx.compose.material3.IconButton
+  BARE 410:                    IconButton(
+  BARE 444:                        IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/ListenTogetherScreen.kt
+  IMPORT 101:import androidx.compose.material3.IconButton
+  IMPORT 105:import androidx.compose.material3.IconButton as MaterialIconButton
+  LONG 423:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/LoginScreen.kt
+  IMPORT 75:import androidx.compose.material3.IconButton
+  LONG 377:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/MoodAndGenresScreen.kt
+  IMPORT 40:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 111:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/NewReleaseScreen.kt
+  IMPORT 36:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 108:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/playlist/AutoPlaylistScreen.kt
+  IMPORT 41:import androidx.compose.material3.IconButton
+  IMPORT 112:import com.metrolist.music.ui.component.LongClickIconButton
+  BARE 582:                                    IconButton(
+  BARE 803:                    IconButton(
+  BARE 822:                    IconButton(
+  LONG 757:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/playlist/CachePlaylistScreen.kt
+  IMPORT 33:import androidx.compose.material3.IconButton
+  IMPORT 88:import com.metrolist.music.ui.component.LongClickIconButton
+  BARE 275:                                IconButton(onClick = {
+  BARE 436:                    IconButton(
+  BARE 458:                    IconButton(onClick = { isSearching = true }) {
+  LONG 396:                LongClickIconButton(onClick = {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/playlist/LocalPlaylistScreen.kt
+  IMPORT 44:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 130:import com.metrolist.music.ui.component.LongClickIconButton
+  BARE 624:                                    IconButton(
+  BARE 643:                                        IconButton(
+  BARE 769:                    IconButton(onClick = onExitSelectionMode) {
+  BARE 776:                    IconButton(
+  BARE 811:                    IconButton(
+  ALIAS 837:                    Material3IconButton(
+  LONG 532:                                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/playlist/OnlinePlaylistScreen.kt
+  IMPORT 36:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 97:import com.metrolist.music.ui.component.LongClickIconButton
+  ALIAS 333:                                    Material3IconButton(onClick = {
+  ALIAS 465:                    Material3IconButton(
+  LONG 405:                LongClickIconButton(
+  LONG 444:                    LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/playlist/TopPlaylistScreen.kt
+  IMPORT 33:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 90:import com.metrolist.music.ui.component.LongClickIconButton
+  ALIAS 509:                    Material3IconButton(
+  LONG 329:                                    LongClickIconButton(
+  LONG 448:                LongClickIconButton(
+  LONG 491:                    LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/podcast/OnlinePodcastScreen.kt
+  IMPORT 81:import androidx.compose.material3.IconButton
+  BARE 222:                                IconButton(onClick = {
+  BARE 267:                IconButton(
+  BARE 288:                    IconButton(onClick = { isSearching = true }) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/recognition/RecognitionHistoryScreen.kt
+  IMPORT 59:import androidx.compose.material3.IconButton
+  BARE 153:                    IconButton(
+  BARE 165:                        IconButton(onClick = { showClearDialog = true }) {
+  BARE 299:            IconButton(onClick = onDelete) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/recognition/RecognitionScreen.kt
+  IMPORT 49:import androidx.compose.material3.IconButton
+  BARE 205:                    IconButton(onClick = { navController.navigateUp() }) {
+  BARE 213:                    IconButton(onClick = { navController.navigate("recognition_history") }) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/search/LocalSearchScreen.kt
+  IMPORT 29:import androidx.compose.material3.IconButton
+  BARE 194:                                    IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/search/OnlineSearchResult.kt
+  IMPORT 34:import androidx.compose.material3.IconButton
+  BARE 294:                IconButton(
+  BARE 384:                IconButton(
+  BARE 396:                    IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/search/OnlineSearchScreen.kt
+  IMPORT 32:import androidx.compose.material3.IconButton
+  BARE 165:                        IconButton(
+  BARE 438:                    IconButton(
+  BARE 677:            IconButton(
+  BARE 688:        IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/search/SearchScreen.kt
+  IMPORT 28:import androidx.compose.material3.IconButton
+  BARE 249:                                    IconButton(
+  BARE 301:                    IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AboutScreen.kt
+  IMPORT 79:import androidx.compose.material3.IconButton
+  LONG 249:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AccountSettings.kt
+  IMPORT 22:import androidx.compose.material3.IconButton
+  BARE 127:            IconButton(onClick = onClose) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AiSettings.kt
+  IMPORT 24:import androidx.compose.material3.IconButton
+  BARE 504:                            IconButton(onClick = { showProviderHelpDialog = true }) {
+  BARE 617:                                    IconButton(onClick = { showTranslateModeHelpDialog = true }) {
+  BARE 663:            IconButton(onClick = { navController.navigateUp() }) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AlarmSettings.kt
+  IMPORT 28:import androidx.compose.material3.IconButton
+  BARE 247:                                    IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AndroidAutoSettings.kt
+  IMPORT 53:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 373:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AppearanceSettings.kt
+  IMPORT 107:import androidx.compose.material3.IconButton
+  LONG 1863:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/BackupAndRestore.kt
+  IMPORT 57:import androidx.compose.material3.IconButton
+  LONG 223:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/ContentSettings.kt
+  IMPORT 92:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 1120:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/integrations/DiscordSettings.kt
+  IMPORT 103:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 883:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/integrations/IntegrationScreen.kt
+  IMPORT 25:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 63:        LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/integrations/LastFMSettings.kt
+  IMPORT 66:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 619:        LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/integrations/ListenTogetherSettings.kt
+  IMPORT 93:import androidx.compose.material3.IconButton
+  BARE 216:        IconButton(onClick = { tempUsername = "" }) {
+  BARE 522:        IconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/PlayerSettings.kt
+  IMPORT 74:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 1124:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/PrivacySettings.kt
+  IMPORT 42:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 253:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/RomanizationSettings.kt
+  IMPORT 38:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 194:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/SettingsScreen.kt
+  IMPORT 39:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 279:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/StorageSettings.kt
+  IMPORT 58:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 481:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/ThemeScreen.kt
+  IMPORT 49:import androidx.compose.material3.IconButton
+  BARE 186:            IconButton(onClick = { navController.navigateUp() }) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/settings/UpdaterSettings.kt
+  IMPORT 44:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 248:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/StatsScreen.kt
+  IMPORT 37:import androidx.compose.material3.IconButton as Material3IconButton
+  IMPORT 89:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 757:                LongClickIconButton(
+  LONG 805:                LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/screens/wrapped/WrappedScreen.kt
+  IMPORT 16:import androidx.compose.material3.IconButton
+  BARE 202:                    IconButton(onClick = onClose) {
+  BARE 207:                    IconButton(onClick = { audioService.toggleMute() }) {
+### app/src/main/kotlin/com/metrolist/music/ui/screens/YouTubeBrowseScreen.kt
+  IMPORT 43:import com.metrolist.music.ui.component.LongClickIconButton
+  LONG 202:            LongClickIconButton(
+### app/src/main/kotlin/com/metrolist/music/ui/utils/ShowOffsetDialog.kt
+  IMPORT 15:import androidx.compose.material3.IconButton
+  BARE 171:                IconButton(
+  BARE 192:            IconButton(
+  BARE 216:            IconButton(
+DONE

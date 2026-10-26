@@ -24,7 +24,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton as Material3IconButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -469,7 +469,7 @@ fun HistoryScreen(
         },
         navigationIcon = {
             if (inSelectMode) {
-                Material3IconButton(onClick = onExitSelectionMode) {
+                IconButton(onClick = onExitSelectionMode) {
                     Icon(
                         painter = painterResource(R.drawable.close),
                         contentDescription = null,
@@ -537,7 +537,7 @@ fun HistoryScreen(
                     )
                 }
             } else if (!isSearching) {
-                Material3IconButton(
+                IconButton(
                     onClick = { isSearching = true },
                 ) {
                     Icon(

@@ -38,7 +38,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton as Material3IconButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -579,7 +579,7 @@ fun AutoPlaylistScreen(
                                         onCheckedChange = onCheckedChange,
                                     )
                                 } else {
-                                    Material3IconButton(
+                                    IconButton(
                                         onClick = {
                                             menuState.show {
                                                 SongMenu(
@@ -754,7 +754,7 @@ fun AutoPlaylistScreen(
                 }
             },
             navigationIcon = {
-                IconButton(
+                LongClickIconButton(
                     onClick = {
                         when {
                             isSearching -> {

@@ -89,7 +89,7 @@ import com.metrolist.music.constants.ShowMonthlyListenersKey
 import com.metrolist.music.constants.ShowWrappedCardKey
 import com.metrolist.music.constants.TopSize
 import com.metrolist.music.ui.component.EnumDialog
-import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.DraggableLyricsProviderItem

@@ -58,6 +58,7 @@ import com.metrolist.music.db.entities.RecognitionHistory
 import com.metrolist.music.ui.component.DefaultDialog
 import androidx.compose.material3.IconButton
 import com.metrolist.music.ui.component.LocalMenuState
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.SearchRoutes
 import kotlinx.coroutines.Dispatchers
@@ -150,7 +151,7 @@ fun RecognitionHistoryScreen(navController: NavController) {
             TopAppBar(
                 title = { Text(stringResource(R.string.recognition_history)) },
                 navigationIcon = {
-                    IconButton(
+                    LongClickIconButton(
                         onClick = { navController.navigateUp() },
                         onLongClick = { navController.backToMain() },
                     ) {
