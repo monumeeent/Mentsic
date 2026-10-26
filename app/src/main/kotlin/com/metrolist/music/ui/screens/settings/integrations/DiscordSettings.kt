@@ -100,7 +100,7 @@ import com.metrolist.music.discord.DiscordRpcManager
 import com.metrolist.music.discord.DiscordTemplateRenderer
 import com.metrolist.music.ui.component.EnumDialog
 import com.metrolist.music.ui.component.DefaultDialog
-import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.utils.backToMain
@@ -880,12 +880,12 @@ fun DiscordSettings(
     TopAppBar(
         title = { Text(stringResource(R.string.discord_integration)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {
                 Icon(
-                    painterResource(R.drawable.arrow_back),
+                    painter = painterResource(R.drawable.arrow_back),
                     contentDescription = null,
                 )
             }
