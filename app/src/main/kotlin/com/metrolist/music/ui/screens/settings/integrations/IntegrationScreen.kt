@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
-import androidx.compose.material3.IconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.IntegrationCard
 import com.metrolist.music.ui.component.IntegrationCardItem
 import com.metrolist.music.ui.utils.backToMain
@@ -58,17 +58,17 @@ fun IntegrationScreen(
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.integrations)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
+    title = { Text(stringResource(R.string.integrations)) },
+    navigationIcon = {
+        LongClickIconButton(
+            onClick = navController::navigateUp,
+            onLongClick = navController::backToMain,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.arrow_back),
+                contentDescription = null,
+            )
         }
-    )
+    }
+)
 }

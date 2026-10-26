@@ -63,7 +63,7 @@ import com.metrolist.music.constants.ScrobbleDelayPercentKey
 import com.metrolist.music.constants.ScrobbleDelaySecondsKey
 import com.metrolist.music.constants.ScrobbleMinSongDurationKey
 import com.metrolist.music.ui.component.DefaultDialog
-import androidx.compose.material3.IconButton
+import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.utils.backToMain
@@ -614,17 +614,17 @@ fun LastFMSettings(
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.lastfm_integration)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
+    title = { Text(stringResource(R.string.lastfm_integration)) },
+    navigationIcon = {
+        LongClickIconButton(
+            onClick = navController::navigateUp,
+            onLongClick = navController::backToMain,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.arrow_back),
+                contentDescription = null,
+            )
         }
-    )
+    }
+)
 }
