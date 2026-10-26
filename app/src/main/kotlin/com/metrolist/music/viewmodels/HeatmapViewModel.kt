@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 data class HeatmapState(
@@ -41,8 +41,9 @@ class HeatmapViewModel @Inject constructor(
     val state: StateFlow<HeatmapState> = _state.asStateFlow()
 
     private val days = 30
-    private val cutoffDate: String
-        get() = LocalDate.now().minusDays(days.toLong()).format(DateTimeFormatter.ISO_LOCAL_DATE)
+    private val cutoffMillis: Long
+        get() = LocalDate.now().minusDays(days.toLong())
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
     init {
         loadHeatmapData()
@@ -51,7 +52,7 @@ class HeatmapViewModel @Inject constructor(
     private fun loadHeatmapData() {
         viewModelScope.launch {
             combine(
-                database.dailyPlayCounts(cutoffDate),
+                database.dailyPlayCounts(cutoffMillis),
                 database.eventCount(),
             ) { dailyCounts, _ ->
                 val maxCount = dailyCounts.values.maxOrNull() ?: 0

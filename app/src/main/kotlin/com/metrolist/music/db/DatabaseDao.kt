@@ -1512,17 +1512,20 @@ interface DatabaseDao {
      * Returns daily listening activity for the last [days] days.
      * Each entry maps a date string (yyyy-MM-dd) to the number of plays that day.
      * Used by the Listening Heatmap widget on the home screen.
+     *
+     * Note: timestamp is stored as epoch millis; SQLite date() expects seconds,
+     * so we divide by 1000 and use 'unixepoch' mode.
      */
     @Query(
         """
-        SELECT date(timestamp) AS day, COUNT(*) AS playCount
+        SELECT date(timestamp / 1000, 'unixepoch') AS day, COUNT(*) AS playCount
         FROM event
-        WHERE timestamp >= :cutoffDate
-        GROUP BY date(timestamp)
+        WHERE timestamp >= :cutoffMillis
+        GROUP BY date(timestamp / 1000, 'unixepoch')
         ORDER BY day ASC
         """,
     )
-    fun dailyPlayCounts(cutoffDate: String): Flow<Map<String, Int>>
+    fun dailyPlayCounts(cutoffMillis: Long): Flow<Map<String, Int>>
 
     /**
      * Returns all songs played on a specific date, ordered by most recent first.
@@ -1532,7 +1535,7 @@ interface DatabaseDao {
     @Query(
         """
         SELECT * FROM event
-        WHERE date(timestamp) = :date
+        WHERE date(timestamp / 1000, 'unixepoch') = :date
         ORDER BY timestamp DESC
         """,
     )
