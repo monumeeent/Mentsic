@@ -185,12 +185,12 @@ fun ArtistSongsScreen(
         TopAppBar(
             title = { Text(artist?.artist?.name.orEmpty()) },
             navigationIcon = {
-                IconButton(
+                LongClickIconButton(
                     onClick = navController::navigateUp,
                     onLongClick = navController::backToMain,
                 ) {
                     Icon(
-                        painterResource(R.drawable.arrow_back),
+                        painter = painterResource(R.drawable.arrow_back),
                         contentDescription = null,
                     )
                 }
