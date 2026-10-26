@@ -1525,7 +1525,7 @@ interface DatabaseDao {
         ORDER BY day ASC
         """,
     )
-    fun dailyPlayCounts(cutoffMillis: Long): Flow<Map<String, Int>>
+    fun dailyPlayCounts(cutoffMillis: Long): Flow<List<DailyPlayCount>>
 
     /**
      * Returns all songs played on a specific date, ordered by most recent first.

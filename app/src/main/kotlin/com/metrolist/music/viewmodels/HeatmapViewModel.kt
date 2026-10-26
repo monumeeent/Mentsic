@@ -9,6 +9,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metrolist.music.db.MusicDatabase
+import com.metrolist.music.db.entities.DailyPlayCount
 import com.metrolist.music.db.entities.EventWithSong
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -56,11 +57,12 @@ class HeatmapViewModel @Inject constructor(
                 database.dailyPlayCounts(cutoffMillis),
                 database.eventCount(),
             ) { dailyCounts, _ ->
-                val maxCount = dailyCounts.values.maxOrNull() ?: 0
+                val cells = dailyCounts.associate { it.day to it.playCount }
+                val maxCount = cells.values.maxOrNull() ?: 0
                 HeatmapState(
-                    cells = dailyCounts,
+                    cells = cells,
                     maxCount = maxCount,
-                    totalListeningDays = dailyCounts.size,
+                    totalListeningDays = cells.size,
                 )
             }.collectLatest { state ->
                 _state.value = state
