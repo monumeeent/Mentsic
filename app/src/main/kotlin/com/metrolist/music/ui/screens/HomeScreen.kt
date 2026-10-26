@@ -132,6 +132,7 @@ import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.SongGridItem
+import com.metrolist.music.ui.component.ListeningHeatmap
 import com.metrolist.music.ui.component.YouTubeGridItem
 import com.metrolist.music.ui.component.shimmer.GridItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
@@ -150,6 +151,7 @@ import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.CommunityPlaylistItem
+import com.metrolist.music.viewmodels.HeatmapViewModel
 import com.metrolist.music.viewmodels.HomeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -653,6 +655,9 @@ fun HomeScreen(
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
     val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
+
+    val heatmapViewModel: HeatmapViewModel = hiltViewModel()
+    val heatmapState by heatmapViewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.loadHomeData() }
 
@@ -1205,6 +1210,13 @@ fun HomeScreen(
                             }
                         }
                     }
+                }
+
+                item {
+                    ListeningHeatmap(
+                        state = heatmapState,
+                        onDaySelected = { heatmapViewModel.selectDate(it) },
+                    )
                 }
 
                 item {
