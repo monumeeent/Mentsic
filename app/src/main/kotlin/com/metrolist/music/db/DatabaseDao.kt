@@ -32,6 +32,7 @@ import com.metrolist.music.db.entities.AlbumEntity
 import com.metrolist.music.db.entities.AlbumWithSongs
 import com.metrolist.music.db.entities.Artist
 import com.metrolist.music.db.entities.ArtistEntity
+import com.metrolist.music.db.entities.DailyPlayCount
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.EventWithSong
 import com.metrolist.music.db.entities.FormatEntity
