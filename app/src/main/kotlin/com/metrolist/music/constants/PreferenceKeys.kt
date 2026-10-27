@@ -53,6 +53,12 @@ enum class DensityScale(
 }
 
 val DefaultOpenTabKey = stringPreferencesKey("defaultOpenTab")
+val HubModeEnabledKey = booleanPreferencesKey("hubModeEnabled")
+val HubSelectedFilterKey = stringPreferencesKey("hubSelectedFilter")
+val HubHeatmapCollapsedKey = booleanPreferencesKey("hubHeatmapCollapsed")
+val HubModeEnabledKey = booleanPreferencesKey("hubModeEnabled")
+val HubSelectedFilterKey = stringPreferencesKey("hubSelectedFilter")
+val HubHeatmapCollapsedKey = booleanPreferencesKey("hubHeatmapCollapsed")
 val ForceBottomNavBarKey = booleanPreferencesKey("forceBottomNavBar")
 val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
@@ -365,6 +371,22 @@ enum class MixSortType {
 enum class GridItemSize {
     BIG,
     SMALL,
+}
+
+enum class HubFilter(
+    val id: String,
+    val label: String,
+) {
+    ALL("all", "All"),
+    DISCOVERY("discovery", "Discovery"),
+    LIBRARY("library", "Library"),
+    MOODS("moods", "Moods"),
+    PODCASTS("podcasts", "Podcasts"),
+    ;
+    
+    companion object {
+        fun fromId(id: String): HubFilter = entries.find { it.id == id } ?: ALL
+    }
 }
 
 enum class MyTopFilter {

@@ -105,6 +105,10 @@ import com.metrolist.music.constants.AutoRadioQueueKey
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
+import com.metrolist.music.constants.HubFilter
+import com.metrolist.music.constants.HubHeatmapCollapsedKey
+import com.metrolist.music.constants.HubModeEnabledKey
+import com.metrolist.music.constants.HubSelectedFilterKey
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.ListItemHeight
 import com.metrolist.music.constants.ListThumbnailSize
@@ -133,6 +137,9 @@ import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.SongGridItem
 import com.metrolist.music.ui.component.ListeningHeatmap
+import com.metrolist.music.ui.component.TacticalCollapsibleHeatmapHeader
+import com.metrolist.music.ui.component.TacticalFilterTabs
+import com.metrolist.music.ui.component.TacticalHeaderBar
 import com.metrolist.music.ui.component.YouTubeGridItem
 import com.metrolist.music.ui.component.shimmer.GridItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
@@ -659,6 +666,23 @@ fun HomeScreen(
     val heatmapViewModel: HeatmapViewModel = hiltViewModel()
     val heatmapState by heatmapViewModel.state.collectAsStateWithLifecycle()
 
+    // Tactical Command Hub state
+    val (hubModeEnabled) = rememberPreference(HubModeEnabledKey, defaultValue = false)
+    val (hubSelectedFilterId, onHubFilterSelected) = rememberPreference(HubSelectedFilterKey, HubFilter.ALL.id)
+    val (hubHeatmapCollapsed, onHubHeatmapCollapsedChange) = rememberPreference(
+        HubHeatmapCollapsedKey,
+        defaultValue = false,
+    )
+    val hubSelectedFilter = HubFilter.fromId(hubSelectedFilterId)
+
+    val greeting = remember {
+        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+            in 5..11 -> "Good morning"
+            in 12..16 -> "Good afternoon"
+            else -> "Good evening"
+        }
+    }
+
     LaunchedEffect(Unit) { viewModel.loadHomeData() }
 
     val shouldShowWrappedCard by viewModel.showWrappedCard.collectAsStateWithLifecycle()
@@ -1153,8 +1177,576 @@ fun HomeScreen(
                 state = lazylistState,
                 contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
             ) {
-                // MIDNIGHT EDITORIAL: Header Section
-                item(key = "midnight_editorial_header") {
+                if (hubModeEnabled) {
+                    // ==================================================================
+                    // Tactical Command Hub — Zones 1-4
+                    // ==================================================================
+
+                    // Zone 1: Header bar + embedded 2x3 Speed Dial grid
+                    item(key = "hub_zone_1_header") {
+                        TacticalHeaderBar(
+                            greeting = greeting,
+                            accountName = accountName,
+                            accountImageUrl = url,
+                            isLoggedIn = isLoggedIn,
+                            onProfileClick = { navController.navigate("account") },
+                        )
+                    }
+
+                    item(key = "hub_zone_1_speed_dial") {
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            SpeedDialSection(
+                                speedDialItems = speedDialItems,
+                                pinnedSpeedDialItems = pinnedSpeedDialItems.map { it.toYTItem() },
+                                pinnedSpeedDialItemTypes = pinnedSpeedDialItems.map { it.type },
+                                isRandomizing = isRandomizing,
+                                onRandomizeClick = {
+                                    if (isRandomizing) {
+                                        randomizeJob?.cancel()
+                                    } else if (!isListenTogetherGuest) {
+                                        randomizeJob =
+                                            scope.launch {
+                                                val randomItem = viewModel.getRandomItem()
+                                                if (randomItem != null) {
+                                                    when (randomItem) {
+                                                        is SongItem -> {
+                                                            playerConnection.playQueue(
+                                                                if (autoRadioQueue) {
+                                                                    YouTubeQueue(
+                                                                        randomItem.endpoint
+                                                                            ?: WatchEndpoint(
+                                                                                videoId = randomItem.id,
+                                                                            ),
+                                                                        randomItem.toMediaMetadata(),
+                                                                    )
+                                                                } else {
+                                                                    ListQueue(
+                                                                        title = randomItem.title,
+                                                                        items = listOf(randomItem.toMediaItem()),
+                                                                    )
+                                                                }
+                                                            )
+                                                        }
+                                                        is AlbumItem -> {
+                                                            navController.navigate("album/${randomItem.id}")
+                                                        }
+                                                        is ArtistItem -> {
+                                                            navController.navigate("artist/${randomItem.id}")
+                                                        }
+                                                        is PlaylistItem -> {
+                                                            navController.navigate("online_playlist/${randomItem.id}")
+                                                        }
+                                                        is PodcastItem -> {
+                                                            navController.navigate("online_podcast/${randomItem.id}")
+                                                        }
+                                                        is EpisodeItem -> {
+                                                            playerConnection.playQueue(
+                                                                ListQueue(
+                                                                    title = randomItem.title,
+                                                                    items = listOf(
+                                                                        randomItem
+                                                                            .toMediaMetadata()
+                                                                            .toMediaItem(),
+                                                                    ),
+                                                                )
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                    }
+                                },
+                                scope = scope,
+                                autoRadioQueue = autoRadioQueue,
+                                isListenTogetherGuest = isListenTogetherGuest,
+                                mediaMetadataId = mediaMetadata?.id,
+                                albumId = mediaMetadata?.album?.id,
+                                isPlaying = isPlaying,
+                                playerConnection = playerConnection,
+                                navController = navController,
+                                database = database,
+                                menuState = menuState,
+                                haptic = haptic,
+                                maxWidth = maxWidth,
+                            )
+                        }
+                    }
+
+                    // Zone 2: Active Session Card — Keep Listening + Quick Picks
+                    if (keepListening?.isNotEmpty() == true || quickPicks?.isNotEmpty() == true) {
+                        item(key = "hub_zone_2_active_session") {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                ),
+                                shape = RoundedCornerShape(28.dp),
+                            ) {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    if (keepListening?.isNotEmpty() == true) {
+                                        KeepListeningSection(
+                                            keepListening = keepListening.filterIsInstance<Song>(),
+                                            localGridItem = localGridItem,
+                                            currentGridHeight = currentGridHeight,
+                                        )
+                                    }
+
+                                    if (quickPicks?.isNotEmpty() == true) {
+                                        QuickPicksSection(
+                                            quickPicks = quickPicks,
+                                            quickPicksLazyGridState = quickPicksLazyGridState,
+                                            quickPicksSnapLayoutInfoProvider = quickPicksSnapLayoutInfoProvider,
+                                            horizontalLazyGridItemWidth = horizontalLazyGridItemWidth,
+                                            isPlaying = isPlaying,
+                                            mediaMetadataId = mediaMetadata?.id,
+                                            isListenTogetherGuest = isListenTogetherGuest,
+                                            autoRadioQueue = autoRadioQueue,
+                                            database = database,
+                                            menuState = menuState,
+                                            haptic = haptic,
+                                            playerConnection = playerConnection,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Zone 3: Filter tabs + filter-driven content area
+                    item(key = "hub_zone_3_tabs") {
+                        TacticalFilterTabs(
+                            selectedFilter = hubSelectedFilter,
+                            onFilterSelected = { filter ->
+                                onHubFilterSelected(filter.id)
+                            },
+                        )
+                    }
+
+                    if (shouldShowWrappedCard) {
+                        item(key = "hub_wrapped_card") {
+                            AnimatedVisibility(visible = shouldShowWrappedCard) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    ),
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (isWrappedDataReady) {
+                                            val bbhFont =
+                                                try {
+                                                    FontFamily(Font(R.font.bbh_bartle_regular))
+                                                } catch (e: Exception) {
+                                                    FontFamily.Default
+                                                }
+                                            Column(
+                                                modifier = Modifier.padding(16.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                                            ) {
+                                                Text(
+                                                    text = stringResource(R.string.wrapped_ready_title),
+                                                    style =
+                                                        MaterialTheme.typography.headlineLarge.copy(
+                                                            fontFamily = bbhFont,
+                                                            textAlign = TextAlign.Center,
+                                                        ),
+                                                )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = stringResource(R.string.wrapped_ready_subtitle),
+                                                    style =
+                                                        MaterialTheme.typography.bodyLarge.copy(
+                                                            textAlign = TextAlign.Center,
+                                                        ),
+                                                )
+                                                Spacer(modifier = Modifier.height(16.dp))
+                                                Button(onClick = {
+                                                    navController.navigate("wrapped")
+                                                }) {
+                                                    Text(stringResource(R.string.open))
+                                                }
+                                            }
+                                        } else {
+                                            ContainedLoadingIndicator()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Loading shimmer during initial data load
+                    if (isLoading && homePage?.sections.isNullOrEmpty()) {
+                        item(key = "hub_loading_shimmer") {
+                            ShimmerHost(
+                            ) {
+                                repeat(2) {
+                                    TextPlaceholder(
+                                        height = 36.dp,
+                                        modifier = Modifier
+                                            .padding(12.dp)
+                                            .width(250.dp),
+                                    )
+                                    LazyRow(
+                                        contentPadding =
+                                            WindowInsets.systemBars
+                                                .only(WindowInsetsSides.Horizontal)
+                                                .asPaddingValues(),
+                                    ) {
+                                        items(4) {
+                                            GridItemPlaceHolder()
+                                        }
+                                    }
+
+                                    TextPlaceholder(
+                                        height = 36.dp,
+                                        modifier = Modifier
+                                            .padding(vertical = 12.dp, horizontal = 12.dp)
+                                            .width(250.dp),
+                                    )
+                                    repeat(4) {
+                                        Row {
+                                            repeat(2) {
+                                                TextPlaceholder(
+                                                    height = MoodAndGenresButtonHeight,
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    modifier = Modifier
+                                                        .padding(horizontal = 12.dp)
+                                                        .width(200.dp),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    when (hubSelectedFilter) {
+                        HubFilter.ALL -> {
+                            homeSections
+                                .filter {
+                                    it !is HomeSection.SpeedDial &&
+                                        it !is HomeSection.QuickPicks &&
+                                        it !is HomeSection.KeepListening
+                                }
+                                .forEach { section ->
+                                    item(key = "hub_all_${section.id}") {
+                                        when (section) {
+                                            HomeSection.FromTheCommunity -> {
+                                                communityPlaylists?.takeIf { it.isNotEmpty() }?.let { playlists ->
+                                                    item(key = "hub_all_community_playlists_content") {
+                                                        FromTheCommunitySection(
+                                                            playlists = playlists,
+                                                            navController = navController,
+                                                            playerConnection = playerConnection,
+                                                            isListenTogetherGuest = isListenTogetherGuest,
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            HomeSection.DailyDiscover -> {
+                                                dailyDiscover?.takeIf { it.isNotEmpty() }?.let { discoverList ->
+                                                    item(key = "hub_all_daily_discover_content") {
+                                                        DailyDiscoverSection(
+                                                            discoverList = discoverList,
+                                                            playerConnection = playerConnection,
+                                                            isListenTogetherGuest = isListenTogetherGuest,
+                                                            autoRadioQueue = autoRadioQueue,
+                                                            modifier = Modifier.clip(MaterialTheme.shapes.extraLarge),
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            HomeSection.AccountPlaylists -> {
+                                                accountPlaylists?.takeIf { it.isNotEmpty() }?.let { accountPlaylists ->
+                                                    item(key = "hub_all_account_playlists_content") {
+                                                        AccountPlaylistsSection(
+                                                            accountPlaylists = accountPlaylists,
+                                                            accountName = accountName,
+                                                            accountImageUrl = url,
+                                                            isLoggedIn = isLoggedIn,
+                                                            ytGridItem = ytGridItem,
+                                                            navController = navController,
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            HomeSection.ForgottenFavorites -> {
+                                                forgottenFavorites?.takeIf { it.isNotEmpty() }?.let { forgottenFavorites ->
+                                                    item(key = "hub_all_forgotten_favorites_content") {
+                                                        ForgottenFavoritesSection(
+                                                            forgottenFavorites = forgottenFavorites,
+                                                            isPlaying = isPlaying,
+                                                            mediaMetadataId = mediaMetadata?.id,
+                                                            isListenTogetherGuest = isListenTogetherGuest,
+                                                            autoRadioQueue = autoRadioQueue,
+                                                            database = database,
+                                                            menuState = menuState,
+                                                            haptic = haptic,
+                                                            playerConnection = playerConnection,
+                                                            forgottenFavoritesLazyGridState = forgottenFavoritesLazyGridState,
+                                                            forgottenFavoritesSnapLayoutInfoProvider = forgottenFavoritesSnapLayoutInfoProvider,
+                                                            horizontalLazyGridItemWidth = horizontalLazyGridItemWidth,
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .height(ListItemHeight * min(4, forgottenFavorites.size)),
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            is HomeSection.SimilarRecommendation -> {
+                                                val recommendation =
+                                                    similarRecommendations?.getOrNull(section.index)
+                                                recommendation?.let {
+                                                    item(key = "hub_all_similar_to_content_${section.index}") {
+                                                        SimilarRecommendationSection(
+                                                            sectionIndex = section.index,
+                                                            recommendation = recommendation,
+                                                            ytGridItem = ytGridItem,
+                                                            navController = navController,
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            is HomeSection.HomePageSection -> {
+                                                val sectionData =
+                                                    homePage?.sections?.getOrNull(section.index)
+                                                sectionData?.let {
+                                                    item(key = "hub_all_home_section_content_${section.index}") {
+                                                        HomePageSection(
+                                                            sectionIndex = section.index,
+                                                            sectionData = sectionData,
+                                                            isPodcastChipActive = false,
+                                                            ytGridItem = ytGridItem,
+                                                            navController = navController,
+                                                            playerConnection = playerConnection,
+                                                            isListenTogetherGuest = isListenTogetherGuest,
+                                                            mediaMetadataId = mediaMetadata?.id,
+                                                            isPlaying = isPlaying,
+                                                            autoRadioQueue = autoRadioQueue,
+                                                            menuState = menuState,
+                                                            haptic = haptic,
+                                                            database = database,
+                                                            scope = scope,
+                                                            currentGridHeight = currentGridHeight,
+                                                            horizontalLazyGridItemWidth = horizontalLazyGridItemWidth,
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            HomeSection.MoodAndGenres -> {
+                                                explorePage?.let { explorePage ->
+                                                    item(key = "hub_all_mood_and_genres_content") {
+                                                        MoodAndGenresSection(
+                                                            explorePage = explorePage,
+                                                            isPodcastChipActive = false,
+                                                            navController = navController,
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            else -> {}
+                                        }
+                                        }
+                                    }
+                                }
+                        }
+
+                        HubFilter.DISCOVERY -> {
+                            dailyDiscover?.takeIf { it.isNotEmpty() }?.let { discoverList ->
+                                item(key = "hub_discovery_daily_discover_content") {
+                                    DailyDiscoverSection(
+                                        discoverList = discoverList,
+                                        playerConnection = playerConnection,
+                                        isListenTogetherGuest = isListenTogetherGuest,
+                                        autoRadioQueue = autoRadioQueue,
+                                        modifier = Modifier.clip(MaterialTheme.shapes.extraLarge),
+                                    )
+                                }
+                            }
+                            explorePage?.let { explorePage ->
+                                if (explorePage.moodAndGenres != null) {
+                                    item(key = "hub_discovery_moods_content") {
+                                        MoodAndGenresSection(
+                                            explorePage = explorePage,
+                                            isPodcastChipActive = false,
+                                            navController = navController,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        HubFilter.LIBRARY -> {
+                            accountPlaylists?.takeIf { it.isNotEmpty() }?.let { accountPlaylists ->
+                                item(key = "hub_library_account_playlists_content") {
+                                    AccountPlaylistsSection(
+                                        accountPlaylists = accountPlaylists,
+                                        accountName = accountName,
+                                        accountImageUrl = url,
+                                        isLoggedIn = isLoggedIn,
+                                        ytGridItem = ytGridItem,
+                                        navController = navController,
+                                    )
+                                }
+                            }
+                            forgottenFavorites?.takeIf { it.isNotEmpty() }?.let { forgottenFavorites ->
+                                item(key = "hub_library_forgotten_favorites_content") {
+                                    ForgottenFavoritesSection(
+                                        forgottenFavorites = forgottenFavorites,
+                                        isPlaying = isPlaying,
+                                        mediaMetadataId = mediaMetadata?.id,
+                                        isListenTogetherGuest = isListenTogetherGuest,
+                                        autoRadioQueue = autoRadioQueue,
+                                        database = database,
+                                        menuState = menuState,
+                                        haptic = haptic,
+                                        playerConnection = playerConnection,
+                                        forgottenFavoritesLazyGridState = forgottenFavoritesLazyGridState,
+                                        forgottenFavoritesSnapLayoutInfoProvider = forgottenFavoritesSnapLayoutInfoProvider,
+                                        horizontalLazyGridItemWidth = horizontalLazyGridItemWidth,
+                                    )
+                                }
+                            }
+                        }
+
+                        HubFilter.MOODS -> {
+                            explorePage?.let { explorePage ->
+                                if (explorePage.moodAndGenres != null) {
+                                    item(key = "hub_moods_content") {
+                                        MoodAndGenresSection(
+                                            explorePage = explorePage,
+                                            isPodcastChipActive = false,
+                                            navController = navController,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        HubFilter.PODCASTS -> {
+                            if (savedPodcastShows.isNotEmpty()) {
+                                item(key = "hub_podcasts_your_shows_title") {
+                                    NavigationTitle(
+                                        title = stringResource(R.string.your_shows),
+                                        onClick = {
+                                            navController.navigate("youtube_browse/FEmusic_library_non_music_audio_list")
+                                        },
+                                    )
+                                }
+
+                                item(key = "hub_podcasts_your_shows_list") {
+                                    LazyRow(
+                                        contentPadding =
+                                            WindowInsets.systemBars
+                                                .only(WindowInsetsSides.Horizontal)
+                                                .asPaddingValues(),
+                                    ) {
+                                        items(savedPodcastShows.distinctBy { it.id }, key = { "home_saved_podcast_${it.id}" }) { podcast ->
+                                            ytGridItem(podcast)
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (episodesForLater.isNotEmpty()) {
+                                item(key = "hub_podcasts_episodes_for_later_title") {
+                                    NavigationTitle(
+                                        title = stringResource(R.string.episodes_for_later),
+                                        onClick = {
+                                            navController.navigate("online_playlist/SE")
+                                        },
+                                    )
+                                }
+
+                                item(key = "hub_podcasts_episodes_for_later_list") {
+                                    LazyRow(
+                                        contentPadding =
+                                            WindowInsets.systemBars
+                                                .only(WindowInsetsSides.Horizontal)
+                                                .asPaddingValues(),
+                                    ) {
+                                        items(episodesForLater.distinctBy { it.id }, key = { "home_episode_later_${it.id}" }) { episode ->
+                                            ytGridItem(episode)
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Regular home page sections that are podcast-related
+                            homeSections.filterIsInstance<HomeSection.HomePageSection>().forEach { section ->
+                                val sectionData = homePage?.sections?.getOrNull(section.index)
+                                val skipTitles = listOf("your shows", "episodes for later", "podcast channels", "new episodes")
+                                if (sectionData?.title?.lowercase()?.let { title -> skipTitles.any { title.contains(it) } == true) {
+                                    return@forEach
+                                }
+                                sectionData?.let {
+                                    item(key = "hub_podcasts_section_${section.index}") {
+                                        HomePageSection(
+                                            sectionIndex = section.index,
+                                            sectionData = sectionData,
+                                            isPodcastChipActive = true,
+                                            ytGridItem = ytGridItem,
+                                            navController = navController,
+                                            playerConnection = playerConnection,
+                                            isListenTogetherGuest = isListenTogetherGuest,
+                                            mediaMetadataId = mediaMetadata?.id,
+                                            isPlaying = isPlaying,
+                                            autoRadioQueue = autoRadioQueue,
+                                            menuState = menuState,
+                                            haptic = haptic,
+                                            database = database,
+                                            scope = scope,
+                                            currentGridHeight = currentGridHeight,
+                                            horizontalLazyGridItemWidth = horizontalLazyGridItemWidth,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        else -> {}
+                    }
+
+                    // Zone 4: Collapsible heatmap header + Listening Heatmap
+                    item(key = "hub_zone_4_header") {
+                        TacticalCollapsibleHeatmapHeader(
+                            isCollapsed = hubHeatmapCollapsed,
+                            onToggleCollapse = {
+                                onHubHeatmapCollapsedChange(!hubHeatmapCollapsed)
+                            },
+                        )
+                    }
+
+                    item(key = "hub_zone_4_heatmap") {
+                        AnimatedVisibility(visible = !hubHeatmapCollapsed) {
+                            ListeningHeatmap(
+                                state = heatmapState,
+                                onDaySelected = { heatmapViewModel.selectDate(it) },
+                            )
+                        }
+                    }
+
+                } else {
+                    // ==================================================================
+                    // Classic home layout (unchanged)
+                    // ==================================================================
                     val greeting = remember {
                         when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
                             in 5..11 -> "Good morning"
@@ -1210,7 +1802,6 @@ fun HomeScreen(
                             }
                         }
                     }
-                }
 
                 item {
                     ListeningHeatmap(
@@ -1785,6 +2376,7 @@ fun HomeScreen(
                             }
                         }
                     }
+                }
                 }
             }
 
