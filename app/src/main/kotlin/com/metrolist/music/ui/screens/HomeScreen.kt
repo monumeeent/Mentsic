@@ -4,6 +4,7 @@
  */
 
 package com.metrolist.music.ui.screens
+import androidx.room.withTransaction
 import java.util.Calendar
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
@@ -37,7 +38,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -64,7 +64,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -1744,15 +1743,16 @@ fun HomeScreen(
                     // ==================================================================
                     // Classic home layout (unchanged)
                     // ==================================================================
-                    val greeting = remember {
-                        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-                            in 5..11 -> "Good morning"
-                            in 12..16 -> "Good afternoon"
-                            else -> "Good evening"
+                    item(key = "classic_home_header") {
+                        val greeting = remember {
+                            when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+                                in 5..11 -> "Good morning"
+                                in 12..16 -> "Good afternoon"
+                                else -> "Good evening"
+                            }
                         }
-                    }
 
-                    Row(
+                        Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp, vertical = 16.dp),
@@ -1798,7 +1798,8 @@ fun HomeScreen(
                                 }
                             }
                         }
-                    }
+                    } // End Row
+                    } // End classic home header item
 
                 item {
                     ListeningHeatmap(
