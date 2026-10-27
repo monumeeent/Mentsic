@@ -1563,7 +1563,6 @@ fun HomeScreen(
                                             else -> {}
                                         }
                                     }
-                                }
                         }
 
                         HubFilter.DISCOVERY -> {
