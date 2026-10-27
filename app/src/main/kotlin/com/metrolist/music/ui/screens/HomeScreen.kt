@@ -1287,7 +1287,7 @@ fun HomeScreen(
                                 Column(modifier = Modifier.fillMaxWidth()) {
                                     if (keepListening?.isNotEmpty() == true) {
                                         KeepListeningSection(
-                                            keepListening = keepListening.filterIsInstance<Song>(),
+                                            keepListening = keepListening?.filterIsInstance<Song>() ?: emptyList(),
                                             localGridItem = localGridItem,
                                             currentGridHeight = currentGridHeight,
                                         )
@@ -1295,7 +1295,7 @@ fun HomeScreen(
 
                                     if (quickPicks?.isNotEmpty() == true) {
                                         QuickPicksSection(
-                                            quickPicks = quickPicks,
+                                            quickPicks = quickPicks ?: emptyList(),
                                             quickPicksLazyGridState = quickPicksLazyGridState,
                                             quickPicksSnapLayoutInfoProvider = quickPicksSnapLayoutInfoProvider,
                                             horizontalLazyGridItemWidth = horizontalLazyGridItemWidth,
@@ -1563,7 +1563,6 @@ fun HomeScreen(
 
                                             else -> {}
                                         }
-                                        }
                                     }
                                 }
                         }
@@ -1693,7 +1692,7 @@ fun HomeScreen(
                             homeSections.filterIsInstance<HomeSection.HomePageSection>().forEach { section ->
                                 val sectionData = homePage?.sections?.getOrNull(section.index)
                                 val skipTitles = listOf("your shows", "episodes for later", "podcast channels", "new episodes")
-                                if (sectionData?.title?.lowercase()?.let { title -> skipTitles.any { title.contains(it) } == true) {
+                                if (sectionData?.title?.lowercase()?.let { title -> skipTitles.any { title.contains(it) } == true } == true) {
                                     return@forEach
                                 }
                                 sectionData?.let {
