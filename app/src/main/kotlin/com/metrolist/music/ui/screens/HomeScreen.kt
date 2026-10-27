@@ -1439,9 +1439,8 @@ fun HomeScreen(
                                         it !is HomeSection.KeepListening
                                 }
                                 .forEach { section ->
-                                    item(key = "hub_all_${section.id}") {
-                                        when (section) {
-                                            HomeSection.FromTheCommunity -> {
+                                    when (section) {
+                                        HomeSection.FromTheCommunity -> {
                                                 communityPlaylists?.takeIf { it.isNotEmpty() }?.let { playlists ->
                                                     item(key = "hub_all_community_playlists_content") {
                                                         FromTheCommunitySection(
