@@ -85,5 +85,9 @@ class MusicWidgetReceiver : AppWidgetProvider() {
         const val ACTION_NEXT = "com.metrolist.music.widget.NEXT"
         const val ACTION_PREVIOUS = "com.metrolist.music.widget.PREVIOUS"
         const val ACTION_UPDATE_WIDGET = "com.metrolist.music.widget.UPDATE_WIDGET"
+        const val ACTION_PLAY_TARGET = "com.metrolist.music.widget.PLAY_TARGET"
+        const val EXTRA_WIDGET_TARGET_TYPE = "com.metrolist.music.widget.EXTRA_WIDGET_TARGET_TYPE"
+        const val EXTRA_WIDGET_TARGET_ID = "com.metrolist.music.widget.EXTRA_WIDGET_TARGET_ID"
+        const val TARGET_TYPE_NOW_PLAYING = "com.metrolist.music.widget.TARGET_TYPE_NOW_PLAYING"
     }
 }

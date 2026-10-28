@@ -277,6 +277,7 @@ dependencies {
     implementation(libs.ucrop)
 
     implementation(libs.shimmer)
+    implementation(libs.tinypinyin)
 
     implementation(libs.media3)
     implementation(libs.media3.session)
