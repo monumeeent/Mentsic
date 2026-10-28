@@ -36,7 +36,6 @@ import javax.inject.Singleton
 class MetrolistWidgetManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val database: MusicDatabase,
-    private val playlistWidgetManager: PlaylistWidgetManager,
 ) {
     private val imageLoader by lazy {
         ImageLoader.Builder(context)
@@ -109,16 +108,6 @@ class MetrolistWidgetManager @Inject constructor(
                 appWidgetManager.updateAppWidget(widgetId, turntableViews)
             }
         }
-
-        playlistWidgetManager.updateWidgets(
-            title = title,
-            artist = artist,
-            artworkUri = artworkUri,
-            isPlaying = isPlaying,
-            isLiked = isLiked,
-            duration = duration,
-            currentPosition = currentPosition,
-        )
     }
 
     fun updateProgress(
@@ -144,8 +133,6 @@ class MetrolistWidgetManager @Inject constructor(
             views.setInt(R.id.widget_progress_fill, "setImageLevel", level)
             appWidgetManager.partiallyUpdateAppWidget(widgetIds, views)
         }
-
-        playlistWidgetManager.updateProgress(duration, currentPosition)
     }
 
     private fun createRemoteViewsForSize(

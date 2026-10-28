@@ -609,7 +609,6 @@ class SyncUtils @Inject constructor(
             YouTube.subscribeChannel(channelId, subscribe)
         }.onSuccess {
             Timber.d("[CHANNEL_TOGGLE] Successfully subscribed/unsubscribed channel: $channelId")
-            PodcastRefreshTrigger.triggerRefresh()
         }.onFailure { e ->
             Timber.e(e, "[CHANNEL_TOGGLE] Failed to subscribe/unsubscribe channel: $channelId")
         }

@@ -4,6 +4,7 @@
 - Avoid CPU/RAM-heavy commands. Rely on static code analysis, precise file inspections, and remote CI validation.
 - Avoid Unix stream-filtering tools (`head`, `tail`, `grep`, `sed`, `find`) in Git Bash due to Windows pipe buffering. Use native file tools or PowerShell equivalents.
 - Do NOT hallucinate unavailable tool names (e.g., `shell`). Only use valid registered tools (`run_commands`).
+- Output Should be in English . 
 
 # Preferred CI/CD Workflow
 - Path for verification: Code edits -> User commits/pushes -> GitHub Actions workflow builds.

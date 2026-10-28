@@ -25,7 +25,6 @@ import com.metrolist.music.MainActivity
 import com.metrolist.music.R
 import com.metrolist.music.db.DatabaseDao
 import com.metrolist.music.db.entities.RecognitionHistory
-import com.metrolist.music.widget.MusicRecognizerWidgetReceiver
 import com.metrolist.shazamkit.models.RecognitionResult
 import com.metrolist.shazamkit.models.RecognitionStatus
 import dagger.hilt.EntryPoint
@@ -285,7 +284,7 @@ class RecognitionForegroundService : Service() {
         statusJob = null
         MusicRecognitionService.reset()
         saveWidgetState(STATE_LISTENING)
-        updateAllWidgets()
+
 
         pulseJob?.cancel()
         pulseJob =
@@ -293,7 +292,7 @@ class RecognitionForegroundService : Service() {
                 var frame = 0
                 while (isActive) {
                     widgetPreferences().edit().putInt(PREF_PULSE_FRAME, frame).apply()
-                    updateAllWidgets()
+            
                     frame = (frame + 1) % PULSE_FRAME_COUNT
                     delay(PULSE_INTERVAL_MS)
                 }
@@ -318,7 +317,7 @@ class RecognitionForegroundService : Service() {
                     )
                 } finally {
                     pulseJob?.cancel()
-                    updateAllWidgets()
+            
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
                 }
@@ -387,7 +386,7 @@ class RecognitionForegroundService : Service() {
         pulseJob?.cancel()
         saveWidgetState(STATE_IDLE)
         widgetPreferences().edit().putInt(PREF_PULSE_FRAME, 0).apply()
-        updateAllWidgets()
+
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -509,14 +508,6 @@ class RecognitionForegroundService : Service() {
 
     private fun saveWidgetState(state: Int) {
         widgetPreferences().edit().putInt(PREF_STATE, state).apply()
-    }
-
-    private fun updateAllWidgets() {
-        sendBroadcast(
-            Intent(this, MusicRecognizerWidgetReceiver::class.java).apply {
-                action = MusicRecognizerWidgetReceiver.ACTION_UPDATE_WIDGET
-            },
-        )
     }
 
     private fun createNotificationChannel() {

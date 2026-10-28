@@ -51,7 +51,6 @@ import com.metrolist.music.ui.screens.settings.ContentSettings
 import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.PlayerSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
-import com.metrolist.music.ui.screens.settings.RomanizationSettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
 import com.metrolist.music.ui.screens.settings.StorageSettings
 import com.metrolist.music.ui.screens.settings.ThemeScreen
@@ -61,7 +60,6 @@ import com.metrolist.music.ui.screens.settings.integrations.IntegrationScreen
 import com.metrolist.music.ui.screens.settings.integrations.LastFMSettings
 import com.metrolist.music.ui.screens.settings.integrations.ListenTogetherSettings
 
-import com.metrolist.music.ui.screens.wrapped.WrappedScreen
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 
@@ -361,7 +359,6 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings/content/romanization") {
-        RomanizationSettings(navController)
     }
 
     composable("settings/ai") {
@@ -417,10 +414,6 @@ fun NavGraphBuilder.navigationBuilder(
             navController = navController,
             isSwitchingChannel = true,
         )
-    }
-
-    composable("wrapped") {
-        WrappedScreen()
     }
 
     composable("equalizer") {

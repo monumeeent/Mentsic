@@ -222,14 +222,6 @@ protobuf {
     }
 }
 
-val cleanLegacyProtoSources = tasks.register<Delete>("cleanLegacyProtoSources") {
-    delete(layout.projectDirectory.dir("src/main/java/com/metrolist/music/listentogether/proto"))
-}
-
-tasks.named("preBuild") {
-    dependsOn(cleanLegacyProtoSources)
-}
-
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
@@ -297,7 +289,6 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.kuromoji.ipadic)
-    implementation(libs.tinypinyin)
     ksp(libs.room.compiler)
 
     implementation(libs.hilt)

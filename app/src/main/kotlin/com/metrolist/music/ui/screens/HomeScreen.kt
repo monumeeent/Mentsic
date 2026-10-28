@@ -94,6 +94,7 @@ import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.innertube.models.YTItem
 import com.metrolist.innertube.utils.completed
 import com.metrolist.innertube.utils.parseCookieString
+import com.metrolist.innertube.utils.parseCookieString
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalArtistNameAliases
 import com.metrolist.music.LocalListenTogetherManager
@@ -105,7 +106,6 @@ import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
 import com.metrolist.music.constants.HubFilter
-import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.HubModeEnabledKey
 import com.metrolist.music.constants.HubSelectedFilterKey
 import com.metrolist.music.constants.InnerTubeCookieKey
@@ -135,7 +135,6 @@ import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.SongGridItem
-import com.metrolist.music.ui.component.ListeningHeatmap
 import com.metrolist.music.ui.component.TacticalCollapsibleHeatmapHeader
 import com.metrolist.music.ui.component.TacticalFilterTabs
 import com.metrolist.music.ui.component.TacticalHeaderBar
@@ -157,7 +156,6 @@ import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.CommunityPlaylistItem
-import com.metrolist.music.viewmodels.HeatmapViewModel
 import com.metrolist.music.viewmodels.HomeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -662,9 +660,6 @@ fun HomeScreen(
     val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
     val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
 
-    val heatmapViewModel: HeatmapViewModel = hiltViewModel()
-    val heatmapState by heatmapViewModel.state.collectAsStateWithLifecycle()
-
     // Tactical Command Hub state
     val (hubModeEnabled) = rememberPreference(HubModeEnabledKey, defaultValue = false)
     val (hubSelectedFilterId, onHubFilterSelected) = rememberPreference(HubSelectedFilterKey, HubFilter.ALL.id)
@@ -684,10 +679,6 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) { viewModel.loadHomeData() }
 
-    val shouldShowWrappedCard by viewModel.showWrappedCard.collectAsStateWithLifecycle()
-    val wrappedState by viewModel.wrappedManager.state.collectAsStateWithLifecycle()
-    val isWrappedDataReady = wrappedState.isDataReady
-
     val isLoggedIn =
         remember(innerTubeCookie) {
             "SAPISID" in parseCookieString(innerTubeCookie)
@@ -695,8 +686,6 @@ fun HomeScreen(
     val url = if (isLoggedIn) accountImageUrl else null
 
     // Extract unique podcasts from episodes for "Podcast Channels" row
-    // Cache the podcasts to prevent them from disappearing during refresh
-    var cachedPodcasts by remember { mutableStateOf<List<PodcastItem>>(emptyList()) }
 
     val featuredPodcasts =
         remember(homePage, selectedChip) {
@@ -745,27 +734,11 @@ fun HomeScreen(
     val scrollToTop =
         backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsStateWithLifecycle()
 
-    val wrappedDismissed by backStackEntry
-        ?.savedStateHandle
-        ?.getStateFlow("wrapped_seen", false)
-        ?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
-
     var randomSeed by rememberSaveable { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
             randomSeed = System.currentTimeMillis()
-        }
-    }
-
-    val foundInSettings = stringResource(R.string.found_in_settings_content)
-    LaunchedEffect(wrappedDismissed) {
-        if (wrappedDismissed) {
-            viewModel.markWrappedAsSeen()
-            scope.launch {
-                snackbarHostState.showSnackbar(foundInSettings)
-            }
-            backStackEntry?.savedStateHandle?.set("wrapped_seen", false) // Reset the value
         }
     }
 
@@ -1323,66 +1296,7 @@ fun HomeScreen(
                         )
                     }
 
-                    if (shouldShowWrappedCard) {
-                        item(key = "hub_wrapped_card") {
-                            AnimatedVisibility(visible = shouldShowWrappedCard) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    ),
-                                ) {
-                                    Box(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        if (isWrappedDataReady) {
-                                            val bbhFont =
-                                                try {
-                                                    FontFamily(Font(R.font.bbh_bartle_regular))
-                                                } catch (e: Exception) {
-                                                    FontFamily.Default
-                                                }
-                                            Column(
-                                                modifier = Modifier.padding(16.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-                                            ) {
-                                                Text(
-                                                    text = stringResource(R.string.wrapped_ready_title),
-                                                    style =
-                                                        MaterialTheme.typography.headlineLarge.copy(
-                                                            fontFamily = bbhFont,
-                                                            textAlign = TextAlign.Center,
-                                                        ),
-                                                )
-                                                Spacer(modifier = Modifier.height(8.dp))
-                                                Text(
-                                                    text = stringResource(R.string.wrapped_ready_subtitle),
-                                                    style =
-                                                        MaterialTheme.typography.bodyLarge.copy(
-                                                            textAlign = TextAlign.Center,
-                                                        ),
-                                                )
-                                                Spacer(modifier = Modifier.height(16.dp))
-                                                Button(onClick = {
-                                                    navController.navigate("wrapped")
-                                                }) {
-                                                    Text(stringResource(R.string.open))
-                                                }
-                                            }
-                                        } else {
-                                            ContainedLoadingIndicator()
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
-
-                    // Loading shimmer during initial data load
                     if (isLoading && homePage?.sections.isNullOrEmpty()) {
                         item(key = "hub_loading_shimmer") {
                             ShimmerHost(
@@ -1730,15 +1644,6 @@ fun HomeScreen(
                         )
                     }
 
-                    item(key = "hub_zone_4_heatmap") {
-                        AnimatedVisibility(visible = !hubHeatmapCollapsed) {
-                            ListeningHeatmap(
-                                state = heatmapState,
-                                onDaySelected = { heatmapViewModel.selectDate(it) },
-                            )
-                        }
-                    }
-
                 } else {
                     // ==================================================================
                     // Classic home layout (unchanged)
@@ -1800,13 +1705,6 @@ fun HomeScreen(
                         }
                     } // End Row
                     } // End classic home header item
-
-                item {
-                    ListeningHeatmap(
-                        state = heatmapState,
-                        onDaySelected = { heatmapViewModel.selectDate(it) },
-                    )
-                }
 
                 item {
                     ChipsRow(
@@ -1992,69 +1890,7 @@ fun HomeScreen(
                 }
 
                 if (selectedChip == null) {
-                    item(key = "wrapped_card") {
-                        AnimatedVisibility(visible = shouldShowWrappedCard) {
-                            Card(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                colors =
-                                    CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    ),
-                            ) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    if (isWrappedDataReady) {
-                                        val bbhFont =
-                                            try {
-                                                FontFamily(Font(R.font.bbh_bartle_regular))
-                                            } catch (e: Exception) {
-                                                FontFamily.Default
-                                            }
-                                        Column(
-                                            modifier = Modifier.padding(16.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.wrapped_ready_title),
-                                                style =
-                                                    MaterialTheme.typography.headlineLarge.copy(
-                                                        fontFamily = bbhFont,
-                                                        textAlign = TextAlign.Center,
-                                                    ),
-                                            )
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = stringResource(R.string.wrapped_ready_subtitle),
-                                                style =
-                                                    MaterialTheme.typography.bodyLarge.copy(
-                                                        textAlign = TextAlign.Center,
-                                                    ),
-                                            )
-                                            Spacer(modifier = Modifier.height(16.dp))
-                                            Button(onClick = {
-                                                navController.navigate("wrapped")
-                                            }) {
-                                                Text(stringResource(R.string.open))
-                                            }
-                                        }
-                                    } else {
-                                        ContainedLoadingIndicator()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                homeSections.forEach { section ->
+                    homeSections.forEach { section ->
                     when (section) {
                         HomeSection.SpeedDial -> {
                             speedDialItems.takeIf { it.isNotEmpty() }?.let { items ->

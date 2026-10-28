@@ -215,7 +215,6 @@ import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.utils.reportException
 import com.metrolist.music.utils.setAppLocale
 import com.metrolist.music.viewmodels.HomeViewModel
-import com.metrolist.music.widget.PlaylistWidgetReceiver
 import com.valentinilk.shimmer.LocalShimmerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -1574,25 +1573,13 @@ class MainActivity : FragmentActivity() {
         val normalizedTargetId = targetId?.takeIf { it.isNotBlank() }
 
         val targetRoute = when (targetType) {
-            PlaylistWidgetReceiver.TARGET_TYPE_LOCAL ->
-                normalizedTargetId?.let { WidgetTargetRoute.LocalPlaylist(it) }
+        MusicWidgetReceiver.TARGET_TYPE_NOW_PLAYING -> {
+            normalizedTargetId?.let { WidgetTargetRoute.LocalPlaylist(it) }
+        }
+        else -> null
+    } ?: return
 
-            PlaylistWidgetReceiver.TARGET_TYPE_ONLINE ->
-                normalizedTargetId?.let { WidgetTargetRoute.OnlinePlaylist(it) }
-
-            PlaylistWidgetReceiver.TARGET_TYPE_LIKED ->
-                WidgetTargetRoute.LikedSongs
-
-            PlaylistWidgetReceiver.TARGET_TYPE_DOWNLOADED ->
-                WidgetTargetRoute.DownloadedSongs
-
-            PlaylistWidgetReceiver.TARGET_TYPE_TOP ->
-                WidgetTargetRoute.TopSongs(normalizedTargetId ?: "50")
-
-            else -> null
-        } ?: return
-
-        navController.navigate(targetRoute.route)
+    navController.navigate(targetRoute.route)
     }
 
     private fun handleDeepLinkIntent(
