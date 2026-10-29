@@ -686,6 +686,7 @@ fun HomeScreen(
     val url = if (isLoggedIn) accountImageUrl else null
 
     // Extract unique podcasts from episodes for "Podcast Channels" row
+    var cachedPodcasts by remember { mutableStateOf(emptyList<PodcastItem>()) }
 
     val featuredPodcasts =
         remember(homePage, selectedChip) {
@@ -1643,7 +1644,6 @@ fun HomeScreen(
                             },
                         )
                     }
-
                 } else {
                     // ==================================================================
                     // Classic home layout (unchanged)
@@ -1658,63 +1658,63 @@ fun HomeScreen(
                         }
 
                         Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = greeting,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                            )
-                            Text(
-                                text = if (isLoggedIn && accountName.isNotBlank()) accountName else "Connect with @monumeeent",
-                                style = MaterialTheme.typography.headlineMedium.copy(
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = greeting,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = if (isLoggedIn && accountName.isNotBlank()) accountName else "Connect with @monumeeent",
+                                    style = MaterialTheme.typography.headlineMedium.copy(
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                    ),
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
 
-                        // Profile / Avatar Anchor
-                        if (url != null) {
-                            AsyncImage(
-                                model = url,
-                                contentDescription = "Profile",
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(CircleShape)
-                            )
-                        } else {
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.size(42.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = "Profile",
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
+                            // Profile / Avatar Anchor
+                            if (url != null) {
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = "Profile",
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    modifier = Modifier.size(42.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Person,
+                                            contentDescription = "Profile",
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
                                 }
                             }
-                        }
-                    } // End Row
+                        } // End Row
                     } // End classic home header item
 
-                item {
-                    ChipsRow(
-                        chips = homePage?.chips?.map { it to it.title } ?: emptyList(),
-                        currentValue = selectedChip,
-                        onValueUpdate = {
-                            viewModel.toggleChip(it)
-                        },
-                    )
-                }
+                    item {
+                        ChipsRow(
+                            chips = homePage?.chips?.map { it to it.title } ?: emptyList(),
+                            currentValue = selectedChip,
+                            onValueUpdate = {
+                                viewModel.toggleChip(it)
+                            },
+                        )
+                    }
 
                 if (isLoading && homePage?.chips.isNullOrEmpty()) {
                     item(key = "chips_shimmer") {

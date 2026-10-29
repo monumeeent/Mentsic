@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/widget_turntable_prev_button"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Previous"
+        android:src="@drawable/widget_play_button_circular" />
+
+    <LinearLayout
+        android:id="@+id/widget_turntable_play_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="4dp">
+
+        <ImageView
+            android:id="@+id/widget_turntable_album_art"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:contentDescription="Album art"
+            android:scaleType="centerCrop" />
+
+        <ImageView
+            android:id="@+id/widget_turntable_play_pause"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="Play/Pause"
+            android:src="@drawable/widget_play_button_circular" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/widget_turntable_next_button"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Next"
+        android:src="@drawable/widget_play_button_circular" />
+
+</LinearLayout>

@@ -2554,7 +2554,7 @@ class MusicService :
 
         // Skip if this change was triggered by Cast sync (to prevent loops)
         if (castConnectionHandler?.isCasting?.value == true &&
-            castConnectionHandler?.isSyncingFromCast != true &&
+            castConnectionHandler?.isSyncingFromCast?.value != true &&
             mediaItem != null
         ) {
             val metadata = mediaItem.metadata
@@ -2563,7 +2563,7 @@ class MusicService :
                 // This avoids a full reload which causes the widget to refresh
                 val navigated = castConnectionHandler?.navigateToMediaIfInQueue(metadata.id) ?: false
                 if (!navigated) {
-                    castConnectionHandler?.loadMedia(metadata)
+                    castConnectionHandler?.loadMedia(metadata.id)
                 }
             }
         }

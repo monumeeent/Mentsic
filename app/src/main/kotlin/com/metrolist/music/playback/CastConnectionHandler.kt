@@ -19,6 +19,7 @@ class CastConnectionHandler(
     val castDuration: StateFlow<Long> = MutableStateFlow(0L).asStateFlow()
     val castIsPlaying: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
     val castIsBuffering: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+    val castVolume: StateFlow<Float> = MutableStateFlow(1f).asStateFlow()
 
     val isSyncingFromCast: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
 
@@ -32,4 +33,5 @@ class CastConnectionHandler(
     fun initialize() {}
     fun navigateToMediaIfInQueue(mediaId: String): Boolean = false
     fun loadMedia(mediaId: String) {}
+    fun setVolume(volume: Float) {}
 }
