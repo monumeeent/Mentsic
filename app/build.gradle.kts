@@ -25,7 +25,6 @@ val workflowDebugKeystoreFile = debugKeystorePathOverride?.let(::file)
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
