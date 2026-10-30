@@ -25,6 +25,7 @@ val workflowDebugKeystoreFile = debugKeystorePathOverride?.let(::file)
 
 plugins {
     id("com.android.application")
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
@@ -37,7 +38,9 @@ android {
     compileSdk = 37
 
     buildFeatures {
+        compose = true
         buildConfig = true
+        resValues = true
     }
 
     defaultConfig {
