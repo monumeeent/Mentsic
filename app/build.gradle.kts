@@ -37,6 +37,10 @@ android {
     namespace = "com.metrolist.music"
     compileSdk = 37
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = applicationIdOverride ?: baseApplicationId
         minSdk = 26
