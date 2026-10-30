@@ -11,4 +11,6 @@
 - When local compilation is requested, DO NOT execute it. Output the exact command for the user to copy-paste manually, then suggest pushing to GitHub instead:
   > "I will not run Gradle locally on this low-spec machine. If you wish to run it manually: `./gradlew assembleDebug`. Otherwise, please push to GitHub to trigger the CI build."
 
-# Codebase Architecture & UI Standards
+## Design System & UI Rules
+- Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
+- Do NOT hardcode colors or raw font sizes in new Composables; always use `MaterialTheme.colorScheme` and `MaterialTheme.typography`.
