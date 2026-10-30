@@ -14,3 +14,6 @@ Use native file tools or PowerShell equivalents.
 ## Design System & UI Rules
 - Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
 - Do NOT hardcode colors or raw font sizes in new Composables; always use `MaterialTheme.colorScheme` and `MaterialTheme.typography`.
+
+## Error Logging
+- Capture any encountered errors or build failures into `errornote.md` for future reference and troubleshooting.
