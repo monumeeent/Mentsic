@@ -25,6 +25,7 @@ val workflowDebugKeystoreFile = debugKeystorePathOverride?.let(::file)
 
 plugins {
     id("com.android.application")
+    alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
@@ -210,8 +211,6 @@ android {
         }
     }
 }
-
-apply(plugin = "com.google.dagger.hilt.android")
 
 protobuf {
     protoc {
