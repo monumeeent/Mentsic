@@ -2213,6 +2213,7 @@ fun HomeScreen(
                 }
                 }
             }
+            }
 
             HideOnScrollFAB(
                 visible = allLocalItems.isNotEmpty() || allYtItems.isNotEmpty(),
