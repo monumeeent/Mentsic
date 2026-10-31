@@ -96,7 +96,7 @@ fun NewReleaseScreen(
         if (newReleaseAlbums.isEmpty()) {
             items(8) {
                 ShimmerHost {
-                    GridItemPlaceHolder(fillMaxWidth = true)
+                    GridItemPlaceHolder(modifier = Modifier.fillMaxWidth())
                 }
             }
         }

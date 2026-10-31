@@ -23,7 +23,7 @@ class TurntableWidgetReceiver : AppWidgetProvider() {
         // Trigger update through MusicService if it's already running
         if (MusicService.isRunning) {
             val intent = Intent(context, MusicService::class.java).apply {
-                action = MusicService.ACTION_UPDATE_WIDGET
+                action = MusicWidgetReceiver.ACTION_UPDATE_WIDGET
             }
             try {
                 context.startService(intent)
@@ -42,7 +42,7 @@ class TurntableWidgetReceiver : AppWidgetProvider() {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
         if (MusicService.isRunning) {
             val intent = Intent(context, MusicService::class.java).apply {
-                action = MusicService.ACTION_UPDATE_WIDGET
+                action = MusicWidgetReceiver.ACTION_UPDATE_WIDGET
             }
             try {
                 context.startService(intent)

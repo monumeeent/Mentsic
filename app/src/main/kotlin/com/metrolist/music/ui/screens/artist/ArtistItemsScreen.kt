@@ -367,7 +367,7 @@ fun ArtistItemsScreen(
             if (itemsPage?.continuation != null) {
                 item(key = "loading") {
                     ShimmerHost(Modifier.animateItem()) {
-                        GridItemPlaceHolder(fillMaxWidth = true)
+                        GridItemPlaceHolder(modifier = Modifier.fillMaxWidth())
                     }
                 }
             }

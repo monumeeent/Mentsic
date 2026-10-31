@@ -79,7 +79,7 @@ fun YouTubeBrowseScreen(
         if (browseResult == null) {
             items(8) {
                 ShimmerHost {
-                    GridItemPlaceHolder(fillMaxWidth = true)
+                    GridItemPlaceHolder(modifier = Modifier.fillMaxWidth())
                 }
             }
         }

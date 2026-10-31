@@ -139,7 +139,7 @@ fun AccountScreen(
                 if (playlists == null) {
                     items(8) {
                         ShimmerHost {
-                            GridItemPlaceHolder(fillMaxWidth = true)
+                            GridItemPlaceHolder(modifier = Modifier.fillMaxWidth())
                         }
                     }
                 }
@@ -175,7 +175,7 @@ fun AccountScreen(
                 if (albums == null) {
                     items(8) {
                         ShimmerHost {
-                            GridItemPlaceHolder(fillMaxWidth = true)
+                            GridItemPlaceHolder(modifier = Modifier.fillMaxWidth())
                         }
                     }
                 }
@@ -211,7 +211,7 @@ fun AccountScreen(
                 if (artists == null) {
                     items(8) {
                         ShimmerHost {
-                            GridItemPlaceHolder(fillMaxWidth = true)
+                            GridItemPlaceHolder(modifier = Modifier.fillMaxWidth())
                         }
                     }
                 }

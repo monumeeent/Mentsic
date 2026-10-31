@@ -137,7 +137,7 @@ fun BrowseScreen(
             if (items.isEmpty()) {
                 items(8) {
                     ShimmerHost {
-                        GridItemPlaceHolder(fillMaxWidth = true)
+                        GridItemPlaceHolder(modifier = Modifier.fillMaxWidth())
                     }
                 }
             }

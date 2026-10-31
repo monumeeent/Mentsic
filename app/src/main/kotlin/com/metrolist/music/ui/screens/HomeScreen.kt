@@ -106,6 +106,7 @@ import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
 import com.metrolist.music.constants.HubFilter
+import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.HubModeEnabledKey
 import com.metrolist.music.constants.HubSelectedFilterKey
 import com.metrolist.music.constants.InnerTubeCookieKey
@@ -1297,7 +1298,6 @@ fun HomeScreen(
                         )
                     }
 
-                    }
                     if (isLoading && homePage?.sections.isNullOrEmpty()) {
                         item(key = "hub_loading_shimmer") {
                             ShimmerHost(
