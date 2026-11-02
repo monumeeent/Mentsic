@@ -122,6 +122,8 @@ import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.metrolist.music.ui.theme.PlayerColorExtractor
+import com.metrolist.music.ui.theme.AlphaDisabled
+import com.metrolist.music.ui.theme.AlphaSubtle
 
 /**
  * Stable wrapper for progress state - reads values only during draw phase
@@ -609,7 +611,7 @@ private fun NewMiniPlayerPlayButton(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f), CircleShape),
+                            .background(Color.Black.copy(alpha = AlphaDisabled), CircleShape),
                 )
                 Icon(
                     painter =
@@ -1064,7 +1066,7 @@ private fun SubscribeButton(
                     color = if (isSubscribed) primaryColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
                     shape = CircleShape,
                 ).background(
-                    color = if (isSubscribed) primaryColor.copy(alpha = 0.1f) else Color.Transparent,
+                    color = if (isSubscribed) primaryColor.copy(alpha = AlphaSubtle) else Color.Transparent,
                     shape = CircleShape,
                 ).clickable {
                     database.transaction {
@@ -1120,7 +1122,7 @@ private fun FavoriteButton(
                     color = if (isLiked) errorColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
                     shape = CircleShape,
                 ).background(
-                    color = if (isLiked) errorColor.copy(alpha = 0.1f) else Color.Transparent,
+                    color = if (isLiked) errorColor.copy(alpha = AlphaSubtle) else Color.Transparent,
                     shape = CircleShape,
                 ).clickable { playerConnection.service.toggleLike() },
     ) {

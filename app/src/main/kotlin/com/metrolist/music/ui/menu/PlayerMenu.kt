@@ -71,6 +71,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.metrolist.music.ui.theme.AlphaDisabled
+import com.metrolist.music.ui.theme.AlphaSubtle
+import com.metrolist.music.ui.theme.LetterSpacingWide
 import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.C
 import androidx.media3.common.PlaybackParameters
@@ -1401,7 +1404,7 @@ fun ListenTogetherDialog(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = AlphaSubtle),
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -1422,7 +1425,7 @@ fun ListenTogetherDialog(
                                     style = MaterialTheme.typography.headlineLarge,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 6.sp,
+                                    letterSpacing = LetterSpacingWide,
                                 )
                             }
                             if (isHost) {
@@ -1958,7 +1961,7 @@ fun ListenTogetherDialog(
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                                color = MaterialTheme.colorScheme.error.copy(alpha = AlphaSubtle),
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,

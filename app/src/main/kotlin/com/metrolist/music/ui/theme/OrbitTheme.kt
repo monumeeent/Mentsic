@@ -11,7 +11,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 
 object OrbitColors {
     // Light theme colors - light surfaces, dark text
@@ -131,13 +130,17 @@ val orbitDarkColorScheme = darkColorScheme(
     inversePrimary = OrbitColors.inversePrimaryDark,
 )
 
+/**
+ * Applies the Orbit static palette to the receiver [ColorScheme], replacing all
+ * dynamic Material You colors with the predefined Orbit light/dark scheme.
+ *
+ * Seed precedence: when [isDark] is true the dark Orbit scheme is returned,
+ * otherwise the light one. This intentionally discards any dynamic seed color
+ * passed to [MetrolistTheme] in favour of the static Orbit palette, so callers
+ * should only invoke this when `enableOrbitTheme` is true.
+ */
 fun ColorScheme.applyOrbitTheme(isDark: Boolean): ColorScheme {
     return if (isDark) orbitDarkColorScheme else orbitLightColorScheme
-}
-
-@Composable
-fun getOrbitColorResource(id: Int): Color {
-    return colorResource(id)
 }
 
 @Composable
