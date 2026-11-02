@@ -32,6 +32,7 @@ import com.metrolist.innertube.models.ArtistItem
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.db.entities.SpeedDialItem
 import com.metrolist.music.db.entities.ArtistEntity
@@ -91,7 +92,7 @@ fun YouTubeArtistMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.radio),
                                             contentDescription = null,
-                                            modifier = Modifier.size(28.dp),
+                                            modifier = Modifier.size(IconSizes.Large),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     },
@@ -111,7 +112,7 @@ fun YouTubeArtistMenu(
                                 Icon(
                                     painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
                                     contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(IconSizes.Large),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             },
@@ -135,7 +136,7 @@ fun YouTubeArtistMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.share),
                                     contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(IconSizes.Large),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             },

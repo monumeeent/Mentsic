@@ -48,6 +48,7 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.LocalSyncUtils
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.db.entities.PlaylistSongMap
 import com.metrolist.music.db.entities.Song
@@ -298,7 +299,7 @@ fun SelectionSongMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.play),
                                         contentDescription = null,
-                                        modifier = Modifier.size(28.dp),
+                                        modifier = Modifier.size(IconSizes.Large),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 },
@@ -323,7 +324,7 @@ fun SelectionSongMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.shuffle),
                                         contentDescription = null,
-                                        modifier = Modifier.size(28.dp),
+                                        modifier = Modifier.size(IconSizes.Large),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 },
@@ -347,7 +348,7 @@ fun SelectionSongMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.playlist_add),
                                     contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(IconSizes.Large),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
@@ -524,7 +525,7 @@ fun SelectionSongMenu(
                                         title = { Text(text = stringResource(R.string.downloading)) },
                                         icon = {
                                             CircularProgressIndicator(
-                                                modifier = Modifier.size(24.dp),
+                                                modifier = Modifier.size(IconSizes.Medium),
                                                 strokeWidth = 2.dp,
                                             )
                                         },
@@ -943,7 +944,7 @@ fun SelectionMediaMetadataMenu(
                                         title = { Text(text = stringResource(R.string.downloading)) },
                                         icon = {
                                             CircularProgressIndicator(
-                                                modifier = Modifier.size(24.dp),
+                                                modifier = Modifier.size(IconSizes.Medium),
                                                 strokeWidth = 2.dp,
                                             )
                                         },

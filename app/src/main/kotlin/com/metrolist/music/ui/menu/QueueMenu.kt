@@ -58,6 +58,7 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.LocalSyncUtils
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.constants.ListItemHeight
 import com.metrolist.music.constants.ListThumbnailSize
@@ -269,7 +270,7 @@ fun QueueMenu(
                             Icon(
                                 painter = painterResource(R.drawable.radio),
                                 contentDescription = null,
-                                modifier = Modifier.size(28.dp),
+                                modifier = Modifier.size(IconSizes.Large),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
@@ -293,7 +294,7 @@ fun QueueMenu(
                             Icon(
                                 painter = painterResource(R.drawable.playlist_add),
                                 contentDescription = null,
-                                modifier = Modifier.size(28.dp),
+                                modifier = Modifier.size(IconSizes.Large),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
@@ -305,7 +306,7 @@ fun QueueMenu(
                             Icon(
                                 painter = painterResource(R.drawable.share),
                                 contentDescription = null,
-                                modifier = Modifier.size(28.dp),
+                                modifier = Modifier.size(IconSizes.Large),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
@@ -388,7 +389,7 @@ fun QueueMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.offline),
                                         contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(IconSizes.Medium)
                                     )
                                 },
                                 onClick = {
@@ -407,7 +408,7 @@ fun QueueMenu(
                                 title = { Text(text = stringResource(R.string.downloading)) },
                                 icon = {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(IconSizes.Medium),
                                         strokeWidth = 2.dp
                                     )
                                 },
@@ -430,7 +431,7 @@ fun QueueMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.download),
                                         contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(IconSizes.Medium)
                                     )
                                 },
                                 onClick = {
@@ -464,7 +465,7 @@ fun QueueMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.artist),
                                         contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(IconSizes.Medium)
                                     )
                                 },
                                 onClick = {
@@ -494,7 +495,7 @@ fun QueueMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.album),
                                         contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(IconSizes.Medium)
                                     )
                                 },
                                 onClick = {
@@ -549,7 +550,7 @@ fun QueueMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.info),
                                     contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(IconSizes.Medium)
                                 )
                             },
                             onClick = {

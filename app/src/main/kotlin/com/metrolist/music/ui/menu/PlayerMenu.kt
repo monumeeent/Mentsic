@@ -82,6 +82,7 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.constants.ListItemHeight
 import com.metrolist.music.constants.VarispeedKey
@@ -263,7 +264,7 @@ fun PlayerMenu(
                     Icon(
                         painter = painterResource(R.drawable.cast),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(IconSizes.Medium),
                         tint = MaterialTheme.colorScheme.primary,
                     )
                     Spacer(modifier = Modifier.width(10.dp))
@@ -322,7 +323,7 @@ fun PlayerMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.radio),
                                         contentDescription = null,
-                                        modifier = Modifier.size(32.dp),
+                                        modifier = Modifier.size(IconSizes.ExtraLarge),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 },
@@ -341,7 +342,7 @@ fun PlayerMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.playlist_add),
                                     contentDescription = null,
-                                    modifier = Modifier.size(32.dp),
+                                    modifier = Modifier.size(IconSizes.ExtraLarge),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
@@ -353,7 +354,7 @@ fun PlayerMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.link),
                                     contentDescription = null,
-                                    modifier = Modifier.size(32.dp),
+                                    modifier = Modifier.size(IconSizes.ExtraLarge),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
@@ -404,7 +405,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.artist),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -434,7 +435,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(if (isPodcast) R.drawable.mic else R.drawable.album),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -476,7 +477,7 @@ fun PlayerMenu(
                                                 },
                                             ),
                                         contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(IconSizes.Medium),
                                     )
                                 },
                                 onClick = {
@@ -496,7 +497,7 @@ fun PlayerMenu(
                                     Icon(
                                         painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
                                         contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(IconSizes.Medium),
                                     )
                                 },
                                 onClick = {
@@ -533,7 +534,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.offline),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -552,7 +553,7 @@ fun PlayerMenu(
                                     title = { Text(text = stringResource(R.string.downloading)) },
                                     icon = {
                                         CircularProgressIndicator(
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                             strokeWidth = 2.dp,
                                         )
                                     },
@@ -574,7 +575,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.download),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -602,7 +603,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.group),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                         if (pendingSuggestions.isNotEmpty()) {
                                             Surface(
@@ -634,7 +635,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.replay),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -662,7 +663,7 @@ fun PlayerMenu(
                                     Icon(
                                         painter = painterResource(R.drawable.info),
                                         contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(IconSizes.Medium),
                                     )
                                 },
                                 onClick = {
@@ -681,7 +682,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.equalizer),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -698,7 +699,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.graphic_eq),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -725,7 +726,7 @@ fun PlayerMenu(
                                         Icon(
                                             painter = painterResource(R.drawable.tune),
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     },
                                     onClick = {
@@ -880,7 +881,7 @@ fun <T> ValueAdjuster(
         Icon(
             painter = painterResource(icon),
             contentDescription = null,
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(IconSizes.Large),
         )
 
         IconButton(
@@ -943,7 +944,7 @@ fun ListenTogetherDialog(
                         painter = painterResource(R.drawable.group),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(IconSizes.AvatarLarge),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -1021,7 +1022,7 @@ fun ListenTogetherDialog(
                         painter = painterResource(R.drawable.group),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(IconSizes.XL3),
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
@@ -1067,7 +1068,7 @@ fun ListenTogetherDialog(
                             painter = painterResource(R.drawable.close),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(IconSizes.Medium),
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -1117,7 +1118,7 @@ fun ListenTogetherDialog(
                             painter = painterResource(R.drawable.close),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(IconSizes.Medium),
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -1164,7 +1165,7 @@ fun ListenTogetherDialog(
                             painter = painterResource(R.drawable.crown),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(IconSizes.Medium),
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -1249,7 +1250,7 @@ fun ListenTogetherDialog(
                     painter = painterResource(R.drawable.group),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(IconSizes.XL3),
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
@@ -1448,7 +1449,7 @@ fun ListenTogetherDialog(
                                         Icon(
                                             painter = painterResource(R.drawable.link),
                                             contentDescription = stringResource(R.string.copy_link),
-                                            modifier = Modifier.size(18.dp),
+                                            modifier = Modifier.size(IconSizes.Small),
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(stringResource(R.string.copy_link))
@@ -1470,7 +1471,7 @@ fun ListenTogetherDialog(
                                         Icon(
                                             painter = painterResource(R.drawable.content_copy),
                                             contentDescription = stringResource(R.string.copy_code),
-                                            modifier = Modifier.size(18.dp),
+                                            modifier = Modifier.size(IconSizes.Small),
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(stringResource(R.string.copy_code))
@@ -1526,7 +1527,7 @@ fun ListenTogetherDialog(
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Surface(
-                                            modifier = Modifier.size(52.dp),
+                                            modifier = Modifier.size(IconSizes.XL5),
                                             shape = RoundedCornerShape(50),
                                             color =
                                                 if (user.isHost) {
@@ -1579,7 +1580,7 @@ fun ListenTogetherDialog(
                                                             ),
                                                         contentDescription = null,
                                                         tint = MaterialTheme.colorScheme.onPrimary,
-                                                        modifier = Modifier.size(12.dp),
+                                                        modifier = Modifier.size(IconSizes.Tiny),
                                                     )
                                                 }
                                             }
@@ -1660,7 +1661,7 @@ fun ListenTogetherDialog(
                                     modifier = Modifier.weight(1f),
                                 ) {
                                     Surface(
-                                        modifier = Modifier.size(36.dp),
+                                        modifier = Modifier.size(IconSizes.XL2),
                                         shape = RoundedCornerShape(50),
                                         color = MaterialTheme.colorScheme.secondary,
                                     ) {
@@ -1692,7 +1693,7 @@ fun ListenTogetherDialog(
                                             painter = painterResource(R.drawable.check),
                                             contentDescription = stringResource(R.string.approve),
                                             tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     }
                                     IconButton(
@@ -1702,7 +1703,7 @@ fun ListenTogetherDialog(
                                             painter = painterResource(R.drawable.close),
                                             contentDescription = stringResource(R.string.reject),
                                             tint = MaterialTheme.colorScheme.error,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     }
                                 }
@@ -1750,7 +1751,7 @@ fun ListenTogetherDialog(
                                         painter = painterResource(R.drawable.queue_music),
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(IconSizes.Medium),
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
@@ -1779,7 +1780,7 @@ fun ListenTogetherDialog(
                                             painter = painterResource(R.drawable.check),
                                             contentDescription = stringResource(R.string.approve),
                                             tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     }
                                     IconButton(
@@ -1789,7 +1790,7 @@ fun ListenTogetherDialog(
                                             painter = painterResource(R.drawable.close),
                                             contentDescription = stringResource(R.string.reject),
                                             tint = MaterialTheme.colorScheme.error,
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(IconSizes.Medium),
                                         )
                                     }
                                 }
@@ -1831,7 +1832,7 @@ fun ListenTogetherDialog(
                             Icon(
                                 painter = painterResource(R.drawable.logout),
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(IconSizes.Small),
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.leave_room), fontWeight = FontWeight.SemiBold)
@@ -1939,7 +1940,7 @@ fun ListenTogetherDialog(
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(IconSizes.Small),
                                     strokeWidth = 2.dp,
                                     color = MaterialTheme.colorScheme.primary,
                                 )
@@ -1967,7 +1968,7 @@ fun ListenTogetherDialog(
                                     Icon(
                                         painterResource(R.drawable.error),
                                         contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
+                                        modifier = Modifier.size(IconSizes.Small),
                                         tint = MaterialTheme.colorScheme.error,
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -2025,7 +2026,7 @@ fun ListenTogetherDialog(
                             Icon(
                                 painter = painterResource(R.drawable.add),
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(IconSizes.Small),
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.create_room), fontWeight = FontWeight.SemiBold)
@@ -2064,7 +2065,7 @@ fun ListenTogetherDialog(
                                 Icon(
                                     painter = painterResource(R.drawable.login),
                                     contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(IconSizes.Small),
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(stringResource(R.string.join_room), fontWeight = FontWeight.SemiBold)

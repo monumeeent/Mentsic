@@ -271,6 +271,7 @@ private fun NewMiniPlayer(
                         val extracted = PlayerColorExtractor.extractGradientColors(
                             palette = palette,
                             fallbackColor = 0xFF000000.toInt(),
+                            darkColor = Color(0xFF000000),
                         )
                         withContext(Dispatchers.Main) {
                             gradientColors = extracted

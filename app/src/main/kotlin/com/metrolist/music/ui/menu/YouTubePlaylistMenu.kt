@@ -62,6 +62,7 @@ import com.metrolist.music.LocalArtistNameAliases
 import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.constants.ListThumbnailSize
 import com.metrolist.music.constants.ThumbnailCornerRadius
@@ -412,7 +413,7 @@ fun YouTubePlaylistMenu(
                                             Icon(
                                                 painter = painterResource(R.drawable.play),
                                                 contentDescription = null,
-                                                modifier = Modifier.size(28.dp),
+                                                modifier = Modifier.size(IconSizes.Large),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         },
@@ -431,7 +432,7 @@ fun YouTubePlaylistMenu(
                                             Icon(
                                                 painter = painterResource(R.drawable.shuffle),
                                                 contentDescription = null,
-                                                modifier = Modifier.size(28.dp),
+                                                modifier = Modifier.size(IconSizes.Large),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         },
@@ -450,7 +451,7 @@ fun YouTubePlaylistMenu(
                                             Icon(
                                                 painter = painterResource(R.drawable.radio),
                                                 contentDescription = null,
-                                                modifier = Modifier.size(28.dp),
+                                                modifier = Modifier.size(IconSizes.Large),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         },
@@ -615,7 +616,7 @@ fun YouTubePlaylistMenu(
                                             title = { Text(text = stringResource(R.string.downloading)) },
                                             icon = {
                                                 CircularProgressIndicator(
-                                                    modifier = Modifier.size(24.dp),
+                                                    modifier = Modifier.size(IconSizes.Medium),
                                                     strokeWidth = 2.dp,
                                                 )
                                             },

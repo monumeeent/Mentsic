@@ -36,6 +36,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.music.LocalDatabase
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.constants.AddToPlaylistPosition
 import com.metrolist.music.constants.AddToPlaylistPositionKey
@@ -272,7 +273,7 @@ fun AddToPlaylistDialogOnline(
                                     if (sortDescending) R.string.sort_descending else R.string.sort_ascending
                                 ),
                                 tint = arrowFg,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(IconSizes.Small)
                             )
                         }
                     }
@@ -428,7 +429,7 @@ fun AddToPlaylistDialogOnline(
                         Image(
                             painter = painterResource(id = R.drawable.favorite),
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier.size(IconSizes.XL3),
                             colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
                         )
                     },

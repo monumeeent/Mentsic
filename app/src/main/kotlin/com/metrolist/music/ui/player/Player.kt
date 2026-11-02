@@ -447,6 +447,7 @@ fun BottomSheetPlayer(
                                 PlayerColorExtractor.extractGradientColors(
                                     palette = palette,
                                     fallbackColor = fallbackColor,
+                                    darkColor = MaterialTheme.colorScheme.onSurface,
                                 )
                             gradientColorsCache[currentMetadata.id] = extractedColors
                             withContext(Dispatchers.Main) { gradientColors = extractedColors }

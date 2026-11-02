@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.metrolist.innertube.utils.parseCookieString
 import com.metrolist.music.LocalDatabase
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.constants.AddToPlaylistPosition
 import com.metrolist.music.constants.AddToPlaylistPositionKey
@@ -279,7 +280,7 @@ fun AddToPlaylistDialog(
                                     if (sortDescending) R.string.sort_descending else R.string.sort_ascending
                                 ),
                                 tint = arrowFg,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(IconSizes.Small)
                             )
                         }
                     }

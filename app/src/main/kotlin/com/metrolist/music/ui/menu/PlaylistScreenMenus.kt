@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.offline.Download
 import com.metrolist.music.LocalListenTogetherManager
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.db.entities.Playlist
 import com.metrolist.music.db.entities.PlaylistSong
@@ -93,7 +94,7 @@ fun LocalPlaylistMenu(
                     description = { Text(stringResource(R.string.download_in_progress_desc)) },
                     icon = {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(IconSizes.Medium),
                             strokeWidth = 2.dp,
                         )
                     },
@@ -352,7 +353,7 @@ fun AutoPlaylistMenu(
                     description = { Text(stringResource(R.string.download_in_progress_desc)) },
                     icon = {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(IconSizes.Medium),
                             strokeWidth = 2.dp,
                         )
                     },
@@ -532,7 +533,7 @@ fun TopPlaylistMenu(
                     description = { Text(stringResource(R.string.download_in_progress_desc)) },
                     icon = {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(IconSizes.Medium),
                             strokeWidth = 2.dp,
                         )
                     },
@@ -696,7 +697,7 @@ fun CachePlaylistMenu(
                     description = { Text(stringResource(R.string.download_in_progress_desc)) },
                     icon = {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(IconSizes.Medium),
                             strokeWidth = 2.dp,
                         )
                     },

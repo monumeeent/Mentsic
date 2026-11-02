@@ -12,6 +12,7 @@ object PlayerColorExtractor {
     fun extractGradientColors(
         palette: Palette,
         fallbackColor: Int,
+        darkColor: Color = Color(0xFF000000),
     ): List<Color> {
         val primaryColor = Color(palette.rankedColors(1, fallbackColor).first())
         return listOf(
@@ -21,7 +22,7 @@ object PlayerColorExtractor {
                 green = primaryColor.green * 0.6f,
                 blue = primaryColor.blue * 0.6f,
             ),
-            Color.Black,
+            darkColor,
         )
     }
 }

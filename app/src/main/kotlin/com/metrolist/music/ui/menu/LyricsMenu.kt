@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.metrolist.music.LocalDatabase
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
 import com.metrolist.music.db.entities.LyricsEntity
 import com.metrolist.music.db.entities.SongEntity
@@ -88,7 +89,7 @@ import com.metrolist.music.constants.OpenRouterModelKey
 import com.metrolist.music.constants.DeeplFormalityKey
 import com.metrolist.music.utils.rememberPreference
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // Stabilization tracking: remove once Material3 ListItem API stabilizes
 @Composable
 fun LyricsMenu(
     lyricsProvider: () -> LyricsEntity?,
@@ -396,7 +397,7 @@ fun LyricsMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.edit),
                                     contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(IconSizes.Large),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
@@ -410,7 +411,7 @@ fun LyricsMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.cached),
                                     contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(IconSizes.Large),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
@@ -425,7 +426,7 @@ fun LyricsMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.search),
                                     contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(IconSizes.Large),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
@@ -439,7 +440,7 @@ fun LyricsMenu(
                                 Icon(
                                     painter = painterResource(R.drawable.content_copy),
                                     contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(IconSizes.Large),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
