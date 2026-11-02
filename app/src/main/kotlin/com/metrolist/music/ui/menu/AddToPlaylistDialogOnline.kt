@@ -142,9 +142,9 @@ fun AddToPlaylistDialogOnline(
         if (!isVisible) {
             playlistsContainingSong = emptySet()
             return@LaunchedEffect
-            }
-                playlistsContainingSong = emptySet()
-                if (playlists.isNotEmpty()) {
+        }
+        playlistsContainingSong = emptySet()
+        if (playlists.isNotEmpty()) {
             withContext(Dispatchers.IO) {
                 val ids = songs.map { it.id }
                 playlistsContainingSong = playlists

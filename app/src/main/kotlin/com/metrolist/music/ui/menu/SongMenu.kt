@@ -6,7 +6,6 @@
 package com.metrolist.music.ui.menu
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -50,7 +49,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -125,7 +123,6 @@ fun SongMenu(
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
     val listenTogetherManager = LocalListenTogetherManager.current
-    val scope = rememberCoroutineScope()
     var refetchIconDegree by remember { mutableFloatStateOf(0f) }
 
     val cacheViewModel = hiltViewModel<CachePlaylistViewModel>()
@@ -133,7 +130,7 @@ fun SongMenu(
     val rotationAnimation by animateFloatAsState(
         targetValue = refetchIconDegree,
         animationSpec = tween(durationMillis = 800),
-        label = "",
+        label = "refetchRotation",
     )
 
     val isPinned by database.speedDialDao.isPinned(song.id).collectAsStateWithLifecycle(initialValue = false)
@@ -490,8 +487,6 @@ fun SongMenu(
     Spacer(modifier = Modifier.height(12.dp))
 
     val bottomSheetPageState = LocalBottomSheetPageState.current
-    val configuration = LocalConfiguration.current
-    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
     val isGuest = listenTogetherManager?.isInRoom == true && !listenTogetherManager.isHost
 
@@ -1107,7 +1102,7 @@ fun SongMenu(
                                 },
                                 onClick = {
                                     refetchIconDegree -= 360
-                                    scope.launch(Dispatchers.IO) {
+                                    coroutineScope.launch(Dispatchers.IO) {
                                         YouTube.queue(listOf(song.id)).onSuccess {
                                             val newSong = it.firstOrNull()
                                             if (newSong != null) {

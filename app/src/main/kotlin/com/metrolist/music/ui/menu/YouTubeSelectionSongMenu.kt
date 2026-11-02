@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -81,24 +82,24 @@ fun YouTubeSelectionSongMenu(
 
     // Check if all songs are liked
     val allLiked by remember(songSelection) {
-        mutableStateOf(
+        derivedStateOf {
             songSelection.isNotEmpty() &&
                 songSelection.all { song ->
                     // Convert to MediaMetadata to check liked status
                     val metadata = song.toMediaMetadata()
                     metadata.liked
-                },
-        )
+                }
+        }
     }
 
     // Check if all songs are in library
     val allInLibrary by remember(songSelection) {
-        mutableStateOf(
+        derivedStateOf {
             songSelection.all { song ->
                 val metadata = song.toMediaMetadata()
                 metadata.inLibrary != null
-            },
-        )
+            }
+        }
     }
 
     LaunchedEffect(songSelection) {
