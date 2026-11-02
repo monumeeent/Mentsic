@@ -1371,7 +1371,7 @@ fun ListenTogetherDialog(
                                 onClick = { listenTogetherManager.forceReconnect() },
                                 modifier = Modifier.weight(1f),
                             ) {
-                                Text("Reconnect", fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.reconnect), fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -1909,7 +1909,7 @@ fun ListenTogetherDialog(
                             value = roomCodeInput,
                             onValueChange = { roomCodeInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8) },
                             label = { Text(stringResource(R.string.room_code)) },
-                            placeholder = { Text("ABCD1234") },
+                            placeholder = { Text(stringResource(R.string.room_code_placeholder)) },
                             supportingText = {
                                 Text(
                                     text = "${roomCodeInput.length}/8",

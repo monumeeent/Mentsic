@@ -243,7 +243,7 @@ fun AlbumMenu(
                     }
                     Text(
                         text = artist.name,
-                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

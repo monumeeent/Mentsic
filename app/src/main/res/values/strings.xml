@@ -345,4 +345,7 @@
     <string name="new_version_available">New version available</string>
     <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
+    <string name="reconnect">Reconnect</string>
+    <string name="selection">Selection</string>
+    <string name="room_code_placeholder">ABCD1234</string>
 </resources>

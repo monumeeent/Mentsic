@@ -30,8 +30,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.metrolist.innertube.YouTube
@@ -440,7 +439,7 @@ fun AddToPlaylistDialogOnline(
             item {
                 Text(
                     text = stringResource(R.string.playlist_add_local_to_synced_note),
-                    fontSize = TextUnit(12F, TextUnitType.Sp),
+                    fontSize = 12.sp,
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )
             }

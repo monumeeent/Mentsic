@@ -16,6 +16,8 @@ val orbitInter = FontFamily(
     Font(R.font.inter, FontWeight(600)),
 )
 
+val orbitMono = FontFamily.Monospace
+
 val orbitDoto = FontFamily(
     Font(R.font.doto, FontWeight(400)),
     Font(R.font.doto, FontWeight(700)),
