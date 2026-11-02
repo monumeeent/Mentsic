@@ -84,6 +84,8 @@ fun SelectionSongMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val syncUtils = LocalSyncUtils.current
     val deletedNSongsTemplate = stringResource(R.string.deleted_n_songs)
+    val selectionTitle = stringResource(R.string.selection)
+d
     val listenTogetherManager = com.metrolist.music.LocalListenTogetherManager.current
     val isGuest = listenTogetherManager?.isInRoom == true && listenTogetherManager.isHost == false
 
@@ -313,7 +315,7 @@ fun SelectionSongMenu(
                                     onDismiss()
                                     playerConnection.playQueue(
                                         ListQueue(
-                                            title = stringResource(R.string.selection),
+                                            title = selectionTitle,
                                             items = songSelection.map { it.toMediaItem() },
                                         ),
                                     )
@@ -338,7 +340,7 @@ fun SelectionSongMenu(
                                     onDismiss()
                                     playerConnection.playQueue(
                                         ListQueue(
-                                            title = stringResource(R.string.selection),
+                                            title = selectionTitle,
                                             items = songSelection.shuffled().map { it.toMediaItem() },
                                         ),
                                     )
@@ -402,7 +404,7 @@ fun SelectionSongMenu(
                                         onDismiss()
                                         playerConnection.playQueue(
                                             ListQueue(
-                                                title = stringResource(R.string.selection),
+                                                title = selectionTitle,
                                                 items = songSelection.shuffled().map { it.toMediaItem() },
                                             ),
                                         )
@@ -671,6 +673,8 @@ fun SelectionMediaMetadataMenu(
     val listenTogetherManager = com.metrolist.music.LocalListenTogetherManager.current
     val isGuest = listenTogetherManager?.isInRoom == true && listenTogetherManager.isHost == false
 
+    val selectionTitle = stringResource(R.string.selection)
+
     val allLiked by remember(songSelection) {
         mutableStateOf(songSelection.isNotEmpty() && songSelection.all { it.liked })
     }
@@ -814,7 +818,7 @@ fun SelectionMediaMetadataMenu(
                                         onDismiss()
                                         playerConnection.playQueue(
                                             ListQueue(
-                                                title = stringResource(R.string.selection),
+                                                title = selectionTitle,
                                                 items = songSelection.map { it.toMediaItem() },
                                             ),
                                         )
@@ -835,7 +839,7 @@ fun SelectionMediaMetadataMenu(
                                         onDismiss()
                                         playerConnection.playQueue(
                                             ListQueue(
-                                                title = stringResource(R.string.selection),
+                                                title = selectionTitle,
                                                 items = songSelection.shuffled().map { it.toMediaItem() },
                                             ),
                                         )
