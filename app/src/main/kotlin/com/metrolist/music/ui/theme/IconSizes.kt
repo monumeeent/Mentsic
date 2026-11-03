@@ -21,4 +21,5 @@ object IconSizes {
     val XL3: Dp = 40.dp
     val XL4: Dp = 48.dp
     val XL5: Dp = 52.dp
+    val AvatarLarge: Dp = 48.dp
 }

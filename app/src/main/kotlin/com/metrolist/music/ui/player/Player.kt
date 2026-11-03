@@ -411,6 +411,7 @@ fun BottomSheetPlayer(
 
     val defaultGradientColors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
     val fallbackColor = MaterialTheme.colorScheme.surface.toArgb()
+    val darkGradientColor = MaterialTheme.colorScheme.onSurface
 
     LaunchedEffect(mediaMetadata?.id, playerBackground) {
         if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
@@ -447,7 +448,7 @@ fun BottomSheetPlayer(
                                 PlayerColorExtractor.extractGradientColors(
                                     palette = palette,
                                     fallbackColor = fallbackColor,
-                                    darkColor = MaterialTheme.colorScheme.onSurface,
+                                    darkColor = darkGradientColor,
                                 )
                             gradientColorsCache[currentMetadata.id] = extractedColors
                             withContext(Dispatchers.Main) { gradientColors = extractedColors }
