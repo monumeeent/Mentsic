@@ -102,10 +102,16 @@ internal fun Palette.rankedColors(
     true,
 )
 
-fun ColorScheme.pureBlack(apply: Boolean) =
+fun ColorScheme.pureBlack(apply: Boolean): ColorScheme =
     if (apply) copy(
         surface = Color.Black,
         background = Color.Black,
+        surfaceContainerLowest = Color.Black,
+        surfaceContainerLow = Color(0xFF080808),
+        surfaceContainer = Color(0xFF101010),
+        surfaceContainerHigh = Color(0xFF161616),
+        surfaceContainerHighest = Color(0xFF1E1E1E),
+        surfaceDim = Color.Black,
     ) else this
 
 val ColorSaver = object : Saver<Color, Int> {

@@ -424,8 +424,10 @@ fun QuickPicksSection(
                     modifier =
                         Modifier
                             .width(horizontalLazyGridItemWidth)
+                            .clip(RoundedCornerShape(12.dp))
                             .combinedClickable(
                                 onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
                                     if (!isListenTogetherGuest) {
                                         if (song!!.id == mediaMetadataId) {
                                             playerConnection?.togglePlayPause()
@@ -803,8 +805,10 @@ fun ForgottenFavoritesSection(
                     modifier =
                         Modifier
                             .width(horizontalLazyGridItemWidth)
+                            .clip(RoundedCornerShape(12.dp))
                             .combinedClickable(
                                 onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
                                     if (!isListenTogetherGuest) {
                                         if (song!!.id == mediaMetadataId) {
                                             playerConnection?.togglePlayPause()

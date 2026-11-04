@@ -22,10 +22,13 @@ import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
@@ -1359,41 +1362,85 @@ class MainActivity : FragmentActivity() {
                                     enterTransition = {
                                         val currentRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
+                                        val motionEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 
-                                        if (currentRouteIndex == -1 || currentRouteIndex > previousRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                        if (currentRouteIndex != -1 && previousRouteIndex != -1) {
+                                            val forward = currentRouteIndex > previousRouteIndex
+                                            slideInHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                initialOffsetX = { if (forward) it / 4 else -it / 4 },
+                                            ) + fadeIn(tween(220, easing = motionEasing))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                initialOffsetX = { it / 5 },
+                                            ) + scaleIn(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                initialScale = 0.96f,
+                                            ) + fadeIn(tween(220, easing = motionEasing))
                                         }
                                     },
                                     exitTransition = {
                                         val currentRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
+                                        val motionEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 
-                                        if (targetRouteIndex == -1 || targetRouteIndex > currentRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                        if (currentRouteIndex != -1 && targetRouteIndex != -1) {
+                                            val forward = targetRouteIndex > currentRouteIndex
+                                            slideOutHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                targetOffsetX = { if (forward) -it / 4 else it / 4 },
+                                            ) + fadeOut(tween(200, easing = motionEasing))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                targetOffsetX = { -it / 5 },
+                                            ) + scaleOut(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                targetScale = 0.96f,
+                                            ) + fadeOut(tween(200, easing = motionEasing))
                                         }
                                     },
                                     popEnterTransition = {
                                         val currentRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
+                                        val motionEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 
-                                        if (previousRouteIndex != -1 && previousRouteIndex < currentRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                        if (previousRouteIndex != -1 && currentRouteIndex != -1) {
+                                            val forward = currentRouteIndex > previousRouteIndex
+                                            slideInHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                initialOffsetX = { if (forward) it / 4 else -it / 4 },
+                                            ) + fadeIn(tween(220, easing = motionEasing))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                initialOffsetX = { -it / 5 },
+                                            ) + scaleIn(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                initialScale = 0.96f,
+                                            ) + fadeIn(tween(220, easing = motionEasing))
                                         }
                                     },
                                     popExitTransition = {
                                         val currentRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
+                                        val motionEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 
-                                        if (currentRouteIndex != -1 && currentRouteIndex < targetRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                        if (currentRouteIndex != -1 && targetRouteIndex != -1) {
+                                            val forward = targetRouteIndex > currentRouteIndex
+                                            slideOutHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                targetOffsetX = { if (forward) -it / 4 else it / 4 },
+                                            ) + fadeOut(tween(200, easing = motionEasing))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                targetOffsetX = { it / 5 },
+                                            ) + scaleOut(
+                                                animationSpec = tween(320, easing = motionEasing),
+                                                targetScale = 0.96f,
+                                            ) + fadeOut(tween(200, easing = motionEasing))
                                         }
                                     },
                                     modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),

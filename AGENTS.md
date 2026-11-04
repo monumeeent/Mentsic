@@ -35,4 +35,24 @@
 ---
 
 ## 6. Error Logging
-* Capture any encountered errors, build failures, or debugging context into `errornote.md` for future reference and troubleshooting.
+* Capture any encountered errors, build failures, or debugging context into `tests/errornote.md` for future reference and troubleshooting.
+
+## 7. Skill Routing & Activation Matrix
+* Activate specific skills based on the exact nature of the task and user request:
+
+Core Engineering & System Maintenance
+- gravitas: Trigger for repository-changing engineering tasks (implementation, complex refactoring, bug fixes, code reviews). Enforces scoped reconnaissance, adaptive planning, requirement tracking, and evidence-backed verification.
+
+- ponytail: Trigger for concise, minimal-diff coding tasks. Use when asked to "be lazy", "keep it simple", "avoid over-engineering", or when implementing surgical single-file fixes with zero bloat.
+
+- reverse-engineer-anything: Trigger when analyzing compiled binaries, native artifacts, Electron/JS bundles, firmware, or browser runtimes to decompile code or trace behavior. Skip for standard source-code analysis.
+
+Design, UI/UX & Art Direction
+- design-taste-frontend: Trigger when building, reviewing, or restyling public-facing web pages, landing pages, marketing sites, or portfolios. Use when an interface looks generic, "AI-made", or sloppy, and requires high-end gallery-level art direction.
+
+- impeccable: Trigger when critique, auditing, or designing component-level UI/UX across web and mobile (dashboards, forms, settings screens, empty states, onboarding). Handles layout hierarchy, typography, motion, micro-copy, and DESIGN.md documentation.
+
+- ui-ux-pro-max: Trigger when needing design system intelligence, stack-specific layout rules, dark-mode palettes, color profiles, font pairings, chart choices, accessibility guidelines, or GSAP animation presets.
+
+## 8 Read Files
+- Read Only Necessary Files 

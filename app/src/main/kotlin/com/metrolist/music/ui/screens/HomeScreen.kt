@@ -598,7 +598,7 @@ fun DailyDiscoverCard(
                             ),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
