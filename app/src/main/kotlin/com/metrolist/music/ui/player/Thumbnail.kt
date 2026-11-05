@@ -189,8 +189,9 @@ private fun getMediaItems(
 private fun getTextColor(playerBackground: PlayerBackgroundStyle): Color {
     return when (playerBackground) {
         PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.onBackground
-        PlayerBackgroundStyle.BLUR -> Color.White
-        PlayerBackgroundStyle.GRADIENT -> Color.White
+        PlayerBackgroundStyle.BLUR -> MaterialTheme.colorScheme.onSurface
+        PlayerBackgroundStyle.GRADIENT -> MaterialTheme.colorScheme.onSurface
+        PlayerBackgroundStyle.GLASS -> MaterialTheme.colorScheme.onSurface
     }
 }
 
@@ -652,12 +653,12 @@ private fun SeekEffectOverlay(
 ) {
     Text(
         text = seekDirection,
-        color = Color.White,
+        color = MaterialTheme.colorScheme.onSurface,
         fontSize = 16.sp,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
         modifier = modifier
-            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
             .padding(8.dp)
     )
 }

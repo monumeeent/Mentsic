@@ -16,7 +16,8 @@
 ---
 
 ## 3. Missing File & Resource Handling Rule
-* When a build error indicates missing files, layouts, or resources, **never run exploratory shell commands** (such as `git log`, recursive file searches, or deep directory listings) to investigate or locate them.
+* When a build error indicates missing files, layouts, or resources, **never run exploratory shell commands** (such as `git `, recursive file searches, or deep directory listings) to investigate or locate them.
+* Do not Run Git Command Ask The User Instead. 
 * Always assume the file is missing, and **immediately ask the user to provide the correct file path or directory** instead of guessing or searching through git history.
 
 ---
@@ -56,3 +57,6 @@ Design, UI/UX & Art Direction
 
 ## 8 Read Files
 - Read Only Necessary Files 
+
+## 9 Full Project in Simple 
+- Read `rea.md`

@@ -535,10 +535,10 @@ fun DailyDiscoverCard(
                                     Brush.verticalGradient(
                                         colors =
                                             listOf(
-                                                Color.Black.copy(alpha = 0.3f),
+                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                                                 Color.Transparent,
-                                                Color.Black.copy(alpha = 0.6f),
-                                                Color.Black.copy(alpha = 0.9f),
+                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
                                             ),
                                     ),
                             ),
@@ -555,7 +555,7 @@ fun DailyDiscoverCard(
                         Text(
                             text = dailyDiscover.recommendation.title,
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
                             text =
@@ -572,7 +572,7 @@ fun DailyDiscoverCard(
                                     }
                                 },
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         )
                     }
 

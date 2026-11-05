@@ -24,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -55,21 +54,14 @@ fun AppNavigationRail(
     currentRoute: String?,
     onItemClick: (Screens, Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    pureBlack: Boolean = false,
     onSearchLongClick: (() -> Unit)? = null,
     onHomeLongHold: (() -> Unit)? = null,
 ) {
-    val containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
-    val selectedIconColor =
-    if (pureBlack) MaterialTheme.colorScheme.primary
-    else MaterialTheme.colorScheme.onPrimaryContainer
-val unselectedIconColor =
-    if (pureBlack) Color.White.copy(alpha = 0.72f)
-    else MaterialTheme.colorScheme.onSurfaceVariant
-val indicatorColor =
-    if (pureBlack) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
-    else MaterialTheme.colorScheme.primaryContainer
-	val haptics = LocalHapticFeedback.current
+    val containerColor = MaterialTheme.colorScheme.surfaceContainer
+    val selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+    val unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val indicatorColor = MaterialTheme.colorScheme.primaryContainer
+    val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
 
     NavigationRail(
@@ -162,13 +154,12 @@ fun AppNavigationBar(
     currentRoute: String?,
     onItemClick: (Screens, Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    pureBlack: Boolean = false,
     slimNav: Boolean = false,
     onSearchLongClick: (() -> Unit)? = null,
     onHomeLongHold: (() -> Unit)? = null,
 ) {
-    val containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
-    val contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+    val containerColor = MaterialTheme.colorScheme.surfaceContainer
+    val contentColor = MaterialTheme.colorScheme.onSurfaceVariant
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
 
@@ -217,29 +208,13 @@ fun AppNavigationBar(
             }
 
             NavigationBarItem(
-			colors = NavigationBarItemDefaults.colors(
-    selectedIconColor = if (pureBlack) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    },
-    selectedTextColor = if (pureBlack) {
-        Color.White
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    },
-    unselectedIconColor = if (pureBlack) {
-        Color.White.copy(alpha = 0.72f)
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    },
-    unselectedTextColor = contentColor.copy(alpha = 0.8f),
-    indicatorColor = if (pureBlack) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
-    } else {
-        MaterialTheme.colorScheme.primaryContainer
-    },
-),
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                ),
                 selected = isSelected,
                 onClick = {
                     if (!isSearchItem && !isHomeHoldItem) {

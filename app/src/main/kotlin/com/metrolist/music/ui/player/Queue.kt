@@ -1180,13 +1180,7 @@ fun Queue(
             modifier =
                 Modifier
                     .background(
-                        if (pureBlack) {
-                            Color.Black
-                        } else {
-                            MaterialTheme.colorScheme
-                                .secondaryContainer
-                                .copy(alpha = 0.90f)
-                        },
+                        MaterialTheme.colorScheme.surface,
                     ).fillMaxWidth()
                     .height(
                         ListItemHeight +
@@ -1327,8 +1321,8 @@ private fun PlayerQueueButton(
                     iconButtonColor
                 } else {
                     when (playerBackground) {
-                        PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
-                            Color.White
+                        PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLASS -> {
+                            MaterialTheme.colorScheme.onSurface
                         }
 
                         PlayerBackgroundStyle.DEFAULT -> {
