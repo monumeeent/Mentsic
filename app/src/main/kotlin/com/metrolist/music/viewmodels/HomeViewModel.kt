@@ -111,6 +111,8 @@ class HomeViewModel @Inject constructor(
     val communityPlaylists = MutableStateFlow<List<CommunityPlaylistItem>?>(null)
     val selectedChip = MutableStateFlow<HomePage.Chip?>(null)
     private val previousHomePage = MutableStateFlow<HomePage?>(null)
+    val accountName = MutableStateFlow("Guest")
+    val accountImageUrl = MutableStateFlow<String?>(null)
 
     // Official API data for podcast sections
     val savedPodcastShows = MutableStateFlow<List<com.metrolist.innertube.models.PodcastItem>>(emptyList())
@@ -178,77 +180,86 @@ class HomeViewModel @Inject constructor(
             )
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    /**
-     * Consolidated UI state observable.
-     *
-     * Combines all individual state flows into a single [HomeDashboardState] snapshot.
-     * [HomeScreen] collects this once with `collectAsStateWithLifecycle`, replacing the
-     * 14 individual collectors and removing the risk of split-state recompositions.
-     *
-     * Hot flow — shared with WhileSubscribed(5_000) so the combine chain is torn down
-     * 5 s after the last subscriber unsubscribes (e.g., when the app is backgrounded).
-     */
-    /**
-     * Consolidated UI state observable built by zipping the two halves so we stay
-     * within the 6-arg typed [combine] limit on each side.
-     *
-     * Half A: content data   (quickPicks … communityPlaylists)
-     * Half B: pages + flags  (homePage … isRandomizing)
-     */
-    private val _uiStateHalfA =
+    private data class FeedGroup(
+        val quickPicks: List<Song>?,
+        val forgottenFavorites: List<Song>?,
+        val keepListening: List<LocalItem>?,
+        val dailyDiscover: List<DailyDiscoverItem>?,
+        val similarRecommendations: List<SimilarRecommendation>?,
+    )
+
+    private data class PageGroup(
+        val homePage: HomePage?,
+        val explorePage: ExplorePage?,
+        val accountPlaylists: List<PlaylistItem>?,
+        val communityPlaylists: List<CommunityPlaylistItem>?,
+    )
+
+    private data class StatusGroup(
+        val accountName: String,
+        val accountImageUrl: String?,
+        val isLoading: Boolean,
+        val isRefreshing: Boolean,
+        val isRandomizing: Boolean,
+    )
+
+    private val _feedGroup =
         combine(
             quickPicks,
             forgottenFavorites,
             keepListening,
-            speedDialItems,
-            pinnedSpeedDialItems,
             dailyDiscover,
-        ) { qp, ff, kl, sd, psd, dd ->
-            listOf(qp, ff, kl, sd, psd, dd)
+            similarRecommendations,
+        ) { qp, ff, kl, dd, sim ->
+            FeedGroup(qp, ff, kl, dd, sim)
         }
 
-    private val _uiStateHalfB =
+    private val _pageGroup =
         combine(
-            similarRecommendations,
-            accountPlaylists,
-            communityPlaylists,
             homePage,
             explorePage,
-            accountName,
-        ) { sim, ap, cp, hp, ep, an ->
-            listOf(sim, ap, cp, hp, ep, an)
+            accountPlaylists,
+            communityPlaylists,
+        ) { hp, ep, ap, cp ->
+            PageGroup(hp, ep, ap, cp)
         }
 
-    private val _uiStateHalfC =
+    private val _statusGroup =
         combine(
+            accountName,
             accountImageUrl,
             isLoading,
             isRefreshing,
             isRandomizing,
-        ) { aiu, il, ir, irz ->
-            listOf(aiu, il, ir, irz)
+        ) { an, aiu, il, ir, irz ->
+            StatusGroup(an, aiu, il, ir, irz)
         }
 
     val uiState: StateFlow<HomeDashboardState> =
-        combine(_uiStateHalfA, _uiStateHalfB, _uiStateHalfC) { a, b, c ->
-            @Suppress("UNCHECKED_CAST")
+        combine(
+            _feedGroup,
+            _pageGroup,
+            _statusGroup,
+            speedDialItems,
+            pinnedSpeedDialItems,
+        ) { feed, page, status, speedDial, pinnedSpeedDial ->
             HomeDashboardState(
-                quickPicks = a[0] as List<com.metrolist.music.db.entities.Song>?,
-                forgottenFavorites = a[1] as List<com.metrolist.music.db.entities.Song>?,
-                keepListening = a[2] as List<com.metrolist.music.db.entities.LocalItem>?,
-                speedDialItems = a[3] as List<com.metrolist.innertube.models.YTItem>,
-                pinnedSpeedDialItems = a[4] as List<com.metrolist.music.db.entities.SpeedDialItem>,
-                dailyDiscover = a[5] as List<DailyDiscoverItem>?,
-                similarRecommendations = b[0] as List<com.metrolist.music.models.SimilarRecommendation>?,
-                accountPlaylists = b[1] as List<com.metrolist.innertube.models.YTItem>?,
-                communityPlaylists = b[2] as List<CommunityPlaylistItem>?,
-                homePage = b[3] as com.metrolist.innertube.pages.HomePage?,
-                explorePage = b[4] as com.metrolist.innertube.pages.ExplorePage?,
-                accountName = b[5] as String,
-                accountImageUrl = c[0] as String?,
-                isLoading = c[1] as Boolean,
-                isRefreshing = c[2] as Boolean,
-                isRandomizing = c[3] as Boolean,
+                quickPicks = feed.quickPicks,
+                forgottenFavorites = feed.forgottenFavorites,
+                keepListening = feed.keepListening,
+                dailyDiscover = feed.dailyDiscover,
+                similarRecommendations = feed.similarRecommendations,
+                homePage = page.homePage,
+                explorePage = page.explorePage,
+                accountPlaylists = page.accountPlaylists,
+                communityPlaylists = page.communityPlaylists,
+                accountName = status.accountName,
+                accountImageUrl = status.accountImageUrl,
+                isLoading = status.isLoading,
+                isRefreshing = status.isRefreshing,
+                isRandomizing = status.isRandomizing,
+                speedDialItems = speedDial,
+                pinnedSpeedDialItems = pinnedSpeedDial,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -321,9 +332,6 @@ class HomeViewModel @Inject constructor(
             isRandomizing.value = false
         }
     }
-
-    val accountName = MutableStateFlow("Guest")
-    val accountImageUrl = MutableStateFlow<String?>(null)
 
     private suspend fun getDailyDiscover() {
         val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
