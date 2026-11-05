@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.screens
 import androidx.room.withTransaction
+import com.metrolist.music.ui.screens.home.models.HomeDashboardState
 import java.util.Calendar
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
@@ -626,37 +627,38 @@ fun HomeScreen(
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
-    val quickPicks by viewModel.quickPicks.collectAsStateWithLifecycle()
-    val forgottenFavorites by viewModel.forgottenFavorites.collectAsStateWithLifecycle()
-    val keepListening by viewModel.keepListening.collectAsStateWithLifecycle()
-    val similarRecommendations by viewModel.similarRecommendations.collectAsStateWithLifecycle()
-    val accountPlaylists by viewModel.accountPlaylists.collectAsStateWithLifecycle()
-    val homePage by viewModel.homePage.collectAsStateWithLifecycle()
-    val explorePage by viewModel.explorePage.collectAsStateWithLifecycle()
-    val dailyDiscover by viewModel.dailyDiscover.collectAsStateWithLifecycle()
-    val communityPlaylists by viewModel.communityPlaylists.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val quickPicks = uiState.quickPicks
+    val forgottenFavorites = uiState.forgottenFavorites
+    val keepListening = uiState.keepListening
+    val similarRecommendations = uiState.similarRecommendations
+    val accountPlaylists = uiState.accountPlaylists
+    val homePage = uiState.homePage
+    val explorePage = uiState.explorePage
+    val dailyDiscover = uiState.dailyDiscover
+    val communityPlaylists = uiState.communityPlaylists
 
     val allLocalItems by viewModel.allLocalItems.collectAsStateWithLifecycle()
     val allYtItems by viewModel.allYtItems.collectAsStateWithLifecycle()
-    val speedDialItems by viewModel.speedDialItems.collectAsStateWithLifecycle()
-    val pinnedSpeedDialItems by viewModel.pinnedSpeedDialItems.collectAsStateWithLifecycle()
+    val speedDialItems = uiState.speedDialItems
+    val pinnedSpeedDialItems = uiState.pinnedSpeedDialItems
     val selectedChip by viewModel.selectedChip.collectAsStateWithLifecycle()
 
     // Official podcast API data
     val savedPodcastShows by viewModel.savedPodcastShows.collectAsStateWithLifecycle()
     val episodesForLater by viewModel.episodesForLater.collectAsStateWithLifecycle()
 
-    val isLoading: Boolean by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isLoading = uiState.isLoading
     val isMoodAndGenresLoading = isLoading && explorePage?.moodAndGenres == null
-    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val isRandomizing by viewModel.isRandomizing.collectAsStateWithLifecycle()
+    val isRefreshing = uiState.isRefreshing
+    val isRandomizing = uiState.isRandomizing
     val pullRefreshState = rememberPullToRefreshState()
 
     val quickPicksLazyGridState = rememberLazyGridState()
     val forgottenFavoritesLazyGridState = rememberLazyGridState()
 
-    val accountName by viewModel.accountName.collectAsStateWithLifecycle()
-    val accountImageUrl by viewModel.accountImageUrl.collectAsStateWithLifecycle()
+    val accountName = uiState.accountName
+    val accountImageUrl = uiState.accountImageUrl
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
     val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)

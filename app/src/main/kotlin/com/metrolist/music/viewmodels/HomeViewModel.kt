@@ -15,6 +15,7 @@ import com.metrolist.innertube.models.ArtistItem
 import com.metrolist.innertube.models.PlaylistItem
 import com.metrolist.innertube.models.SongItem
 import kotlinx.coroutines.flow.combine
+import com.metrolist.music.ui.screens.home.models.HomeDashboardState
 import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.innertube.models.BrowseEndpoint
 import com.metrolist.innertube.models.YTItem
@@ -176,6 +177,84 @@ class HomeViewModel @Inject constructor(
                 home = home?.sections.orEmpty().flatMap { it.items },
             )
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    /**
+     * Consolidated UI state observable.
+     *
+     * Combines all individual state flows into a single [HomeDashboardState] snapshot.
+     * [HomeScreen] collects this once with `collectAsStateWithLifecycle`, replacing the
+     * 14 individual collectors and removing the risk of split-state recompositions.
+     *
+     * Hot flow — shared with WhileSubscribed(5_000) so the combine chain is torn down
+     * 5 s after the last subscriber unsubscribes (e.g., when the app is backgrounded).
+     */
+    /**
+     * Consolidated UI state observable built by zipping the two halves so we stay
+     * within the 6-arg typed [combine] limit on each side.
+     *
+     * Half A: content data   (quickPicks … communityPlaylists)
+     * Half B: pages + flags  (homePage … isRandomizing)
+     */
+    private val _uiStateHalfA =
+        combine(
+            quickPicks,
+            forgottenFavorites,
+            keepListening,
+            speedDialItems,
+            pinnedSpeedDialItems,
+            dailyDiscover,
+        ) { qp, ff, kl, sd, psd, dd ->
+            listOf(qp, ff, kl, sd, psd, dd)
+        }
+
+    private val _uiStateHalfB =
+        combine(
+            similarRecommendations,
+            accountPlaylists,
+            communityPlaylists,
+            homePage,
+            explorePage,
+            accountName,
+        ) { sim, ap, cp, hp, ep, an ->
+            listOf(sim, ap, cp, hp, ep, an)
+        }
+
+    private val _uiStateHalfC =
+        combine(
+            accountImageUrl,
+            isLoading,
+            isRefreshing,
+            isRandomizing,
+        ) { aiu, il, ir, irz ->
+            listOf(aiu, il, ir, irz)
+        }
+
+    val uiState: StateFlow<HomeDashboardState> =
+        combine(_uiStateHalfA, _uiStateHalfB, _uiStateHalfC) { a, b, c ->
+            @Suppress("UNCHECKED_CAST")
+            HomeDashboardState(
+                quickPicks = a[0] as List<com.metrolist.music.db.entities.Song>?,
+                forgottenFavorites = a[1] as List<com.metrolist.music.db.entities.Song>?,
+                keepListening = a[2] as List<com.metrolist.music.db.entities.LocalItem>?,
+                speedDialItems = a[3] as List<com.metrolist.innertube.models.YTItem>,
+                pinnedSpeedDialItems = a[4] as List<com.metrolist.music.db.entities.SpeedDialItem>,
+                dailyDiscover = a[5] as List<DailyDiscoverItem>?,
+                similarRecommendations = b[0] as List<com.metrolist.music.models.SimilarRecommendation>?,
+                accountPlaylists = b[1] as List<com.metrolist.innertube.models.YTItem>?,
+                communityPlaylists = b[2] as List<CommunityPlaylistItem>?,
+                homePage = b[3] as com.metrolist.innertube.pages.HomePage?,
+                explorePage = b[4] as com.metrolist.innertube.pages.ExplorePage?,
+                accountName = b[5] as String,
+                accountImageUrl = c[0] as String?,
+                isLoading = c[1] as Boolean,
+                isRefreshing = c[2] as Boolean,
+                isRandomizing = c[3] as Boolean,
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = HomeDashboardState.Loading,
+        )
 
     suspend fun getRandomItem(): YTItem? {
         try {
