@@ -84,7 +84,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    pureBlack: Boolean,
+    
     savedStateHandle: SavedStateHandle,
 ) {
     val navController = LocalNavController.current

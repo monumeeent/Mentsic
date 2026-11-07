@@ -864,7 +864,7 @@ private fun LegacyMiniPlayer(
                 mediaMetadata?.let {
                     LegacyMiniMediaInfo(
                         mediaMetadata = it,
-                        pureBlack = pureBlack,
+                        
                         modifier = Modifier.padding(horizontal = 6.dp),
                     )
                 }

@@ -159,7 +159,7 @@ fun ThemeScreen(
             innerPadding = PaddingValues(0.dp),
             darkMode = darkMode,
             onDarkModeChange = onDarkModeChange,
-            pureBlack = pureBlack,
+            
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
             onSelectedThemeColorChange = handleColorSelection,
@@ -171,7 +171,7 @@ fun ThemeScreen(
             innerPadding = PaddingValues(0.dp),
             darkMode = darkMode,
             onDarkModeChange = onDarkModeChange,
-            pureBlack = pureBlack,
+            
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
             onSelectedThemeColorChange = handleColorSelection,
@@ -221,7 +221,7 @@ fun PortraitThemeLayout(
         ) {
             ThemeMockupPortrait(
                 darkMode = darkMode,
-                pureBlack = pureBlack,
+                
                 themeColor = selectedThemeColor
             )
         }
@@ -231,7 +231,7 @@ fun PortraitThemeLayout(
         ThemeControls(
             darkMode = darkMode,
             onDarkModeChange = onDarkModeChange,
-            pureBlack = pureBlack,
+            
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
             onSelectedThemeColorChange = onSelectedThemeColorChange,
@@ -276,7 +276,7 @@ fun LandscapeThemeLayout(
             ) {
                 ThemeMockup(
                     darkMode = darkMode,
-                    pureBlack = pureBlack,
+                    
                     themeColor = selectedThemeColor
                 )
             }
@@ -292,7 +292,7 @@ fun LandscapeThemeLayout(
             ThemeControls(
                 darkMode = darkMode,
                 onDarkModeChange = onDarkModeChange,
-                pureBlack = pureBlack,
+                
                 onPureBlackChange = onPureBlackChange,
                 selectedThemeColor = selectedThemeColor,
                 onSelectedThemeColorChange = onSelectedThemeColorChange,
@@ -345,7 +345,7 @@ fun ThemeControls(
                     // System mode (AUTO)
                     ModeCircle(
                         darkMode = darkMode,
-                        pureBlack = pureBlack,
+                        
                         targetMode = DarkMode.AUTO,
                         targetPureBlack = pureBlack,
                         onClick = {
@@ -365,7 +365,7 @@ fun ThemeControls(
                     // Manual modes (Light, Dark, Pure Black)
                     ModeCircle(
                         darkMode = darkMode,
-                        pureBlack = pureBlack,
+                        
                         targetMode = DarkMode.OFF,
                         targetPureBlack = false,
                         onClick = {
@@ -377,7 +377,7 @@ fun ThemeControls(
                     
                     ModeCircle(
                         darkMode = darkMode,
-                        pureBlack = pureBlack,
+                        
                         targetMode = DarkMode.ON,
                         targetPureBlack = false,
                         onClick = {
@@ -389,7 +389,7 @@ fun ThemeControls(
                     
                     ModeCircle(
                         darkMode = darkMode,
-                        pureBlack = pureBlack,
+                        
                         targetMode = DarkMode.ON,
                         targetPureBlack = true,
                         onClick = {
@@ -728,7 +728,7 @@ fun ThemeMockup(
 
     MetrolistTheme(
         darkTheme = useDark,
-        pureBlack = pureBlack,
+        
         themeColor = themeColor
     ) {
         Card(
@@ -836,7 +836,7 @@ fun ThemeMockupPortrait(
 
     MetrolistTheme(
         darkTheme = useDark,
-        pureBlack = pureBlack,
+        
         themeColor = themeColor
     ) {
         Card(
