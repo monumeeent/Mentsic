@@ -16,27 +16,17 @@
 
 ## 3. Missing File & Resource Handling Rule
 * When a build error indicates missing files, layouts, or resources, **never run exploratory shell commands** (such as `git `, recursive file searches, or deep directory listings) to investigate or locate them.
-* Do not Run Git Command Ask The User Instead. 
+* Do not Run Git Command Ask The User Instead.
+* Do not Run `./gradlew :app:compileFossDebugKotlin 2>&1` . 
 * Always assume the file is missing, and **immediately ask the user to provide the correct file path or directory** instead of guessing or searching through git history.
 
 
 ## 4. Preferred CI/CD Workflow
 * **Verification Path:** Code edits $\rightarrow$ User commits/pushes $\rightarrow$ GitHub Actions workflow builds.
-* When local compilation is requested, **DO NOT** execute it(`./gradlew`). Output the exact command for the user to copy-paste manually, then suggest pushing to GitHub instead:
+* When local compilation is requested, **DO NOT** execute it. Output the exact command for the user to copy-paste manually, then suggest pushing to GitHub instead:
   > *"I will not run Gradle locally on this low-spec machine. If you wish to run it manually: `./gradlew assembleDebug`. Otherwise, please push to GitHub to trigger the CI build."*
 
 ## 5. Design System & UI Rules
 * Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
 * Do **NOT** hardcode colors or raw font sizes in new Composables; always use `MaterialTheme.colorScheme` and `MaterialTheme.typography`.
 
-## 6. Error Logging
-* Capture any encountered errors, build failures, or debugging context into `tests/errornote.md` for future reference and troubleshooting.
-
-## 7. Skill Routing & Activation Matrix
-* Activate specific skills based on the exact nature of the task and user request
-
-## 8 Read Files
-- Read Only Necessary Files 
-
-## 9 Full Project in Simple 
-- Read `rea.md`

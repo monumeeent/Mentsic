@@ -200,8 +200,8 @@ fun SearchScreen(
                                 .weight(1f)
                                 .height(52.dp),
                             shape = RoundedCornerShape(20.dp),
-                            color = if (pureBlack) {
-                                Color.Black
+                            color = if (false) {
+                                MaterialTheme.colorScheme.surfaceContainerHigh
                             } else {
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                             },
@@ -309,16 +309,16 @@ fun SearchScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (pureBlack) {
-                        Color.Black
+                    containerColor = if (false) {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
                     } else {
                         MaterialTheme.colorScheme.background
                     },
                 ),
             )
         },
-        containerColor = if (pureBlack) {
-            Color.Black
+        containerColor = if (false) {
+            MaterialTheme.colorScheme.surfaceContainerHigh
         } else {
             MaterialTheme.colorScheme.background
         },
