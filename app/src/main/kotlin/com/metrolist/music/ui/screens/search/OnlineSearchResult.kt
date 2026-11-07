@@ -563,7 +563,7 @@ fun OnlineSearchResult(
                         isSearchFocused = false
                         focusManager.clearFocus()
                     },
-                    pureBlack = pureBlack,
+                    
                 )
             }
             HideOnScrollFAB(

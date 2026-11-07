@@ -88,7 +88,7 @@ fun NavGraphBuilder.navigationBuilder(
                 pureBlackEnabled && useDarkTheme
             }
         SearchScreen(
-            pureBlack = pureBlack,
+            
             savedStateHandle = backStackEntry.savedStateHandle
         )
     }

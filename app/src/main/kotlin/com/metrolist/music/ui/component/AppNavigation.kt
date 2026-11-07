@@ -110,23 +110,11 @@ fun AppNavigationRail(
             }
 
             NavigationRailItem(
-colors = NavigationRailItemDefaults.colors(
-    selectedIconColor = if (pureBlack) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    },
-    unselectedIconColor = if (pureBlack) {
-        Color.White.copy(alpha = 0.72f)
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    },
-    indicatorColor = if (pureBlack) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
-    } else {
-        MaterialTheme.colorScheme.primaryContainer
-    },
-),
+                colors = NavigationRailItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                ),
                 selected = isSelected,
                 onClick = {
                     if (!isSearchItem && !isHomeHoldItem) {

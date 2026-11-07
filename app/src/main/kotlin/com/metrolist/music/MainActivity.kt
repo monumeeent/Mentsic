@@ -691,7 +691,6 @@ class MainActivity : FragmentActivity() {
 
         MetrolistTheme(
             darkTheme = useDarkTheme,
-            pureBlack = pureBlack,
             themeColor = themeColor,
             enableOrbitTheme = enableOrbitTheme,
         ) {
@@ -1218,7 +1217,7 @@ class MainActivity : FragmentActivity() {
                                         BottomSheetPlayer(
                                             state = playerBottomSheetState,
                                             navController = navController,
-                                            pureBlack = pureBlack,
+                                            
                                         )
                                     }
 
@@ -1226,7 +1225,6 @@ class MainActivity : FragmentActivity() {
                                         navigationItems = navigationItems,
                                         currentRoute = currentRoute,
                                         onItemClick = onNavItemClick,
-                                        pureBlack = pureBlack,
                                         slimNav = slimNav,
                                         onSearchLongClick = onSearchLongClick,
                                         onHomeLongHold = { showAccountDialog = true },
@@ -1280,7 +1278,7 @@ class MainActivity : FragmentActivity() {
                                         BottomSheetPlayer(
                                             state = playerBottomSheetState,
                                             navController = navController,
-                                            pureBlack = pureBlack,
+                                            
                                         )
                                     }
                                 }
@@ -1344,7 +1342,6 @@ class MainActivity : FragmentActivity() {
                                     navigationItems = navigationItems,
                                     currentRoute = currentRoute,
                                     onItemClick = onRailItemClick,
-                                    pureBlack = pureBlack,
                                     onSearchLongClick = onRailSearchLongClick,
                                     onHomeLongHold = { showAccountDialog = true },
                                 )
