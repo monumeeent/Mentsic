@@ -379,6 +379,7 @@ fun OnlineSearchScreen(
             SuggestionItem(
                 query = history.query,
                 online = false,
+pureBlack = pureBlack,
                 onClick = {
                     onSearch(history.query)
                     onDismiss()
@@ -398,6 +399,7 @@ fun OnlineSearchScreen(
 
         items(viewState.suggestions, key = { "suggestion_$it" }) { query ->
             SuggestionItem(
+pureBlack = pureBlack,
                 query = query,
                 online = true,
                 onClick = {
