@@ -30,3 +30,5 @@
 * Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
 * Do **NOT** hardcode colors or raw font sizes in new Composables; always use `MaterialTheme.colorScheme` and `MaterialTheme.typography`.
 
+## 6. Plan Write 
+* If we plan something and needs to be written append it in `implementation_plan.md`. 

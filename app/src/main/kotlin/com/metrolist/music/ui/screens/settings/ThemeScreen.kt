@@ -198,7 +198,7 @@ fun PortraitThemeLayout(
     innerPadding: PaddingValues,
     darkMode: DarkMode,
     onDarkModeChange: (DarkMode) -> Unit,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
     onSelectedThemeColorChange: (Color) -> Unit,
@@ -248,7 +248,8 @@ fun LandscapeThemeLayout(
     innerPadding: PaddingValues,
     darkMode: DarkMode,
     onDarkModeChange: (DarkMode) -> Unit,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
+    onPureBlackChange: (Boolean) -> Unit,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
     onSelectedThemeColorChange: (Color) -> Unit,
@@ -309,7 +310,8 @@ fun LandscapeThemeLayout(
 fun ThemeControls(
     darkMode: DarkMode,
     onDarkModeChange: (DarkMode) -> Unit,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
+    onPureBlackChange: (Boolean) -> Unit,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
     onSelectedThemeColorChange: (Color) -> Unit,
@@ -468,7 +470,7 @@ fun ThemeControls(
 @Composable
 fun ModeCircle(
     darkMode: DarkMode,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
     targetMode: DarkMode,
     targetPureBlack: Boolean,
     showIcon: Boolean,
@@ -716,7 +718,7 @@ fun PaletteItem(
 @Composable
 fun ThemeMockup(
     darkMode: DarkMode,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
     themeColor: Color
 ) {
     val isSystemDark = isSystemInDarkTheme()
@@ -824,7 +826,7 @@ fun ThemeMockup(
 @Composable
 fun ThemeMockupPortrait(
     darkMode: DarkMode,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
     themeColor: Color
 ) {
     val isSystemDark = isSystemInDarkTheme()

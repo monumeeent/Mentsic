@@ -345,6 +345,7 @@ fun SearchScreen(
                         onDismiss = {
                             // Don't dismiss when searching from suggestions.
                         },
+                        pureBlack = pureBlack,
                         
                     )
                 }

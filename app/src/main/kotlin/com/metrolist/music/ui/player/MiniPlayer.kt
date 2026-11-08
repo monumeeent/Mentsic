@@ -959,7 +959,7 @@ private fun LegacyPlayPauseButton(
 @Composable
 private fun LegacyMiniMediaInfo(
     mediaMetadata: MediaMetadata,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val error by LocalPlayerConnection.current?.error?.collectAsState() ?: remember { mutableStateOf(null) }

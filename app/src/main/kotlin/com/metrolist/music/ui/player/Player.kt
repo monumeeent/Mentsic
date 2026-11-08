@@ -208,7 +208,7 @@ fun BottomSheetPlayer(
     state: BottomSheetState,
     navController: NavController,
     modifier: Modifier = Modifier,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
 ) {
     val context = LocalContext.current
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

@@ -89,7 +89,7 @@ fun OnlineSearchScreen(
     onQueryChange: (TextFieldValue) -> Unit,
     onSearch: (String) -> Unit,
     onDismiss: () -> Unit,
-    pureBlack: Boolean,
+    pureBlack: Boolean = false,
     viewModel: OnlineSearchSuggestionViewModel = hiltViewModel(),
 ) {
     val navController = LocalNavController.current
