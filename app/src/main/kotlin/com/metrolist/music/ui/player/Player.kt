@@ -2008,7 +2008,7 @@ fun BottomSheetPlayer(
                 TextBackgroundColor = TextBackgroundColor,
                 textButtonColor = textButtonColor,
                 iconButtonColor = iconButtonColor,
-                
+                pureBlack = pureBlack,
                 showInlineLyrics = showInlineLyrics,
                 playerBackground = playerBackground,
                 onToggleLyrics = {

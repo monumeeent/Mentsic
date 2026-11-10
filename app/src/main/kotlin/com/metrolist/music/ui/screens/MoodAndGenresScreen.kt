@@ -31,8 +31,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.metrolist.music.R
 import com.metrolist.music.ui.component.mentsic.ConnectedButtonGroup
@@ -41,7 +43,7 @@ import com.metrolist.music.ui.component.mentsic.MentsicButtonType
 import com.metrolist.music.ui.component.mentsic.MentsicNavigationBar
 import com.metrolist.music.ui.theme.MentsicTheme
 
-const val MoodAndGenresButtonHeight = 48.dp
+val MoodAndGenresButtonHeight = 48.dp
 
 @Composable
 fun MoodAndGenresButton(
@@ -62,7 +64,7 @@ fun MoodAndGenresButton(
             text = title,
             style = MaterialTheme.typography.labelLarge,
             maxLines = 1,
-            overflow = androidx.compose.ui.text.TextOverflow.Ellipsis,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

@@ -80,7 +80,7 @@ fun MentsicChip(
         ) {
             if (isSelected) {
                 Icon(
-                    imageVector = Check,
+                    imageVector = Icons.Filled.Check,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,

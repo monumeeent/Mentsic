@@ -8,10 +8,13 @@
 
 package com.metrolist.music.ui.screens.mentsic
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,90 +24,134 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icons
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabPosition
-import androidx.compose.material3.Tabs
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.metrolist.music.R
 import com.metrolist.music.LocalPlayerConnection
+import com.metrolist.music.R
+import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.ui.component.mentsic.ConnectedButtonGroup
 import com.metrolist.music.ui.component.mentsic.MentsicButtonItem
 import com.metrolist.music.ui.component.mentsic.MentsicButtonType
 import com.metrolist.music.ui.component.mentsic.MentsicNavigationBar
 import com.metrolist.music.ui.theme.MentsicTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+private data class CommunityItem(
+    val title: String,
+    val subtitle: String,
+    @DrawableRes val iconRes: Int,
+    @DrawableRes val trailingRes: Int,
+)
+
 @Composable
 fun CommandHubScreen(
     onNavigateToHome: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    MentsicTheme(darkTheme = androidx.compose.foundation.isSystemInDarkTheme()) {
+    MentsicTheme(darkTheme = isSystemInDarkTheme()) {
         val haptics = LocalHapticFeedback.current
         val playerConnection = LocalPlayerConnection.current
-        val activeTab by remember { mutableStateOf(0) }
+        var activeTab by remember { mutableIntStateOf(0) }
 
         ScaffoldContent(
             haptics = haptics,
             playerConnection = playerConnection,
             activeTab = activeTab,
+            onTabSelected = { activeTab = it },
+            onNavigateToHome = onNavigateToHome,
+            modifier = modifier,
+        )
+    }
+}
+
 @Composable
 private fun ScaffoldContent(
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    playerConnection: com.metrolist.music.playback.PlayerConnection?,
+    haptics: HapticFeedback,
+    playerConnection: PlayerConnection?,
     activeTab: Int,
     onTabSelected: (Int) -> Unit,
     onNavigateToHome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Column(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             CommandHubTopBar(onNavigateToHome = onNavigateToHome)
-            Spacer(Modifier.height(16.dp))
-            CommandHubTabs(activeTab = activeTab, onTabSelected = onTabSelected)
-            Spacer(Modifier.height(16.dp))
-            CommandHubSpeedDialHeading()
-            Spacer(Modifier.height(8.dp))
-            CommandHubFocusButtons()
-            Spacer(Modifier.height(16.dp))
-            CommandHubActiveSessionHeading()
-            Spacer(Modifier.height(8.dp))
-            CommandHubActiveSessionCard()
-            Spacer(Modifier.height(16.dp))
-            CommandHubCommunityList()
-            Spacer(Modifier.height(24.dp))
-            CommandHubHeatmapCard()
-            Spacer(Modifier.height(24.dp))
-            CommandHubNavigationBar()
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                item {
+                    CommandHubTabs(activeTab = activeTab, onTabSelected = onTabSelected)
+                }
+                item {
+                    Spacer(Modifier.height(16.dp))
+                }
+                item {
+                    CommandHubSpeedDialHeading()
+                }
+                item {
+                    Spacer(Modifier.height(8.dp))
+                }
+                item {
+                    CommandHubFocusButtons()
+                }
+                item {
+                    Spacer(Modifier.height(16.dp))
+                }
+                item {
+                    CommandHubActiveSessionHeading()
+                }
+                item {
+                    Spacer(Modifier.height(8.dp))
+                }
+                item {
+                    CommandHubActiveSessionCard()
+                }
+                item {
+                    Spacer(Modifier.height(16.dp))
+                }
+                item {
+                    CommandHubCommunityList()
+                }
+                item {
+                    Spacer(Modifier.height(24.dp))
+                }
+                item {
+                    CommandHubHeatmapCard()
+                }
+            }
+            CommandHubNavigationBar(onNavigateToHome = onNavigateToHome)
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CommandHubTopBar(onNavigateToHome: () -> Unit) {
     TopAppBar(
@@ -114,18 +161,18 @@ private fun CommandHubTopBar(onNavigateToHome: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onNavigateToHome) {
                 Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
+                    painter = painterResource(R.drawable.arrow_back),
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         },
         actions = {
             IconButton(onClick = { }) {
                 Icon(
-                    imageVector = Icons.Rounded.Tune,
+                    painter = painterResource(R.drawable.tune),
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         },
@@ -146,9 +193,8 @@ private fun CommandHubTabs(activeTab: Int, onTabSelected: (Int) -> Unit) {
         stringResource(R.string.podcasts),
         stringResource(R.string.community),
     )
-    Tabs(
+    PrimaryTabRow(
         selectedTabIndex = activeTab,
-        onTabSelected = onTabSelected,
         divider = { },
     ) {
         tabs.forEachIndexed { index, label ->
@@ -160,11 +206,7 @@ private fun CommandHubTabs(activeTab: Int, onTabSelected: (Int) -> Unit) {
         }
     }
 }
-            onTabSelected = { activeTab = it },
-            onNavigateToHome = onNavigateToHome,
-        )
-    }
-}
+
 @Composable
 private fun CommandHubSpeedDialHeading() {
     Text(
@@ -215,7 +257,7 @@ private fun CommandHubActiveSessionCard() {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.PlayCircle,
+                    painter = painterResource(R.drawable.play),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.primary,
@@ -226,26 +268,39 @@ private fun CommandHubActiveSessionCard() {
                 text = stringResource(R.string.keep_listening_daft_punk),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.random_access_memories_paused),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
 @Composable
 private fun CommandHubCommunityList() {
     val items = listOf(
         CommunityItem(
             title = stringResource(R.string.synthwave_2088),
             subtitle = stringResource(R.string.curated_by_neon_rider),
-            icon = Icons.Rounded.PlaylistPlay,
-            trailing = Icons.Rounded.FavoriteBorder,
+            iconRes = R.drawable.playlist_play,
+            trailingRes = R.drawable.favorite_border,
         ),
         CommunityItem(
             title = stringResource(R.string.justice_radio),
             subtitle = stringResource(R.string.recommended_based_on_recent),
-            icon = Icons.Rounded.Radio,
-            trailing = Icons.Rounded.MoreVert,
+            iconRes = R.drawable.radio,
+            trailingRes = R.drawable.more_vert,
         ),
         CommunityItem(
             title = stringResource(R.string.forgotten_favorite_get_lucky),
             subtitle = stringResource(R.string.played_82_times),
-            icon = Icons.Rounded.History,
-            trailing = Icons.Rounded.PlayArrow,
+            iconRes = R.drawable.history,
+            trailingRes = R.drawable.play,
         ),
     )
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -269,7 +324,7 @@ private fun CommandHubCommunityItem(item: CommunityItem, onClick: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = item.icon,
+                painter = painterResource(item.iconRes),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary,
@@ -280,7 +335,7 @@ private fun CommandHubCommunityItem(item: CommunityItem, onClick: () -> Unit) {
             Text(text = item.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
             Text(text = item.subtitle, style = MaterialTheme.typography.bodyMedium, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(imageVector = item.trailing, contentDescription = null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(painter = painterResource(item.trailingRes), contentDescription = null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -303,7 +358,7 @@ private fun CommandHubHeatmapCard() {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Insights,
+                    painter = painterResource(R.drawable.stats),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.primary,
@@ -328,25 +383,11 @@ private fun CommandHubHeatmapCard() {
 }
 
 @Composable
-private fun CommandHubNavigationBar() {
-    MentsicNavigationBar(selectedIndex = 0, onDestinationClick = { })
-}
-
-private data class CommunityItem(
-    val title: String,
-    val subtitle: String,
-    val icon: androidx.compose.ui.graphics.ImageVector,
-    val trailing: androidx.compose.ui.graphics.ImageVector,
-)
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.random_access_memories_paused),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+private fun CommandHubNavigationBar(onNavigateToHome: () -> Unit = {}) {
+    MentsicNavigationBar(
+        selectedIndex = 0,
+        onDestinationClick = { index ->
+            if (index == 0) onNavigateToHome()
+        },
+    )
 }

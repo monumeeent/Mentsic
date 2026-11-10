@@ -8,9 +8,11 @@
 package com.metrolist.music.ui.screens.mentsic
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,9 +22,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,32 +34,35 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.graphics.vector.ImageVector
-import androidx.compose.material3.Icons
+import com.metrolist.music.LocalPlayerConnection
+import com.metrolist.music.R
+import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.ui.component.mentsic.ConnectedButtonGroup
 import com.metrolist.music.ui.component.mentsic.ConnectedChipGroup
 import com.metrolist.music.ui.component.mentsic.MentsicButtonItem
 import com.metrolist.music.ui.component.mentsic.MentsicButtonType
 import com.metrolist.music.ui.component.mentsic.MentsicChipItem
 import com.metrolist.music.ui.component.mentsic.MentsicNavigationBar
+import com.metrolist.music.ui.screens.MoodAndGenresButton
 import com.metrolist.music.ui.theme.MentsicTheme
-import com.metrolist.music.R
-import com.metrolist.music.LocalPlayerConnection
+import java.util.Calendar
+
+private data class QuickPicksSongItem(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+)
 
 @Composable
 fun ClassicHomeScreen(
@@ -63,13 +70,10 @@ fun ClassicHomeScreen(
     onNavigateToExplore: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    MentsicTheme(darkTheme = androidx.compose.foundation.isSystemInDarkTheme()) {
+    MentsicTheme(darkTheme = isSystemInDarkTheme()) {
         val haptics = LocalHapticFeedback.current
         val playerConnection = LocalPlayerConnection.current
-
-        val greeting by remember {
-            derivedGreeting()
-        }
+        val greeting = derivedGreeting()
 
         ScaffoldContent(
             greeting = greeting,
@@ -77,6 +81,7 @@ fun ClassicHomeScreen(
             playerConnection = playerConnection,
             onNavigateToHub = onNavigateToHub,
             onNavigateToExplore = onNavigateToExplore,
+            modifier = modifier,
         )
     }
 }
@@ -84,8 +89,8 @@ fun ClassicHomeScreen(
 @Composable
 private fun ScaffoldContent(
     greeting: String,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    playerConnection: com.metrolist.music.playback.PlayerConnection?,
+    haptics: HapticFeedback,
+    playerConnection: PlayerConnection?,
     onNavigateToHub: () -> Unit,
     onNavigateToExplore: () -> Unit,
     modifier: Modifier = Modifier,
@@ -93,13 +98,13 @@ private fun ScaffoldContent(
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
         ) {
             item {
                 ClassicHomeTopBar(
                     greeting = greeting,
                     onAccountClick = onNavigateToHub,
-                    onNotificationsClick = { haptics.performHapticFeedback(HapticFeedbackType.Click) },
+                    onNotificationsClick = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
                 )
             }
             item {
@@ -136,20 +141,21 @@ private fun ScaffoldContent(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             item {
-                ClassicHomeExploreButton()
+                ClassicHomeExploreButton(onClick = onNavigateToExplore)
             }
             item {
                 Spacer(modifier = Modifier.height(24.dp))
             }
             item {
-                ClassicHomeNavigationBar()
+                ClassicHomeNavigationBar(onNavigateToExplore = onNavigateToExplore)
             }
         }
     }
 }
 
+@Composable
 private fun derivedGreeting(): String {
-    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     return when {
         hour in 5 until 12 -> stringResource(R.string.good_morning)
         hour in 12 until 17 -> stringResource(R.string.good_afternoon)
@@ -158,7 +164,6 @@ private fun derivedGreeting(): String {
     }
 }
 
-@Composable
 @Composable
 private fun QuickPicksSongList() {
     val songs = listOf(
@@ -197,7 +202,7 @@ private fun QuickPicksSongList() {
 
 @Composable
 private fun QuickPicksSongItems(items: List<QuickPicksSongItem>) {
-    Column(modifier = Modifier.height(200.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         items.forEach { song ->
             QuickPicksSongItemContent(item = song, onClick = { })
         }
@@ -219,12 +224,17 @@ private fun QuickPicksSongItemContent(item: QuickPicksSongItem, onClick: () -> U
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
         ) {
-            Icon(
-                imageVector = Icons.Rounded.MusicNote,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.music_note),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
         }
         Spacer(Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -242,13 +252,15 @@ private fun QuickPicksSongItemContent(item: QuickPicksSongItem, onClick: () -> U
             )
         }
         Icon(
-            imageVector = Icons.Rounded.MoreVert,
+            painter = painterResource(R.drawable.more_vert),
             contentDescription = null,
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
-    @Composable
+
+@Composable
 private fun ClassicHomeChips() {
     ConnectedChipGroup(
         items = listOf(
@@ -298,7 +310,63 @@ private fun ClassicHomeSpeedDialActions() {
         }
     }
 }
-    @Composable
+
+@Composable
+private fun ClassicHomeDailyDiscoverRow() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.daily_mix_1),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(Modifier.height(8.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = stringResource(R.string.curated_by_neon_rider),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClassicHomeExploreButton(onClick: () -> Unit) {
+    MoodAndGenresButton(
+        title = stringResource(R.string.explore_moods_and_genres),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun ClassicHomeNavigationBar(onNavigateToExplore: () -> Unit) {
+    MentsicNavigationBar(
+        selectedIndex = 0,
+        onDestinationClick = { index ->
+            if (index == 1) onNavigateToExplore()
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun ClassicHomeTopBar(
     greeting: String,
     onAccountClick: () -> Unit,
@@ -315,18 +383,18 @@ private fun ClassicHomeTopBar(
         navigationIcon = {
             IconButton(onClick = onAccountClick) {
                 Icon(
-                    imageVector = Icons.Rounded.AccountCircle,
+                    painter = painterResource(R.drawable.account),
                     contentDescription = stringResource(R.string.account),
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         },
         actions = {
             IconButton(onClick = onNotificationsClick) {
                 Icon(
-                    imageVector = Icons.Rounded.Notifications,
+                    painter = painterResource(R.drawable.notification),
                     contentDescription = stringResource(R.string.notifications),
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         },
