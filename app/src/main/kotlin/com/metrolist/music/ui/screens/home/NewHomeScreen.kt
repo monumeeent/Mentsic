@@ -23,9 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -50,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -360,7 +358,11 @@ fun NewHomeScreen(
                         .padding(Spacing.large)
                         // Lift above the capsule when one is visible so the two never overlap.
                         .padding(bottom = feedInsets.calculateBottomPadding() + if (mediaMetadata != null) 80.dp else 0.dp),
-                ) { Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.shuffle)) }
+                ) {
+                    // Uses the app's own vector drawable: material-icons-extended does not ship
+                    // Icons.Default.Shuffle, and the rest of the app draws R.drawable.shuffle too.
+                    Icon(painterResource(R.drawable.shuffle), contentDescription = stringResource(R.string.shuffle))
+                }
             }
         }
     }
@@ -468,7 +470,12 @@ private fun ResumeButton(isPlaying: Boolean, onClick: () -> Unit) {
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         modifier = Modifier.size(48.dp),
-    ) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = if (isPlaying) "Pause" else "Resume") }
+    ) {
+        Icon(
+            painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+            contentDescription = if (isPlaying) "Pause" else "Resume",
+        )
+    }
 }
 
 @Composable
@@ -516,7 +523,11 @@ private fun HomeSongCard(song: Song, isActive: Boolean, isPlaying: Boolean, onCl
                     shape = CircleShape,
                     modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.small).size(28.dp),
                 ) {
-                    Icon(Icons.Default.Pause, contentDescription = "Now playing", modifier = Modifier.padding(Spacing.tiny))
+                    Icon(
+                        painterResource(R.drawable.pause),
+                        contentDescription = "Now playing",
+                        modifier = Modifier.padding(Spacing.tiny),
+                    )
                 }
             }
         }
@@ -602,7 +613,12 @@ private fun HomeMiniPlayerCapsule(title: String, artist: String, isPlaying: Bool
                 Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            IconButton(onClick = onToggle) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = if (isPlaying) "Pause" else "Play") }
+            IconButton(onClick = onToggle) {
+                Icon(
+                    painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                )
+            }
         }
     }
 }
