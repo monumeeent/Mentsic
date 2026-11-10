@@ -405,6 +405,4 @@ Resume playback or open queue switcher.</string>
     <string name="all">All</string>
     <string name="explore">Explore</string>
     <string name="notifications">Notifications</string>
-    <string name="speed_dial">Speed Dial</string>
-    <string name="play_all">Play all</string>
 </resources>
