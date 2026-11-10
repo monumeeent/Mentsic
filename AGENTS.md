@@ -23,6 +23,7 @@
 
 ## 4. Preferred CI/CD Workflow
 * **Verification Path:** Code edits $\rightarrow$ User commits/pushes $\rightarrow$ GitHub Actions workflow builds.
+* Always tell me the **Next Step** .
 * When local compilation is requested, **DO NOT** execute it. Output the exact command for the user to copy-paste manually, then suggest pushing to GitHub instead:
   > *"I will not run Gradle locally on this low-spec machine. If you wish to run it manually: `./gradlew assembleDebug`. Otherwise, please push to GitHub to trigger the CI build."*
 
@@ -30,5 +31,6 @@
 * Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
 * Do **NOT** hardcode colors or raw font sizes in new Composables; always use `MaterialTheme.colorScheme` and `MaterialTheme.typography`.
 
-## 6. Plan Write 
-* If we plan something and needs to be written append it in `implementation_plan.md`. 
+## 6. Constraints 
+- No local Gradle/Android build commands; verification via static analysis + CI on push
+- Git Bash compatible terminal commands only

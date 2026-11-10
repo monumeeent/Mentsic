@@ -6,144 +6,183 @@
 package com.metrolist.music.ui.screens
 
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Icons
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
-import com.metrolist.music.ui.component.LongClickIconButton
-import com.metrolist.music.ui.component.NavigationTitle
-import com.metrolist.music.ui.component.shimmer.ListItemPlaceHolder
-import com.metrolist.music.ui.component.shimmer.ShimmerHost
-import com.metrolist.music.ui.utils.backToMain
-import com.metrolist.music.viewmodels.MoodAndGenresViewModel
+import com.metrolist.music.ui.component.mentsic.ConnectedButtonGroup
+import com.metrolist.music.ui.component.mentsic.MentsicButtonItem
+import com.metrolist.music.ui.component.mentsic.MentsicButtonType
+import com.metrolist.music.ui.component.mentsic.MentsicNavigationBar
+import com.metrolist.music.ui.theme.MentsicTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoodAndGenresScreen(
-    navController: NavController,
-    viewModel: MoodAndGenresViewModel = hiltViewModel(),
-) {
-    val localConfiguration = LocalConfiguration.current
-    val itemsPerRow = if (localConfiguration.orientation == ORIENTATION_LANDSCAPE) 3 else 2
-
-    val moodAndGenresList by viewModel.moodAndGenres.collectAsStateWithLifecycle()
-
-    LazyColumn(
-        contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-    ) {
-        if (moodAndGenresList == null) {
-            item(key = "mood_and_genres_shimmer") {
-                ShimmerHost(
-                    modifier = Modifier.animateItem()
-                ) {
-                    repeat(8) {
-                        ListItemPlaceHolder()
-                    }
-                }
-            }
-        }
-
-        moodAndGenresList?.forEachIndexed { index, moodAndGenres ->
-            item(key = "mood_and_genres_section_$index") {
-                Column(
-                    modifier = Modifier
-                        .animateItem()
-                        .padding(horizontal = 6.dp),
-                ) {
-                    NavigationTitle(
-                        title = moodAndGenres.title,
-                    )
-                    moodAndGenres.items.chunked(itemsPerRow).forEach { row ->
-                        Row {
-                            row.forEach {
-                                MoodAndGenresButton(
-                                    title = it.title,
-                                    onClick = {
-                                        navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
-                                    },
-                                    modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(6.dp),
-                                )
-                            }
-
-                            repeat(itemsPerRow - row.size) {
-                                Spacer(Modifier.weight(1f))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    TopAppBar(
-        title = { Text(stringResource(R.string.mood_and_genres)) },
-        navigationIcon = {
-            LongClickIconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
-}
-
-@Composable
-fun MoodAndGenresButton(
-    title: String,
-    onClick: () -> Unit,
+    onNavigateToHome: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        contentAlignment = Alignment.CenterStart,
-        modifier =
-        modifier
-            .height(MoodAndGenresButtonHeight)
-            .clip(RoundedCornerShape(6.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+    MentsicTheme(darkTheme = androidx.compose.foundation.isSystemInDarkTheme()) {
+        ScaffoldContent(
+            onNavigateToHome = onNavigateToHome,
         )
     }
 }
 
-val MoodAndGenresButtonHeight = 48.dp
+@Composable
+private fun ScaffoldContent(
+    onNavigateToHome: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        Column(modifier = modifier.fillMaxSize()) {
+            MoodAndGenresTopBar(onNavigateToHome = onNavigateToHome)
+            Spacer(Modifier.height(16.dp))
+            MoodAndGenresMomentsHeading()
+            Spacer(Modifier.height(8.dp))
+            MoodAndGenresMoodGroups()
+            Spacer(Modifier.height(16.dp))
+            MoodAndGenresPopularHeading()
+            Spacer(Modifier.height(8.dp))
+            MoodAndGenresGenreGroups()
+            Spacer(Modifier.height(24.dp))
+            MoodAndGenresNavigationBar()
+        }
+    }
+}
+
+@Composable
+private fun MoodAndGenresTopBar(onNavigateToHome: () -> Unit) {
+    TopAppBar(
+        title = {
+            Text(text = stringResource(R.string.mood_and_genres), style = MaterialTheme.typography.titleLarge, maxLines = 1)
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateToHome) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowBack,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                )
+            }
+@Composable
+private fun MoodAndGenresMomentsHeading() {
+    Text(
+        text = stringResource(R.string.moods_and_moments),
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+}
+
+@Composable
+private fun MoodAndGenresMoodGroups() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ConnectedButtonGroup(
+            items = listOf(
+                MentsicButtonItem(label = stringResource(R.string.chill), type = MentsicButtonType.Tonal),
+                MentsicButtonItem(label = stringResource(R.string.focus), type = MentsicButtonType.Tonal),
+            ),
+            onButtonClick = { },
+        )
+        Spacer(Modifier.height(8.dp))
+        ConnectedButtonGroup(
+            items = listOf(
+                MentsicButtonItem(label = stringResource(R.string.workout), type = MentsicButtonType.Tonal),
+                MentsicButtonItem(label = stringResource(R.string.party), type = MentsicButtonType.Tonal),
+            ),
+            onButtonClick = { },
+        )
+        Spacer(Modifier.height(8.dp))
+        ConnectedButtonGroup(
+            items = listOf(
+                MentsicButtonItem(label = stringResource(R.string.commute), type = MentsicButtonType.Tonal),
+                MentsicButtonItem(label = stringResource(R.string.sleep), type = MentsicButtonType.Tonal),
+            ),
+            onButtonClick = { },
+        )
+    }
+}
+
+@Composable
+private fun MoodAndGenresPopularHeading() {
+    Text(
+        text = stringResource(R.string.popular_genres),
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+}
+
+@Composable
+private fun MoodAndGenresGenreGroups() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ConnectedButtonGroup(
+            items = listOf(
+                MentsicButtonItem(label = stringResource(R.string.electronic), type = MentsicButtonType.Filled),
+                MentsicButtonItem(label = stringResource(R.string.hip_hop), type = MentsicButtonType.Filled),
+            ),
+            onButtonClick = { },
+        )
+        Spacer(Modifier.height(8.dp))
+        ConnectedButtonGroup(
+            items = listOf(
+                MentsicButtonItem(label = stringResource(R.string.rock_alternative), type = MentsicButtonType.Filled),
+                MentsicButtonItem(label = stringResource(R.string.pop_hits), type = MentsicButtonType.Filled),
+            ),
+            onButtonClick = { },
+        )
+        Spacer(Modifier.height(8.dp))
+        ConnectedButtonGroup(
+            items = listOf(
+                MentsicButtonItem(label = stringResource(R.string.r_b_soul), type = MentsicButtonType.Filled),
+                MentsicButtonItem(label = stringResource(R.string.indie_folk), type = MentsicButtonType.Filled),
+            ),
+            onButtonClick = { },
+        )
+    }
+}
+
+@Composable
+private fun MoodAndGenresNavigationBar() {
+    MentsicNavigationBar(selectedIndex = 1, onDestinationClick = { })
+}
+        },
+        actions = {
+            IconButton(onClick = { }) {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+        modifier = Modifier.height(64.dp),
+    )
+}

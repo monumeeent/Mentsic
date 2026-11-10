@@ -59,6 +59,9 @@ import com.metrolist.music.ui.screens.settings.integrations.DiscordSettings
 import com.metrolist.music.ui.screens.settings.integrations.IntegrationScreen
 import com.metrolist.music.ui.screens.settings.integrations.LastFMSettings
 import com.metrolist.music.ui.screens.settings.integrations.ListenTogetherSettings
+import com.metrolist.music.ui.screens.mentsic.ClassicHomeScreen
+import com.metrolist.music.ui.screens.mentsic.CommandHubScreen
+import com.metrolist.music.ui.screens.mentsic.MoodAndGenresScreen as MentsicMoodAndGenresScreen
 
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -116,7 +119,28 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("mood_and_genres") {
-        MoodAndGenresScreen(navController)
+        MentsicMoodAndGenresScreen(
+            onNavigateToHome = { navController.navigate("home") },
+        )
+    }
+
+    composable("mentsic_home") {
+        ClassicHomeScreen(
+            onNavigateToHub = { navController.navigate("mentsic_hub") },
+            onNavigateToExplore = { navController.navigate("mentsic_explore") },
+        )
+    }
+
+    composable("mentsic_hub") {
+        CommandHubScreen(
+            onNavigateToHome = { navController.navigate("home") },
+        )
+    }
+
+    composable("mentsic_explore") {
+        MentsicMoodAndGenresScreen(
+            onNavigateToHome = { navController.navigate("home") },
+        )
     }
 
     composable("account") {
