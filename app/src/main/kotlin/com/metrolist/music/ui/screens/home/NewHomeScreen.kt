@@ -44,7 +44,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -132,17 +131,9 @@ fun NewHomeScreen(
     val isFocused = selectedChip != null
     BackHandler(enabled = isFocused) { viewModel.toggleChip(null) }
 
-    // Infinite-scroll tail: load the next InnerTube page once the last card is nearly visible.
-    LaunchedEffect(homePage?.continuation) {
-        if (homePage?.continuation == null) return@LaunchedEffect
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastVisible ->
-                val total = listState.layoutInfo.totalItemsCount
-                if (lastVisible != null && lastVisible >= total - 3) {
-                    viewModel.loadMoreYouTubeItems(homePage?.continuation)
-                }
-            }
-    }
+    // No infinite-scroll paging here by design: HomeViewModel.loadMoreYouTubeItems appends the
+    // next InnerTube page onto the existing sections, which repeats shelf titles that InnerTube
+    // already returned (e.g. "Mixed for you"), so the feed visibly duplicated itself.
 
     PullToRefreshBox(
         state = refreshState,
@@ -318,9 +309,14 @@ fun NewHomeScreen(
                     item(key = "new_home_loading") { HomeLoadingState() }
                 }
 
-                // InnerTube sections (personalised "Now / Next" feed and chip results).
-                homePage?.sections?.forEachIndexed { index, section ->
-                    if (section.items.isEmpty()) return@forEachIndexed
+                // InnerTube sections (personalised feed and chip results).
+                // Rendered once per distinct section: the ViewModel can hold repeated shelf
+                // titles, and rendering each one produced duplicate rows on screen.
+                val renderedSections = homePage?.sections
+                    ?.filter { it.items.isNotEmpty() }
+                    ?.distinctBy { it.title }
+                    .orEmpty()
+                renderedSections.forEachIndexed { index, section ->
                     item(key = "new_home_section_$index") {
                         HomeSectionHeaderV2(title = section.title)
                         HomeYouTubeRow(
