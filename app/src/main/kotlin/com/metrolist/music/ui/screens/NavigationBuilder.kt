@@ -61,7 +61,7 @@ import com.metrolist.music.ui.screens.settings.integrations.LastFMSettings
 import com.metrolist.music.ui.screens.settings.integrations.ListenTogetherSettings
 import com.metrolist.music.ui.screens.mentsic.ClassicHomeScreen
 import com.metrolist.music.ui.screens.mentsic.CommandHubScreen
-import com.metrolist.music.ui.screens.mentsic.MoodAndGenresScreen as MentsicMoodAndGenresScreen
+import com.metrolist.music.ui.screens.MoodAndGenresScreen
 
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -91,7 +91,7 @@ fun NavGraphBuilder.navigationBuilder(
                 pureBlackEnabled && useDarkTheme
             }
         SearchScreen(
-            
+            pureBlack = pureBlack,
             savedStateHandle = backStackEntry.savedStateHandle
         )
     }
@@ -119,7 +119,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("mood_and_genres") {
-        MentsicMoodAndGenresScreen(
+        MoodAndGenresScreen(
             onNavigateToHome = { navController.navigate("home") },
         )
     }
@@ -138,7 +138,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("mentsic_explore") {
-        MentsicMoodAndGenresScreen(
+        MoodAndGenresScreen(
             onNavigateToHome = { navController.navigate("home") },
         )
     }

@@ -8,34 +8,34 @@
 
 package com.metrolist.music.ui.component.mentsic
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.Shape
-import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.metrolist.music.R
 
 @Stable
 data class MentsicChipItem(
@@ -45,7 +45,7 @@ data class MentsicChipItem(
 )
 
 @Composable
-fun RowScope.MentsicChip(
+fun MentsicChip(
     item: MentsicChipItem,
     shape: Shape,
     modifier: Modifier = Modifier,
@@ -68,7 +68,10 @@ fun RowScope.MentsicChip(
             .height(32.dp)
             .clip(shape)
             .background(backgroundColor)
-            .clickable(onClick = item.onClick),
+            .clickable(
+                onClick = item.onClick,
+                role = Role.Button,
+            ),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
@@ -77,7 +80,7 @@ fun RowScope.MentsicChip(
         ) {
             if (isSelected) {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    imageVector = Check,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -105,7 +108,7 @@ fun ConnectedChipGroup(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        items.forEachIndexed { index, item ->
+        itemsIndexed(items, key = { index, _ -> "chip_$index" }) { index, item ->
             val isFirst = index == 0
             val isLast = index == chipCount - 1
             val shape = when {
@@ -114,15 +117,13 @@ fun ConnectedChipGroup(
                 isLast -> RoundedCornerShape(4.dp, 8.dp, 4.dp, 8.dp)
                 else -> RoundedCornerShape(4.dp)
             }
-            item(key = "chip_$index") {
-                MentsicChip(
-                    item = item.copy(
-                        selected = index == selectedIndex,
-                        onClick = { onChipClick(index) },
-                    ),
-                    shape = shape,
-                )
-            }
+            MentsicChip(
+                item = item.copy(
+                    selected = index == selectedIndex,
+                    onClick = { onChipClick(index) },
+                ),
+                shape = shape,
+            )
         }
     }
 }

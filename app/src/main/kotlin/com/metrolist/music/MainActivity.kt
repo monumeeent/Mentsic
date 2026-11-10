@@ -1216,9 +1216,8 @@ class MainActivity : FragmentActivity() {
                                     if (activePlayerConnection != null) {
                                         BottomSheetPlayer(
                                             state = playerBottomSheetState,
-pureBlack = pureBlack,
+                                            pureBlack = pureBlack,
                                             navController = navController,
-                                            
                                         )
                                     }
 
@@ -1275,13 +1274,11 @@ pureBlack = pureBlack,
                                 }
                             } else {
                                 if (currentRoute != "wrapped") {
-                                        BottomSheetPlayer(
-                                            state = playerBottomSheetState,
-                                            navController = navController,
-pureBlack = pureBlack,
-                                            
-                                        )
-                                    }
+                                    BottomSheetPlayer(
+                                        state = playerBottomSheetState,
+                                        navController = navController,
+                                        pureBlack = pureBlack,
+                                    )
                                 }
 
                                 Box(
