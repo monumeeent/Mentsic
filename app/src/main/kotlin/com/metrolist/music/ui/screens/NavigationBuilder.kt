@@ -59,6 +59,7 @@ import com.metrolist.music.ui.screens.settings.integrations.DiscordSettings
 import com.metrolist.music.ui.screens.settings.integrations.IntegrationScreen
 import com.metrolist.music.ui.screens.settings.integrations.LastFMSettings
 import com.metrolist.music.ui.screens.settings.integrations.ListenTogetherSettings
+import com.metrolist.music.ui.screens.home.NewHomeScreen
 import com.metrolist.music.ui.screens.mentsic.ClassicHomeScreen
 import com.metrolist.music.ui.screens.mentsic.CommandHubScreen
 import com.metrolist.music.ui.screens.MoodAndGenresScreen
@@ -75,6 +76,13 @@ fun NavGraphBuilder.navigationBuilder(
     snackbarHostState: SnackbarHostState,
 ) {
     composable(Screens.Home.route) {
+        // Redesigned home: content-first feed under MainActivity's existing top app bar.
+        // `home_legacy` below keeps the previous feed reachable for side-by-side QA.
+        NewHomeScreen()
+    }
+
+    // Legacy production feed, kept reachable while the redesigned home is validated on device.
+    composable("home_legacy") {
         HomeScreen(snackbarHostState = snackbarHostState)
     }
 

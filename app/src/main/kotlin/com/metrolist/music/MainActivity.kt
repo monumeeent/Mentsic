@@ -1049,6 +1049,7 @@ class MainActivity : FragmentActivity() {
                     LocalContentColor provides contentColorFor(MaterialTheme.colorScheme.surface),
                     LocalPlayerConnection provides playerConnection,
                     LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
+                    LocalPlayerBottomSheetState provides playerBottomSheetState,
                     LocalDownloadUtil provides downloadUtil,
                     LocalShimmerTheme provides ShimmerTheme,
                     LocalSyncUtils provides syncUtils,
@@ -1763,3 +1764,12 @@ val LocalListenTogetherManager = staticCompositionLocalOf<com.metrolist.music.li
 val LocalChangelogState = staticCompositionLocalOf<MutableState<Boolean>> { error("No LocalChangelogState provided") }
 val LocalArtistNameAliases = staticCompositionLocalOf<Map<String, String>> { emptyMap() }
 val LocalIsPlayerExpanded = compositionLocalOf { false }
+
+/**
+ * Player bottom-sheet controller, provided by [MainActivity].
+ *
+ * Home surfaces (e.g. the mini-player capsule) need to expand the real player sheet instead of
+ * navigating to a duplicate route. Kept nullable so screens remain previewable/testable without
+ * the full activity shell.
+ */
+val LocalPlayerBottomSheetState = staticCompositionLocalOf<com.metrolist.music.ui.component.BottomSheetState?> { null }
