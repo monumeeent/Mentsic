@@ -10,13 +10,20 @@ package com.metrolist.music.ui.component.mentsic
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.Shape
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.metrolist.music.R
 
 @Stable
@@ -41,7 +47,7 @@ data class MentsicChipItem(
 @Composable
 fun RowScope.MentsicChip(
     item: MentsicChipItem,
-    shape: androidx.compose.foundation.shape.Shape,
+    shape: Shape,
     modifier: Modifier = Modifier,
 ) {
     val contentColor = LocalContentColor.current
@@ -62,24 +68,21 @@ fun RowScope.MentsicChip(
             .height(32.dp)
             .clip(shape)
             .background(backgroundColor)
-            .clickable(
-                onClick = item.onClick,
-                role = androidx.compose.foundation.role.Role.Button,
-            ),
+            .clickable(onClick = item.onClick),
         contentAlignment = Alignment.CenterStart,
     ) {
-        androidx.compose.foundation.layout.Row(
+        Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 8.dp),
         ) {
             if (isSelected) {
                 Icon(
-                    imageVector = androidx.compose.material3.Icons.Default.Check,
+                    imageVector = Icons.Default.Check,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
-                androidx.compose.foundation.layout.Spacer(Modifier.width(4.dp))
+                Spacer(Modifier.width(4.dp))
             }
             Text(
                 text = item.label,

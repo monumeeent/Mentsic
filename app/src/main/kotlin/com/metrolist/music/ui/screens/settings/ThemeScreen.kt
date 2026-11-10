@@ -311,6 +311,7 @@ fun ThemeControls(
     onDarkModeChange: (DarkMode) -> Unit,
     pureBlack: Boolean = false,
     onPureBlackChange: (Boolean) -> Unit,
+    selectedThemeColor: Color,
     onSelectedThemeColorChange: (Color) -> Unit,
     enableOrbitTheme: Boolean,
     onEnableOrbitThemeChange: (Boolean) -> Unit,

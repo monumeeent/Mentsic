@@ -9,14 +9,16 @@
 
 package com.metrolist.music.ui.component.mentsic
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +42,7 @@ fun MentsicNavigationBar(
 ) {
     val destinations = listOf(
         MentsicNavDestination(R.string.home, R.drawable.home_outlined, R.drawable.home_filled),
-        MentsicNavDestination(R.string.explore, R.drawable.explore_outlined, R.drawable.explore_outlined),
+        MentsicNavDestination(R.string.explore, R.drawable.explore_outlined, R.drawable.explore_filled),
         MentsicNavDestination(R.string.filter_library, R.drawable.library_music_outlined, R.drawable.library_music_filled),
     )
 
@@ -57,18 +59,17 @@ fun MentsicNavigationBar(
                 val iconRes = if (isSelected) destination.iconActive else destination.iconInactive
 
                 Box(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onDestinationClick(index) },
                     contentAlignment = Alignment.Center,
                 ) {
-                    // Active pill indicator (drawn behind the content).
                     if (isSelected) {
                         Box(
                             modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .align(Alignment.Bottom)
                                 .size(64.dp, 32.dp)
-                                .background(MaterialTheme.colorScheme.secondaryContainer)
-                                .clip(CircleShape),
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.secondaryContainer),
                         )
                     }
 
@@ -98,10 +99,6 @@ fun MentsicNavigationBar(
                         )
                     }
                 }
-                .clickable(
-                    onClick = { onDestinationClick(index) },
-                    role = androidx.compose.foundation.role.Role.Tab,
-                )
             }
         }
     }

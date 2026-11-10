@@ -5,18 +5,18 @@
 
 package com.metrolist.music.ui.screens
 
-import android.content.res.Configuration.ORIENTATION_LANDSCAPE
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icons
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,9 +41,10 @@ fun MoodAndGenresScreen(
     onNavigateToHome: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    MentsicTheme(darkTheme = androidx.compose.foundation.isSystemInDarkTheme()) {
+    MentsicTheme(darkTheme = isSystemInDarkTheme()) {
         ScaffoldContent(
             onNavigateToHome = onNavigateToHome,
+            modifier = modifier,
         )
     }
 }
@@ -55,7 +55,7 @@ private fun ScaffoldContent(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Column(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             MoodAndGenresTopBar(onNavigateToHome = onNavigateToHome)
             Spacer(Modifier.height(16.dp))
             MoodAndGenresMomentsHeading()
@@ -71,6 +71,8 @@ private fun ScaffoldContent(
     }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MoodAndGenresTopBar(onNavigateToHome: () -> Unit) {
     TopAppBar(
@@ -85,6 +87,26 @@ private fun MoodAndGenresTopBar(onNavigateToHome: () -> Unit) {
                     modifier = Modifier.size(48.dp),
                 )
             }
+        },
+        actions = {
+            IconButton(onClick = { }) {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+        modifier = Modifier.height(64.dp),
+    )
+}
+
 @Composable
 private fun MoodAndGenresMomentsHeading() {
     Text(
@@ -167,22 +189,4 @@ private fun MoodAndGenresGenreGroups() {
 private fun MoodAndGenresNavigationBar() {
     MentsicNavigationBar(selectedIndex = 1, onDestinationClick = { })
 }
-        },
-        actions = {
-            IconButton(onClick = { }) {
-                Icon(
-                    imageVector = Icons.Rounded.Search,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-        modifier = Modifier.height(64.dp),
-    )
-}
+
