@@ -15,22 +15,23 @@
 
 
 ## 3. Missing File & Resource Handling Rule
-* When a build error indicates missing files, layouts, or resources, **never run exploratory shell commands** (such as `git `, recursive file searches, or deep directory listings) to investigate or locate them.
-* Do not Run Git Command Ask The User Instead.
-* Do not Run `./gradlew :app:compileFossDebugKotlin 2>&1` . 
+* When a build error indicates missing files, layouts, or resources, **never run exploratory shell commands** (recursive file searches, or deep directory listings) to investigate or locate them.
+
 * Always assume the file is missing, and **immediately ask the user to provide the correct file path or directory** instead of guessing or searching through git history.
 
 
 ## 4. Preferred CI/CD Workflow
-* **Verification Path:** Code edits $\rightarrow$ User commits/pushes $\rightarrow$ GitHub Actions workflow builds.
-* Always tell me the **Next Step** .
 * When local compilation is requested, **DO NOT** execute it. Output the exact command for the user to copy-paste manually, then suggest pushing to GitHub instead:
   > *"I will not run Gradle locally on this low-spec machine. If you wish to run it manually: `./gradlew assembleDebug`. Otherwise, please push to GitHub to trigger the CI build."*
 
+* Instead Follow add , commit , push > **Verification Path:** Code edits $\rightarrow$ User commits/pushes $\rightarrow$ GitHub Actions workflow builds.
+
 ## 5. Design System & UI Rules
 * Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
-* Do **NOT** hardcode colors or raw font sizes in new Composables; always use `MaterialTheme.colorScheme` and `MaterialTheme.typography`.
+
 
 ## 6. Constraints 
 - No local Gradle/Android build commands; verification via static analysis + CI on push
 - Git Bash compatible terminal commands only
+- Always tell me the **Next Step:** `What to do next after Build Compilation`  .
+- How to Test the new features

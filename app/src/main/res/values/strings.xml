@@ -362,7 +362,7 @@
     <string name="daft_punk">Daft Punk</string>
     <string name="midnight_city">Midnight City</string>
     <string name="m83">M83</string>
-    <string name="hurry_up_we_are_dreaming">Hurry Up, We're Dreaming</string>
+    <string name="hurry_up_we_are_dreaming">Hurry Up, We\'re Dreaming</string>
     <string name="blinding_lights">Blinding Lights</string>
     <string name="after_hours">After Hours</string>
     <string name="instant_crush">Instant Crush</string>
@@ -378,15 +378,14 @@
     <string name="electronic_focus">Electronic Focus</string>
     <string name="deep_bass">Deep Bass</string>
     <string name="zone2_active_session">Zone 2: Active Session</string>
-    <string name="keep_listening_daft_punk">Keep Listening \u2022 Daft Punk</string>
-    <string name="random_access_memories_paused">Random Access Memories \u2022 Paused at 02:44
-Resume playback or open queue switcher.</string>
+    <string name="keep_listening_daft_punk">Keep Listening &#8226; Daft Punk</string>
+    <string name="random_access_memories_paused">Random Access Memories &#8226; Paused at 02:44\nResume playback or open queue switcher.</string>
     <string name="synthwave_2088">From The Community: Synthwave 2088</string>
-    <string name="curated_by_neon_rider">Curated by @neon_rider \u2022 48 tracks</string>
+    <string name="curated_by_neon_rider">Curated by \@neon_rider &#8226; 48 tracks</string>
     <string name="justice_radio">Similar to Daft Punk: Justice Radio</string>
     <string name="recommended_based_on_recent">Recommended based on recent listening</string>
     <string name="forgotten_favorite_get_lucky">Forgotten Favorite: Get Lucky</string>
-    <string name="played_82_times">Played 82 times \u2022 Last played 3 months ago</string>
+    <string name="played_82_times">Played 82 times &#8226; Last played 3 months ago</string>
     <string name="zone4_listening_heatmap">Zone 4: Listening Heatmap</string>
     <string name="weekly_peak_activity">Weekly peak activity: 24h streaming time across 12 genres.</string>
     <string name="moods_and_moments">Moods &amp; Moments</string>
