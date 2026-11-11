@@ -2620,7 +2620,7 @@ class MusicService :
             if (state.isActiveOn(today)) return@launch
 
             val updated = StreakTracker.recordPlay(state, today)
-            dataStore.safeDataStoreEdit {
+            safeDataStoreEdit {
                 it[StreakCurrentKey] = updated.current
                 it[StreakLongestKey] = updated.longest
                 it[StreakTotalKey] = updated.total
