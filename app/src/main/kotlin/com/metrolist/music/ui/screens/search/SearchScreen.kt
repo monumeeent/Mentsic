@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.screens.search
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.asPaddingValues
@@ -48,6 +49,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -68,6 +70,7 @@ import com.metrolist.music.LocalIsPlayerExpanded
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.PauseSearchHistoryKey
 import com.metrolist.music.constants.SearchSource
 import com.metrolist.music.constants.SearchSourceKey
@@ -79,6 +82,12 @@ import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+/**
+ * Typing this exact string in the search bar toggles developer options. Kept as a code constant
+ * (not a translatable string resource) so it cannot be discovered from the resources.
+ */
+private const val DeveloperModeUnlockCode = "@#monu"
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,6 +104,7 @@ fun SearchScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val playerConnection = LocalPlayerConnection.current
     val isPlayerExpanded = LocalIsPlayerExpanded.current
+    val context = LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val lazyListState = rememberLazyListState()
     var isHandlingScrollToTop by remember { mutableStateOf(false) }
@@ -139,9 +149,25 @@ fun SearchScreen(
         mutableStateOf(TextFieldValue())
     }
     val pauseSearchHistory by rememberPreference(PauseSearchHistoryKey, defaultValue = false)
+    var developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
 
     fun handleSearch(searchQuery: String) {
         if (searchQuery.isEmpty()) {
+            return
+        }
+
+        // Secret developer-mode toggle. Handled before anything else so the code never reaches
+        // InnerTube and is never written to the search history.
+        if (searchQuery.trim() == DeveloperModeUnlockCode) {
+            developerMode = !developerMode
+            query = TextFieldValue("")
+            focusManager.clearFocus()
+            keyboardController?.hide()
+            Toast.makeText(
+                context,
+                if (developerMode) "Developer options enabled" else "Developer options disabled",
+                Toast.LENGTH_SHORT,
+            ).show()
             return
         }
 

@@ -206,7 +206,13 @@ import com.metrolist.music.playback.queues.filterExplicit
 import com.metrolist.music.playback.queues.filterVideoSongs
 import com.metrolist.music.constants.LoudnessLevel
 import com.metrolist.music.constants.LoudnessLevelKey
+import com.metrolist.music.constants.StreakCurrentKey
+import com.metrolist.music.constants.StreakHistoryKey
+import com.metrolist.music.constants.StreakLongestKey
+import com.metrolist.music.constants.StreakTotalKey
 import com.metrolist.music.utils.CoilBitmapLoader
+import com.metrolist.music.utils.StreakState
+import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.NetworkConnectivityObserver
 import com.metrolist.music.utils.ScrobbleManager
 import com.metrolist.music.utils.SyncUtils
@@ -251,6 +257,7 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 import kotlin.random.Random
@@ -2596,10 +2603,41 @@ class MusicService :
         }
     }
 
+    /**
+     * Marks today as listened for the daily streak (per device, no account needed).
+     * Idempotent per calendar day, so every play in a session is a cheap no-op.
+     */
+    private fun recordStreakPlay() {
+        scope.launch(Dispatchers.IO) {
+            val today = LocalDate.now()
+            val state =
+                StreakState(
+                    current = dataStore[StreakCurrentKey] ?: 0,
+                    longest = dataStore[StreakLongestKey] ?: 0,
+                    total = dataStore[StreakTotalKey] ?: 0,
+                    history = StreakTracker.decodeHistory(dataStore[StreakHistoryKey]),
+                )
+            if (state.isActiveOn(today)) return@launch
+
+            val updated = StreakTracker.recordPlay(state, today)
+            dataStore.safeDataStoreEdit {
+                it[StreakCurrentKey] = updated.current
+                it[StreakLongestKey] = updated.longest
+                it[StreakTotalKey] = updated.total
+                it[StreakHistoryKey] = StreakTracker.encodeHistory(updated.history)
+            }
+        }
+    }
+
     override fun onPlaybackStateChanged(
         @Player.State playbackState: Int,
     ) {
         updateInitialBufferRecovery(playbackState)
+
+        // A day counts toward the listening streak once a song actually starts playing.
+        if (playbackState == Player.STATE_READY && player.playWhenReady) {
+            recordStreakPlay()
+        }
 
         if (playbackState == Player.STATE_ENDED) {
             player.currentMediaItem?.mediaId?.let { mediaId ->

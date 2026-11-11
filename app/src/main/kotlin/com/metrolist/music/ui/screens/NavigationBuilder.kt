@@ -15,6 +15,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavGraphBuilder
@@ -24,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import com.metrolist.music.constants.DarkModeKey
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.ui.screens.artist.ArtistAlbumsScreen
 import com.metrolist.music.ui.screens.artist.ArtistItemsScreen
@@ -49,6 +51,7 @@ import com.metrolist.music.ui.screens.settings.AppearanceSettings
 import com.metrolist.music.ui.screens.settings.BackupAndRestore
 import com.metrolist.music.ui.screens.settings.ContentSettings
 import com.metrolist.music.ui.screens.settings.DarkMode
+import com.metrolist.music.ui.screens.settings.DeveloperSettings
 import com.metrolist.music.ui.screens.settings.PlayerSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
@@ -395,6 +398,17 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/ai") {
         AiSettings(navController)
+    }
+
+    // Hidden developer area. Guarded here as well as in SettingsScreen so a stale deep link
+    // (or a restored back stack) cannot open it once developer mode is switched off.
+    composable("settings/developer") {
+        val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
+        if (developerMode) {
+            DeveloperSettings(navController)
+        } else {
+            LaunchedEffect(Unit) { navController.navigateUp() }
+        }
     }
 
     composable("settings/player") {

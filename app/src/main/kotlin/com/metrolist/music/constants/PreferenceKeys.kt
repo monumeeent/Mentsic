@@ -24,6 +24,17 @@ val PureBlackKey = booleanPreferencesKey("pureBlack")
 val PureBlackMiniPlayerKey = booleanPreferencesKey("pureBlackMiniPlayer")
 val MiniPlayerBackgroundStyleKey = stringPreferencesKey("miniPlayerBackgroundStyle")
 
+// Daily listening streak. Counted per device (no account required): a day counts once the
+// user plays at least one song. History is stored as comma-separated ISO dates (yyyy-MM-dd)
+// so it survives DataStore without a custom TypeConverter.
+val StreakCurrentKey = intPreferencesKey("streakCurrent")
+val StreakLongestKey = intPreferencesKey("streakLongest")
+val StreakTotalKey = intPreferencesKey("streakTotal")
+val StreakHistoryKey = stringPreferencesKey("streakHistory")
+
+// Secret developer mode, toggled by typing the unlock code in the search bar.
+val DeveloperModeKey = booleanPreferencesKey("developerMode")
+
 enum class MiniPlayerBackgroundStyle {
     DEFAULT,
     TRANSPARENT,

@@ -25,6 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -35,11 +37,12 @@ import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.utils.backToMain
-import androidx.compose.runtime.remember
+import com.metrolist.music.utils.rememberPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +52,8 @@ fun SettingsScreen(
 ) {
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
+    // The Developer entry only exists while the hidden mode is on.
+    val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
     val isAndroid12OrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val hasAndroidAuto = remember {
         try {
@@ -207,6 +212,15 @@ fun SettingsScreen(
                                     }
                                 }
                             }
+                        )
+                    )
+                }
+                if (developerMode) {
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.bug_report),
+                            title = { Text(stringResource(R.string.developer_options)) },
+                            onClick = { navController.navigate("settings/developer") }
                         )
                     )
                 }

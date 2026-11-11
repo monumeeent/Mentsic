@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,7 +67,6 @@ import com.metrolist.innertube.models.YTItem
 import com.metrolist.music.R
 import com.metrolist.music.LocalNavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
-import com.metrolist.music.LocalPlayerBottomSheetState
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.db.entities.Album
 import com.metrolist.music.db.entities.Song
@@ -75,13 +75,13 @@ import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
-import com.metrolist.music.ui.component.BottomSheetState
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.shimmer.GridItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
 
 import com.metrolist.music.ui.theme.GlassTokens
+import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.viewmodels.HomeViewModel
 import java.util.Calendar
@@ -89,7 +89,6 @@ import java.util.Calendar
 @Composable
 fun NewHomeScreen(
     modifier: Modifier = Modifier,
-    playerBottomSheetState: BottomSheetState? = LocalPlayerBottomSheetState.current,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val navController = LocalNavController.current
@@ -170,12 +169,7 @@ fun NewHomeScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Text(
-                            text = "Now, next, later",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
+                        DeveloperCreditRow()
                     }
                 }
 
@@ -327,21 +321,6 @@ fun NewHomeScreen(
                 }
             }
 
-            if (mediaMetadata != null) {
-                HomeMiniPlayerCapsule(
-                    title = mediaMetadata?.title.orEmpty(),
-                    artist = mediaMetadata?.artists?.joinToString { it.name }.orEmpty(),
-                    isPlaying = isPlaying,
-                    onClick = {
-                        // MainActivity renders the player as a bottom sheet; expand it rather than
-                        // pushing a duplicate route.
-                        playerBottomSheetState?.expandSoft()
-                    },
-                    onToggle = { playerConnection.togglePlayPause() },
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = feedInsets.calculateBottomPadding()),
-                )
-            }
-
             if (!uiState.isLoading && uiState.speedDialItems.isNotEmpty()) {
                 FloatingActionButton(
                     onClick = {
@@ -356,8 +335,7 @@ fun NewHomeScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(Spacing.large)
-                        // Lift above the capsule when one is visible so the two never overlap.
-                        .padding(bottom = feedInsets.calculateBottomPadding() + if (mediaMetadata != null) 80.dp else 0.dp),
+                        .padding(bottom = feedInsets.calculateBottomPadding()),
                 ) {
                     // Uses the app's own vector drawable: material-icons-extended does not ship
                     // Icons.Default.Shuffle, and the rest of the app draws R.drawable.shuffle too.
@@ -369,6 +347,38 @@ fun NewHomeScreen(
 }
 
 
+
+@Composable
+private fun DeveloperCreditRow() {
+    val uriHandler = LocalUriHandler.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.small)
+            .clickable { uriHandler.openUri("https://instagram.com/monumeeent") }
+            .padding(vertical = Spacing.tiny),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.instagram),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(IconSizes.Small),
+        )
+        Spacer(Modifier.width(Spacing.small))
+        Text(
+            text = "Developer",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(Spacing.tiny))
+        Text(
+            text = "@monumeeent",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
 
 @Composable
 private fun HomeFilterRow(filters: List<String>, selected: String, onSelected: (String) -> Unit) {
@@ -605,23 +615,7 @@ private fun HomeSpeedDialRow(items: List<YTItem>, activeId: String?, isPlaying: 
     }
 }
 
-@Composable
-private fun HomeMiniPlayerCapsule(title: String, artist: String, isPlaying: Boolean, onClick: () -> Unit, onToggle: () -> Unit, modifier: Modifier = Modifier) {
-    GlassCard(modifier = modifier.fillMaxWidth().padding(horizontal = Spacing.medium, vertical = Spacing.small), style = GlassTokens.Elevated, shape = RoundedCornerShape(20.dp)) {
-        Row(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = Spacing.medium, vertical = Spacing.small), verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            IconButton(onClick = onToggle) {
-                Icon(
-                    painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                )
-            }
-        }
-    }
-}
+
 
 @Composable
 private fun HomeLoadingState() {

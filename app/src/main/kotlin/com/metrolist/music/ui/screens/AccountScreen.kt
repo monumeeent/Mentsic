@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,8 +53,13 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
+import com.metrolist.music.constants.StreakCurrentKey
+import com.metrolist.music.constants.StreakHistoryKey
+import com.metrolist.music.constants.StreakLongestKey
+import com.metrolist.music.constants.StreakTotalKey
 import com.metrolist.music.db.entities.PodcastEntity
 import com.metrolist.music.ui.component.ChipsRow
+import com.metrolist.music.ui.component.StreakCard
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.YouTubeGridItem
@@ -63,10 +69,15 @@ import com.metrolist.music.ui.component.shimmer.ShimmerHost
 import com.metrolist.music.ui.menu.YouTubeAlbumMenu
 import com.metrolist.music.ui.menu.YouTubeArtistMenu
 import com.metrolist.music.ui.menu.YouTubePlaylistMenu
+import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.StreakState
+import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberEnumPreference
+import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.AccountContentType
 import com.metrolist.music.viewmodels.AccountViewModel
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -89,10 +100,35 @@ fun AccountScreen(
     val selectedContentType by viewModel.selectedContentType.collectAsStateWithLifecycle()
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
+    // Daily listening streak: stored per device, counted on the first song played each day.
+    val streakCurrent by rememberPreference(StreakCurrentKey, 0)
+    val streakLongest by rememberPreference(StreakLongestKey, 0)
+    val streakTotal by rememberPreference(StreakTotalKey, 0)
+    val streakHistoryRaw by rememberPreference(StreakHistoryKey, "")
+    val today = remember { LocalDate.now() }
+    val streakState = remember(streakCurrent, streakLongest, streakTotal, streakHistoryRaw, today) {
+        StreakState(
+            current = streakCurrent,
+            longest = streakLongest,
+            total = streakTotal,
+            history = StreakTracker.decodeHistory(streakHistoryRaw),
+        )
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
         contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
     ) {
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            StreakCard(
+                week = StreakTracker.weekDays(streakState, today),
+                currentStreak = StreakTracker.currentForDisplay(streakState, today),
+                longestStreak = streakState.longest,
+                total = streakState.total,
+                modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
+            )
+        }
+
         item(span = { GridItemSpan(maxLineSpan) }) {
             ChipsRow(
                 chips =
