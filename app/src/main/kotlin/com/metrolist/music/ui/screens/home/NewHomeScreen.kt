@@ -36,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -74,6 +75,7 @@ import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.db.entities.Album
 import com.metrolist.music.db.entities.Song
 import com.metrolist.music.extensions.getQueueWindows
+import com.metrolist.music.extensions.metadata
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.PlayerConnection
@@ -126,6 +128,7 @@ fun NewHomeScreen(
                     SongItem(
                         id = metadata.id,
                         title = metadata.title,
+                        // MediaMetadata.Artist and innertube Artist are different types.
                         artists = metadata.artists.map { Artist(name = it.name, id = it.id) },
                         thumbnail = metadata.thumbnailUrl ?: "",
                     )
