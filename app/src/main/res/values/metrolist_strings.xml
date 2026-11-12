@@ -264,6 +264,15 @@
     <string name="streak_rule_2">Each day you listen, your streak increases by one.</string>
     <string name="streak_rule_3">Missing a day will reset your streak to 0.</string>
 
+    <!-- Home feed sections -->
+    <string name="shuffles">Shuffles</string>
+    <string name="top_listened">Top listened</string>
+    <string name="remixes">Remixes</string>
+    <string name="shuffle_my_taste">Shuffle my taste</string>
+    <string name="personal_space">Personal Space</string>
+    <string name="continue_listening">Continue listening</string>
+    <string name="top_artists">Top artists</string>
+
     <!-- Hidden developer options -->
     <string name="developer_options">Developer options</string>
     <string name="developer_ai_lyrics">AI Lyrics</string>

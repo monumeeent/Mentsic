@@ -51,16 +51,10 @@ fun MetrolistTheme(
         }
     }
 
-    val finalColorScheme = remember(colorScheme, enableOrbitTheme, darkTheme) {
-        if (enableOrbitTheme) {
-            colorScheme.applyOrbitTheme(darkTheme)
-        } else {
-            colorScheme
-        }
-    }
-
+    // Orbit only swaps the typography. Colors always come from the user's selected palette
+    // (themeColor / dynamic color / pure black), so enabling Orbit no longer overrides them.
     MaterialTheme(
-        colorScheme = finalColorScheme,
+        colorScheme = colorScheme,
         typography = if (enableOrbitTheme) orbitTypography else MaterialTheme.typography,
         content = content,
     )

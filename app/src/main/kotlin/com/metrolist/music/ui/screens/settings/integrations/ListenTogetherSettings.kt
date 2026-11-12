@@ -94,6 +94,7 @@ import androidx.compose.material3.IconButton
 import com.metrolist.music.ui.component.IntegrationCard
 import com.metrolist.music.ui.component.IntegrationCardItem
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.listenTogetherName
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.flow.collectLatest
 
@@ -241,7 +242,7 @@ fun ListenTogetherSettings(navController: NavController) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = {
-                        val finalUsername = createUsername.trim()
+                        val finalUsername = listenTogetherName(createUsername)
                         if (finalUsername.isNotBlank()) {
                             username = finalUsername
                             manager.createRoom(finalUsername)
@@ -292,7 +293,7 @@ fun ListenTogetherSettings(navController: NavController) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = {
-                        val finalUsername = joinUsername.trim()
+                        val finalUsername = listenTogetherName(joinUsername)
                         if (finalUsername.isNotBlank() && roomCodeInput.length == 8) {
                             username = finalUsername
                             manager.joinRoom(roomCodeInput, finalUsername)

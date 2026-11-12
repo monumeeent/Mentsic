@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.screens.search
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -55,6 +56,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -87,6 +89,7 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.AutoRadioQueueKey
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.MiniPlayerBottomSpacing
 import com.metrolist.music.constants.MiniPlayerHeight
@@ -110,6 +113,7 @@ import com.metrolist.music.ui.menu.YouTubeArtistMenu
 import com.metrolist.music.ui.menu.YouTubePlaylistMenu
 import com.metrolist.music.ui.menu.YouTubeSongMenu
 import com.metrolist.music.utils.SearchRoutes
+import com.metrolist.music.utils.isDeveloperUnlockCode
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.OnlineSearchViewModel
 import kotlinx.coroutines.Dispatchers
@@ -160,6 +164,8 @@ fun OnlineSearchResult(
     val pauseSearchHistory by rememberPreference(PauseSearchHistoryKey, defaultValue = false)
     val hideVideoSongs by rememberPreference(HideVideoSongsKey, defaultValue = false)
     val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
+    var developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
+    val context = LocalContext.current
 
     BackHandler(enabled = isSearchFocused) {
         isSearchFocused = false
@@ -176,7 +182,22 @@ fun OnlineSearchResult(
 
     val onSearch: (String) -> Unit =
         remember {
-            { searchQuery ->
+            search@{ searchQuery ->
+                // Secret developer-mode toggle. Intercepted here as well as in SearchScreen,
+                // because this screen is the one that receives the IME's search action.
+                if (isDeveloperUnlockCode(searchQuery)) {
+                    developerMode = !developerMode
+                    query = TextFieldValue("")
+                    isSearchFocused = false
+                    focusManager.clearFocus()
+                    Toast.makeText(
+                        context,
+                        if (developerMode) "Developer options enabled" else "Developer options disabled",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    return@search
+                }
+
                 if (searchQuery.isNotEmpty()) {
                     isSearchFocused = false
                     focusManager.clearFocus()

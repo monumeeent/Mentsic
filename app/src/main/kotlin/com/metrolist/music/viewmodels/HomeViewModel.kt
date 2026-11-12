@@ -75,6 +75,12 @@ data class CommunityPlaylistItem(
     val songs: List<SongItem>
 )
 
+/** Number of random library songs appended to the Remixes row. */
+private const val REMIX_RANDOM_SAMPLE = 10
+
+/** Number of cells in the Home "Shuffles" grid (3x3). */
+private const val SHUFFLE_GRID_SIZE = 9
+
 internal fun buildSpeedDialItems(
     pinned: List<YTItem>,
     keepListening: List<YTItem>,
@@ -105,6 +111,18 @@ class HomeViewModel @Inject constructor(
     val forgottenFavorites = MutableStateFlow<List<Song>?>(null)
     val keepListening = MutableStateFlow<List<LocalItem>?>(null)
     val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
+
+    /** 9-song shuffle grid, re-rolled on every refresh. */
+    val shuffles = MutableStateFlow<List<Song>>(emptyList())
+
+    /** Most-played songs of the last 30 days, at most 4. */
+    val topListened = MutableStateFlow<List<Song>>(emptyList())
+
+    /**
+     * Remixes: the running queue's upcoming tracks merged with a random unlisted sample.
+     * Rebuilt whenever the queue changes or the feed refreshes.
+     */
+    val remixes = MutableStateFlow<List<YTItem>>(emptyList())
     val accountPlaylists = MutableStateFlow<List<PlaylistItem>?>(null)
     val homePage = MutableStateFlow<HomePage?>(null)
     val explorePage = MutableStateFlow<ExplorePage?>(null)
@@ -766,6 +784,8 @@ class HomeViewModel @Inject constructor(
             } else {
                 load()
             }
+            // Reshuffle so the grid changes on every pull-to-refresh.
+            runCatching { loadShuffles() }
             isRefreshing.value = false
         }
         // Run sync when user manually refreshes
@@ -829,6 +849,56 @@ class HomeViewModel @Inject constructor(
 
     private var isHomeDataLoaded = false
 
+    /**
+     * Most-played songs of the last 30 days for the Top Listened row (at most 4).
+     * The UI pads short rows with placeholders.
+     */
+    private suspend fun loadTopListened() {
+        topListened.value = database.mostPlayedSongs(
+            fromTimeStamp = LocalDateTime.now().minusDays(30),
+            limit = 4,
+        ).first()
+    }
+
+    /**
+     * Re-rolls the 9-song shuffle grid from local history (quick picks + forgotten favourites).
+     * Called on load and on every refresh, so the grid is different each time Home reloads.
+     */
+    private suspend fun loadShuffles() {
+        val pool = buildList {
+            addAll(database.quickPicks().first())
+            addAll(database.forgottenFavorites().first())
+        }.distinctBy { it.id }
+
+        shuffles.value = if (pool.isEmpty()) {
+            emptyList()
+        } else {
+            pool.shuffled().take(SHUFFLE_GRID_SIZE)
+        }
+    }
+
+    /**
+     * Builds the Remixes row: upcoming queue tracks first, then a random unlisted sample
+     * from the song library, deduplicated. Called from the UI, which owns the player.
+     */
+    fun updateRemixes(queueItems: List<YTItem>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val randomPool = database.allSongs()
+                .first()
+                .shuffled()
+                .take(REMIX_RANDOM_SAMPLE)
+                .map { song ->
+                    SongItem(
+                        id = song.id,
+                        title = song.title,
+                        artists = song.artists.map { Artist(name = it.name, id = it.id) },
+                        thumbnail = song.thumbnailUrl ?: "",
+                    )
+                }
+            remixes.value = (queueItems + randomPool).distinctBy { it.id }
+        }
+    }
+
     fun loadHomeData() {
         if (isHomeDataLoaded) return
         viewModelScope.launch(Dispatchers.IO) {
@@ -844,6 +914,8 @@ class HomeViewModel @Inject constructor(
 
                 isHomeDataLoaded = true
                 load()
+                loadTopListened()
+                loadShuffles()
             } catch (e: Exception) {
                 isHomeDataLoaded = false
                 Timber.e(e, "Failed to load home data")

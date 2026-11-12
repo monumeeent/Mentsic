@@ -213,6 +213,7 @@ import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.Updater
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.safeDataStoreEdit
+import com.metrolist.music.utils.listenTogetherName
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -1641,7 +1642,7 @@ class MainActivity : FragmentActivity() {
                 ?: uri.pathSegments.getOrNull(1)
         val isListenLink = uri.pathSegments.firstOrNull() == "listen" || uri.host?.equals("listen", ignoreCase = true) == true
         if (!listenCode.isNullOrBlank() && isListenLink) {
-            val username = dataStore.get(ListenTogetherUsernameKey, "").ifBlank { "Guest" }
+            val username = listenTogetherName(dataStore.get(ListenTogetherUsernameKey, ""))
             listenTogetherManager.joinRoom(listenCode, username)
             return
         }

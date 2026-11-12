@@ -78,16 +78,11 @@ import com.metrolist.music.db.entities.SearchHistory
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.HideOnScrollFAB
 import com.metrolist.music.utils.SearchRoutes
+import com.metrolist.music.utils.isDeveloperUnlockCode
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-/**
- * Typing this exact string in the search bar toggles developer options. Kept as a code constant
- * (not a translatable string resource) so it cannot be discovered from the resources.
- */
-private const val DeveloperModeUnlockCode = "@#monu"
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,7 +153,7 @@ fun SearchScreen(
 
         // Secret developer-mode toggle. Handled before anything else so the code never reaches
         // InnerTube and is never written to the search history.
-        if (searchQuery.trim() == DeveloperModeUnlockCode) {
+        if (isDeveloperUnlockCode(searchQuery)) {
             developerMode = !developerMode
             query = TextFieldValue("")
             focusManager.clearFocus()
@@ -268,6 +263,10 @@ fun SearchScreen(
                                         cursorBrush = SolidColor(
                                             MaterialTheme.colorScheme.primary,
                                         ),
+                                        // Without these the IME's Enter key did nothing, so the
+                                        // developer unlock code could never be submitted.
+                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                        keyboardActions = KeyboardActions(onSearch = { onSearch(query.text) }),
                                     )
                                 }
 

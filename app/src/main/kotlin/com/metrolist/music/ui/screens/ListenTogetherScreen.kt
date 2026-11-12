@@ -101,6 +101,7 @@ import com.metrolist.music.ui.component.DefaultDialog
 import androidx.compose.material3.IconButton as MaterialIconButton
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.listenTogetherName
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.launch
 
@@ -366,7 +367,8 @@ fun ListenTogetherScreen(
                     bringIntoViewRequester = bringIntoViewRequester,
                     onCreateRoom = {
                         val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
-                        val finalUsername = username.trim()
+                        val finalUsername = listenTogetherName(username)
+                        savedUsername = finalUsername
                         if (finalUsername.isNotBlank()) {
                             savedUsername = finalUsername
                             Toast.makeText(context, R.string.creating_room, Toast.LENGTH_SHORT).show()
@@ -381,7 +383,8 @@ fun ListenTogetherScreen(
                     },
                     onJoinRoom = {
                         val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
-                        val finalUsername = username.trim()
+                        val finalUsername = listenTogetherName(username)
+                        savedUsername = finalUsername
                         if (finalUsername.isNotBlank()) {
                             savedUsername = finalUsername
                             Toast

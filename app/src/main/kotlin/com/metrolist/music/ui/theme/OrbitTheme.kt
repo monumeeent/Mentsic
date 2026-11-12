@@ -134,10 +134,9 @@ val orbitDarkColorScheme = darkColorScheme(
  * Applies the Orbit static palette to the receiver [ColorScheme], replacing all
  * dynamic Material You colors with the predefined Orbit light/dark scheme.
  *
- * Seed precedence: when [isDark] is true the dark Orbit scheme is returned,
- * otherwise the light one. This intentionally discards any dynamic seed color
- * passed to [MetrolistTheme] in favour of the static Orbit palette, so callers
- * should only invoke this when `enableOrbitTheme` is true.
+ * Orbit is a typography-only style: it must never replace the user's selected color palette, so
+ * [MetrolistTheme] no longer calls this. It is kept for callers that explicitly opt into the
+ * standalone Orbit palette (e.g. previews).
  */
 fun ColorScheme.applyOrbitTheme(isDark: Boolean): ColorScheme {
     return if (isDark) orbitDarkColorScheme else orbitLightColorScheme

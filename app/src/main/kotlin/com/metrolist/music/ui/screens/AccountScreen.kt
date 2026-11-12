@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -43,6 +45,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -53,10 +56,6 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
-import com.metrolist.music.constants.StreakCurrentKey
-import com.metrolist.music.constants.StreakHistoryKey
-import com.metrolist.music.constants.StreakLongestKey
-import com.metrolist.music.constants.StreakTotalKey
 import com.metrolist.music.db.entities.PodcastEntity
 import com.metrolist.music.ui.component.ChipsRow
 import com.metrolist.music.ui.component.StreakCard
@@ -71,10 +70,9 @@ import com.metrolist.music.ui.menu.YouTubeArtistMenu
 import com.metrolist.music.ui.menu.YouTubePlaylistMenu
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.utils.backToMain
-import com.metrolist.music.utils.StreakState
 import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberEnumPreference
-import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.utils.rememberStreakState
 import com.metrolist.music.viewmodels.AccountContentType
 import com.metrolist.music.viewmodels.AccountViewModel
 import java.time.LocalDate
@@ -101,47 +99,70 @@ fun AccountScreen(
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
     // Daily listening streak: stored per device, counted on the first song played each day.
-    val streakCurrent by rememberPreference(StreakCurrentKey, 0)
-    val streakLongest by rememberPreference(StreakLongestKey, 0)
-    val streakTotal by rememberPreference(StreakTotalKey, 0)
-    val streakHistoryRaw by rememberPreference(StreakHistoryKey, "")
     val today = remember { LocalDate.now() }
-    val streakState = remember(streakCurrent, streakLongest, streakTotal, streakHistoryRaw, today) {
-        StreakState(
-            current = streakCurrent,
-            longest = streakLongest,
-            total = streakTotal,
-            history = StreakTracker.decodeHistory(streakHistoryRaw),
-        )
-    }
+    val streakState = rememberStreakState()
 
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
-        contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            StreakCard(
-                week = StreakTracker.weekDays(streakState, today),
-                currentStreak = StreakTracker.currentForDisplay(streakState, today),
-                longestStreak = streakState.longest,
-                total = streakState.total,
-                modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
+    // A real Scaffold, not a bare grid: the top app bar is drawn after the grid, so with the
+    // player-aware inset (which grows while music plays) the first rows scrolled underneath it
+    // and the screen appeared empty. Scaffold's inner padding keeps the content below the bar.
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.account)) },
+                navigationIcon = {
+                    LongClickIconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_back),
+                            contentDescription = null,
+                        )
+                    }
+                },
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { innerPadding ->
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
+            contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+            modifier = Modifier.padding(innerPadding),
+        ) {
+            // Personal Space header: the streak is the hero, with a compact library summary
+            // beneath it. The chip row then acts as the filter for the grid below.
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                StreakCard(
+                    week = StreakTracker.weekDays(streakState, today),
+                    currentStreak = StreakTracker.currentForDisplay(streakState, today),
+                    longestStreak = streakState.longest,
+                    total = streakState.total,
+                    modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
+                )
+            }
 
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            ChipsRow(
-                chips =
-                    listOf(
-                        AccountContentType.PLAYLISTS to stringResource(R.string.filter_playlists),
-                        AccountContentType.ALBUMS to stringResource(R.string.filter_albums),
-                        AccountContentType.ARTISTS to stringResource(R.string.filter_artists),
-                        AccountContentType.PODCASTS to stringResource(R.string.filter_podcasts),
-                    ),
-                currentValue = selectedContentType,
-                onValueUpdate = { viewModel.setSelectedContentType(it) },
-            )
-        }
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                PersonalSpaceStats(
+                    playlistCount = playlists?.size ?: 0,
+                    albumCount = albums?.size ?: 0,
+                    artistCount = artists?.size ?: 0,
+                    modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                ChipsRow(
+                    chips =
+                        listOf(
+                            AccountContentType.PLAYLISTS to stringResource(R.string.filter_playlists),
+                            AccountContentType.ALBUMS to stringResource(R.string.filter_albums),
+                            AccountContentType.ARTISTS to stringResource(R.string.filter_artists),
+                            AccountContentType.PODCASTS to stringResource(R.string.filter_podcasts),
+                        ),
+                    currentValue = selectedContentType,
+                    onValueUpdate = { viewModel.setSelectedContentType(it) },
+                )
+            }
 
         when (selectedContentType) {
             AccountContentType.PLAYLISTS -> {
@@ -353,21 +374,56 @@ fun AccountScreen(
             }
         }
     }
+}
+}
 
-    TopAppBar(
-        title = { Text(stringResource(R.string.account)) },
-        navigationIcon = {
-            LongClickIconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
+/** Compact library summary shown under the streak card in Personal Space. */
+@Composable
+private fun PersonalSpaceStats(
+    playlistCount: Int,
+    albumCount: Int,
+    artistCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.medium),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            PersonalSpaceStat(
+                value = playlistCount,
+                label = stringResource(R.string.filter_playlists),
+            )
+            PersonalSpaceStat(
+                value = albumCount,
+                label = stringResource(R.string.filter_albums),
+            )
+            PersonalSpaceStat(
+                value = artistCount,
+                label = stringResource(R.string.filter_artists),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PersonalSpaceStat(value: Int, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable

@@ -99,6 +99,7 @@ import com.metrolist.music.ui.component.Material3MenuItemData
 import com.metrolist.music.ui.component.NewAction
 import com.metrolist.music.ui.component.NewActionGrid
 import com.metrolist.music.ui.component.VolumeSlider
+import com.metrolist.music.utils.listenTogetherName
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -2037,7 +2038,7 @@ fun ListenTogetherDialog(
                             Button(
                                 onClick = {
                                     val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
-                                    val finalUsername = username.trim()
+                                    val finalUsername = listenTogetherName(username)
                                     if (finalUsername.isNotBlank()) {
                                         savedUsername = finalUsername
                                         Toast

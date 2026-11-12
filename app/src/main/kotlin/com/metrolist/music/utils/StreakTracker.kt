@@ -9,6 +9,13 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.metrolist.music.constants.StreakCurrentKey
+import com.metrolist.music.constants.StreakHistoryKey
+import com.metrolist.music.constants.StreakLongestKey
+import com.metrolist.music.constants.StreakTotalKey
 
 /**
  * Daily listening streak.
@@ -114,4 +121,25 @@ object StreakTracker {
                 }
             }
             .toSet()
+}
+
+/**
+ * Reads the persisted streak from DataStore and exposes it as a [StreakState].
+ *
+ * Shared by the Home header chip and the Personal Space card so both always agree.
+ */
+@Composable
+fun rememberStreakState(): StreakState {
+    val current by rememberPreference(StreakCurrentKey, 0)
+    val longest by rememberPreference(StreakLongestKey, 0)
+    val total by rememberPreference(StreakTotalKey, 0)
+    val historyRaw by rememberPreference(StreakHistoryKey, "")
+    return remember(current, longest, total, historyRaw) {
+        StreakState(
+            current = current,
+            longest = longest,
+            total = total,
+            history = StreakTracker.decodeHistory(historyRaw),
+        )
+    }
 }
