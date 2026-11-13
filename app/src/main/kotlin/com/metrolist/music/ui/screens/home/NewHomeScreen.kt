@@ -313,17 +313,17 @@ fun NewHomeScreen(
                         }
                     }
 
-                    // 3x3 thumbnail-only shuffle grid, re-rolled on every refresh.
-                    if (shuffles.isNotEmpty()) {
-                        item(key = "new_home_shuffles") {
-                            HomeSectionHeaderV2(title = stringResource(R.string.shuffles))
-                            ShuffleGrid(
-                                songs = shuffles,
-                                activeId = mediaMetadata?.id,
-                                isPlaying = isPlaying,
-                                onSongClick = { playSong(it, playerConnection, mediaMetadata?.id) },
-                            )
-                        }
+                    // 3x3 thumbnail-only shuffle grid, re-rolled on every refresh. The header and
+                    // an empty 9-cell grid stay on screen while the library/history query is still
+                    // running, so the section never silently disappears from the feed.
+                    item(key = "new_home_shuffles") {
+                        HomeSectionHeaderV2(title = stringResource(R.string.shuffles))
+                        ShuffleGrid(
+                            songs = shuffles,
+                            activeId = mediaMetadata?.id,
+                            isPlaying = isPlaying,
+                            onSongClick = { playSong(it, playerConnection, mediaMetadata?.id) },
+                        )
                     }
 
                     // Top listened: always 4 cells, padded with placeholders when short.
@@ -925,7 +925,10 @@ private fun ShuffleGrid(
             .padding(horizontal = Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        cells.chunked(3).forEach { rowSongs ->
+        // Always three rows of three. `chunked(3)` over an empty list produces no rows at all,
+        // which collapsed the section to a bare header whenever the pool was still loading.
+        repeat(3) { rowIndex ->
+            val rowSongs = cells.drop(rowIndex * 3).take(3)
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 rowSongs.forEach { song ->
                     val isActive = song.id == activeId
@@ -961,8 +964,18 @@ private fun ShuffleGrid(
                         }
                     }
                 }
-                // Keep the last row aligned when it has fewer than 3 cells.
-                repeat(3 - rowSongs.size) { Spacer(Modifier.weight(1f)) }
+                // Missing cells keep their footprint as tonal placeholders so the grid stays
+                // square and aligned instead of showing ragged blank space.
+                repeat(3 - rowSongs.size) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    )
+                }
             }
         }
     }

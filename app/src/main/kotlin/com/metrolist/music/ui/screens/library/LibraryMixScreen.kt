@@ -84,12 +84,7 @@ import com.metrolist.music.extensions.matchesNormalizedQuery
 import com.metrolist.music.extensions.normalizeForSearch
 import com.metrolist.music.extensions.reversed
 import com.metrolist.music.extensions.toMediaItem
-import com.metrolist.music.models.SmartPlaylist
-import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.queues.ListQueue
-import com.metrolist.music.playback.queues.YouTubeQueue
-import com.metrolist.music.ui.component.SmartPlaylistRow
-import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.AlbumGridItem
 import com.metrolist.music.ui.component.AlbumListItem
 import com.metrolist.music.ui.component.ArtistGridItem
@@ -110,8 +105,6 @@ import com.metrolist.music.ui.menu.SongMenu
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.LibraryMixViewModel
-import com.metrolist.music.viewmodels.SmartPlaylistViewModel
-import com.metrolist.innertube.models.WatchEndpoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.Collator
@@ -238,21 +231,6 @@ fun LibraryMixScreen(
         showUploaded && matchesNormalizedQuery(normalizedQuery, uploadedPlaylist.playlist.name)
     val showCachedPlaylists = showCached && matchesNormalizedQuery(normalizedQuery, cachedPlaylist.playlist.name)
 
-
-    // Auto-generated mixes. Loaded once per screen; the generator caches the result for a week.
-    val smartPlaylistViewModel: SmartPlaylistViewModel = hiltViewModel()
-    val smartPlaylists by smartPlaylistViewModel.playlists.collectAsStateWithLifecycle()
-    val onSmartPlayAll: (SmartPlaylist) -> Unit = { playlist ->
-        playlist.songs.firstOrNull()?.let { first ->
-            playerConnection.playQueue(
-                YouTubeQueue(
-                    endpoint = WatchEndpoint(videoId = first.id),
-                    preloadItem = first.toMediaMetadata(),
-                ),
-            )
-        }
-    }
-    LaunchedEffect(Unit) { smartPlaylistViewModel.refresh() }
 
     val albums = viewModel.albums.collectAsStateWithLifecycle()
     val artist = viewModel.artists.collectAsStateWithLifecycle()
@@ -489,27 +467,6 @@ fun LibraryMixScreen(
                         contentType = CONTENT_TYPE_HEADER,
                     ) {
                         headerContent()
-                    }
-
-                    // Generated mixes sit above the user's own items: they are the newest thing
-                    // in the library and are hidden while a search is active.
-                    if (smartPlaylists.isNotEmpty() && !isSearchActive) {
-                        item(
-                            key = "smart_playlists_header",
-                            contentType = CONTENT_TYPE_HEADER,
-                        ) {
-                            NavigationTitle(title = stringResource(R.string.smart_playlists))
-                        }
-                        item(
-                            key = "smart_playlists",
-                            contentType = CONTENT_TYPE_PLAYLIST,
-                        ) {
-                            SmartPlaylistRow(
-                                playlists = smartPlaylists,
-                                onPlaylistClick = { navController.navigate("smart_playlist/${it.id}") },
-                                onPlayAll = onSmartPlayAll,
-                            )
-                        }
                     }
 
                     if (showLikedPlaylist) {
@@ -838,28 +795,6 @@ fun LibraryMixScreen(
                         contentType = CONTENT_TYPE_HEADER,
                     ) {
                         headerContent()
-                    }
-
-                    // Generated mixes span the full row: the collage cards read better large.
-                    if (smartPlaylists.isNotEmpty() && !isSearchActive) {
-                        item(
-                            key = "smart_playlists_header",
-                            span = { GridItemSpan(maxLineSpan) },
-                            contentType = CONTENT_TYPE_HEADER,
-                        ) {
-                            NavigationTitle(title = stringResource(R.string.smart_playlists))
-                        }
-                        item(
-                            key = "smart_playlists",
-                            span = { GridItemSpan(maxLineSpan) },
-                            contentType = CONTENT_TYPE_PLAYLIST,
-                        ) {
-                            SmartPlaylistRow(
-                                playlists = smartPlaylists,
-                                onPlaylistClick = { navController.navigate("smart_playlist/${it.id}") },
-                                onPlayAll = onSmartPlayAll,
-                            )
-                        }
                     }
 
                     if (showLikedPlaylist) {

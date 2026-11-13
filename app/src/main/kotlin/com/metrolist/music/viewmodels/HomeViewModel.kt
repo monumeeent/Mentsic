@@ -863,18 +863,30 @@ class HomeViewModel @Inject constructor(
     /**
      * Re-rolls the 9-song shuffle grid from local history (quick picks + forgotten favourites).
      * Called on load and on every refresh, so the grid is different each time Home reloads.
+     *
+     * Both sources are history-driven: `quickPicks` reads the event table and
+     * `forgottenFavorites` needs plays on both sides of a 30-day cutoff. A fresh install, or a
+     * library that was synced but never played, therefore yields an empty pool and the whole
+     * section vanished from Home. Falling back to the song table keeps the grid populated.
      */
     private suspend fun loadShuffles() {
-        val pool = buildList {
-            addAll(database.quickPicks().first())
-            addAll(database.forgottenFavorites().first())
-        }.distinctBy { it.id }
+        val historyPool =
+            buildList {
+                addAll(database.quickPicks().first())
+                addAll(database.forgottenFavorites().first())
+            }.distinctBy { it.id }
 
-        shuffles.value = if (pool.isEmpty()) {
-            emptyList()
-        } else {
-            pool.shuffled().take(SHUFFLE_GRID_SIZE)
-        }
+        val pool =
+            historyPool.ifEmpty {
+                database.allSongs().first()
+            }.distinctBy { it.id }
+
+        shuffles.value =
+            if (pool.isEmpty()) {
+                emptyList()
+            } else {
+                pool.shuffled().take(SHUFFLE_GRID_SIZE)
+            }
     }
 
     /**
@@ -914,12 +926,18 @@ class HomeViewModel @Inject constructor(
 
                 isHomeDataLoaded = true
                 load()
-                loadTopListened()
-                loadShuffles()
             } catch (e: Exception) {
                 isHomeDataLoaded = false
                 Timber.e(e, "Failed to load home data")
             }
+
+            // Local-only sections are populated independently of the network. Sharing the try
+            // block above meant an offline `load()` failure also skipped the shuffle grid, which
+            // reads nothing but the local database.
+            runCatching { loadTopListened() }
+                .onFailure { Timber.w(it, "Failed to load top listened") }
+            runCatching { loadShuffles() }
+                .onFailure { Timber.w(it, "Failed to load shuffles") }
         }
     }
 }
