@@ -9,6 +9,7 @@ import com.metrolist.innertube.models.SongItem
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /** The auto-generated mixes offered by the smart-playlist engine. */
 enum class SmartPlaylistType {
@@ -55,27 +56,27 @@ data class SmartPlaylist(
     val isPlayable: Boolean
         get() = songs.isNotEmpty()
 
-    /**
-     * Whether the persisted [lastRefreshMillis] stamp is old enough to regenerate the mix.
-     * Pure so the weekly cadence can be reasoned about (and tested) without DataStore.
-     */
-    fun isStale(
-        lastRefreshMillis: Long,
-        refreshDays: Long = 7L,
-        now: LocalDate = LocalDate.now(),
-    ): Boolean {
-        if (lastRefreshMillis <= 0L) return true
-        val lastDate =
-            Instant
-                .ofEpochMilli(lastRefreshMillis)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
-        return java.time.temporal.ChronoUnit.DAYS.between(lastDate, now) >= refreshDays
-    }
-
     companion object {
         fun idFor(type: SmartPlaylistType): String = type.routeId
 
         fun typeFromId(id: String): SmartPlaylistType? = SmartPlaylistType.fromRouteId(id)
+
+        /**
+         * Whether a persisted [lastRefreshMillis] stamp is old enough to regenerate the mixes.
+         * Pure so the weekly cadence can be reasoned about (and tested) without DataStore.
+         */
+        fun isStale(
+            lastRefreshMillis: Long,
+            refreshDays: Long = 7L,
+            now: LocalDate = LocalDate.now(),
+        ): Boolean {
+            if (lastRefreshMillis <= 0L) return true
+            val lastDate =
+                Instant
+                    .ofEpochMilli(lastRefreshMillis)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+            return ChronoUnit.DAYS.between(lastDate, now) >= refreshDays
+        }
     }
 }

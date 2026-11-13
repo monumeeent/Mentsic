@@ -56,6 +56,8 @@ import kotlin.collections.emptyList
 
 /** The three queries behind the weekly recap card, bundled so `combine` stays typed. */
 private data class ReportInput(
+    // The Stats query, not mostPlayedSongs: only SongWithStats carries the per-period
+    // songCountListened and timeListened the recap card reports.
     val songs: List<com.metrolist.music.db.entities.SongWithStats>,
     val artists: List<com.metrolist.music.db.entities.Artist>,
     val daily: List<DailyPlayCount>,
@@ -84,7 +86,7 @@ constructor(
     // toggles the period chips above the lists.
     val weeklyReport: StateFlow<ListeningReport?> =
         combine(
-            database.mostPlayedSongs(fromTimeStamp = LocalDateTime.now().minusWeeks(1), limit = -1),
+            database.mostPlayedSongsStats(fromTimeStamp = LocalDateTime.now().minusWeeks(1), limit = -1),
             database.mostPlayedArtists(fromTimeStamp = LocalDateTime.now().minusWeeks(1), limit = -1),
             database
                 .dailyPlayCounts(
@@ -92,27 +94,24 @@ constructor(
                 )
         ) { songs, artists, daily ->
             ReportInput(songs, artists, daily)
-        }.map<ListeningReport> { input ->
-            val songs = input.songs
-            val artists = input.artists
-            val daily = input.daily
+        }.map { input: ReportInput ->
             val periodStart = LocalDate.now().minusDays(6)
             val activeDays =
-                daily
-                    .filter { entry ->
+                input.daily
+                    .count { entry ->
                         runCatching { LocalDate.parse(entry.day) }
                             .getOrNull()
                             ?.isBefore(periodStart) == false
-                    }.size
+                    }
 
             ListeningReport(
                 // The card is always the rolling last seven days; the label is filled in by the UI.
                 periodLabel = "",
-                totalPlays = songs.sumOf { it.songCountListened },
-                totalMinutes = songs.sumOf { it.timeListened ?: 0L } / 60_000L,
-                uniqueArtists = artists.size,
+                totalPlays = input.songs.sumOf { it.songCountListened },
+                totalMinutes = input.songs.sumOf { it.timeListened ?: 0L } / 60_000L,
+                uniqueArtists = input.artists.size,
                 topSongs =
-                    songs.take(5).map { song ->
+                    input.songs.take(5).map { song ->
                         ReportHighlight(
                             id = song.id,
                             title = song.title,
@@ -122,7 +121,7 @@ constructor(
                             minutesListened = (song.timeListened ?: 0L) / 60_000L,
                         )
                     },
-                topArtistNames = artists.take(4).map { it.artist.name },
+                topArtistNames = input.artists.take(4).map { it.artist.name },
                 activeDays = activeDays,
                 periodDays = 7,
             )
