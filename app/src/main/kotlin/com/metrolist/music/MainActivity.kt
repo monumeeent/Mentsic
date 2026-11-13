@@ -145,6 +145,7 @@ import com.metrolist.music.constants.DismissedKmpUpdateKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.DisableScreenshotKey
+import com.metrolist.music.constants.AlbumArtThemeKey
 import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
@@ -576,6 +577,8 @@ class MainActivity : FragmentActivity() {
         }
 
         val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
+        // Album-art theming is its own toggle now; it used to piggyback on DynamicThemeKey.
+        val enableAlbumArtTheme by rememberPreference(AlbumArtThemeKey, defaultValue = true)
         val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
 
         LaunchedEffect(enableHighRefreshRate) {
@@ -639,14 +642,14 @@ class MainActivity : FragmentActivity() {
         val themeColorCache = remember { mutableMapOf<String, Color>() }
 
         LaunchedEffect(selectedThemeColor) {
-            if (!enableDynamicTheme) {
+            if (!enableAlbumArtTheme) {
                 themeColor = selectedThemeColor
             }
         }
 
-        LaunchedEffect(playerConnection, enableDynamicTheme, selectedThemeColor) {
+        LaunchedEffect(playerConnection, enableAlbumArtTheme, selectedThemeColor) {
             val playerConnection = playerConnection
-            if (!enableDynamicTheme || playerConnection == null) {
+            if (!enableAlbumArtTheme || playerConnection == null) {
                 themeColor = selectedThemeColor
                 return@LaunchedEffect
             }

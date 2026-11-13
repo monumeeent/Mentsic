@@ -37,6 +37,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton as Material3IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import android.content.Intent
+import android.widget.Toast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -89,6 +94,8 @@ import com.metrolist.music.ui.component.HideOnScrollFAB
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.LocalAlbumsGrid
 import com.metrolist.music.ui.component.LocalArtistsGrid
+import com.metrolist.music.ui.component.ListeningReportCard
+import com.metrolist.music.ui.component.ListeningReportPlaceholder
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.LocalSongsGrid
 import com.metrolist.music.ui.component.NavigationTitle
@@ -98,6 +105,7 @@ import com.metrolist.music.ui.menu.AlbumMenu
 import com.metrolist.music.ui.menu.ArtistMenu
 import com.metrolist.music.ui.menu.SongMenu
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.ListeningReportShare
 import com.metrolist.music.utils.joinByBullet
 import com.metrolist.music.utils.makeTimeString
 import com.metrolist.music.utils.rememberPreference
@@ -172,6 +180,7 @@ fun StatsScreen(
     val mostPlayedAlbums by viewModel.filteredAlbums.collectAsStateWithLifecycle()
     val allArtists by viewModel.mostPlayedArtists.collectAsStateWithLifecycle()
     val firstEvent by viewModel.firstEvent.collectAsStateWithLifecycle()
+    val weeklyReport by viewModel.weeklyReport.collectAsStateWithLifecycle()
     val weeklyMostPlaylist by viewModel.weeklyMostPlaylist.collectAsStateWithLifecycle()
     val monthlyMostPlaylist by viewModel.monthlyMostPlaylist.collectAsStateWithLifecycle()
     val recapPlaylists by viewModel.recapPlaylists.collectAsStateWithLifecycle()
@@ -198,6 +207,25 @@ fun StatsScreen(
 
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
+
+    // Rendering the PNG touches the bitmap encoder, so keep it off the main thread.
+    val reportContext = LocalContext.current
+    val onShareReport: () -> Unit = {
+        val report = weeklyReport
+        if (report != null) {
+            coroutineScope.launch {
+                val intent =
+                    withContext(Dispatchers.IO) {
+                        ListeningReportShare.buildShareIntent(reportContext, report)
+                    }
+                if (intent == null) {
+                    Toast.makeText(reportContext, R.string.report_share_failed, Toast.LENGTH_SHORT).show()
+                } else {
+                    reportContext.startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        }
+    }
     val selectedOption by viewModel.selectedOption.collectAsStateWithLifecycle()
 
     var showTimeTransfer by rememberSaveable { mutableStateOf(false) }
@@ -329,6 +357,22 @@ fun StatsScreen(
                     }.filter { artist ->
                         artist.name.contains(query.text, ignoreCase = true)
                     }
+
+            val todayLabel = stringResource(R.string.report_this_week)
+            if (!isSearching && sArtists.isEmpty()) {
+                item(key = "weekly_report") {
+                    val report = weeklyReport
+                    if (report == null) {
+                        ListeningReportPlaceholder(modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).animateItem())
+                    } else {
+                        ListeningReportCard(
+                            report = report.copy(periodLabel = todayLabel),
+                            onShare = onShareReport,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).animateItem(),
+                        )
+                    }
+                }
+            }
 
             item(key = "choice_chips") {
                 ChoiceChipsRow(

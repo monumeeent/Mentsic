@@ -20,6 +20,7 @@ import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.LastFMUseSendLikes
 import com.metrolist.music.constants.LastFullSyncKey
 import com.metrolist.music.constants.SYNC_COOLDOWN
+import com.metrolist.music.constants.SyncFrequencyKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.ArtistEntity
 import com.metrolist.music.db.entities.PlaylistEntity
@@ -29,6 +30,7 @@ import com.metrolist.music.db.entities.SongEntity
 import com.metrolist.music.extensions.collectLatest
 import com.metrolist.music.extensions.isInternetConnected
 import com.metrolist.music.extensions.isSyncEnabled
+import com.metrolist.music.extensions.isWifiConnected
 import com.metrolist.music.models.toMediaMetadata
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -91,6 +93,17 @@ internal fun localSongIndexesAbsentFromRemote(
         }
     }
 }
+
+/** How often the library auto-syncs in the background. */
+enum class SyncFrequency {
+    OFF,
+    ON_WIFI,
+    ALWAYS,
+    DAILY,
+}
+
+/** Seconds between automatic syncs when the user picks the DAILY frequency. */
+private const val DAILY_SYNC_INTERVAL = 24L * 60L * 60L
 
 @Singleton
 class SyncUtils @Inject constructor(
@@ -330,9 +343,25 @@ class SyncUtils @Inject constructor(
                 return@launch
             }
 
+            // User-selected sync frequency. ALWAYS keeps the previous cooldown-only behaviour.
+            val frequency =
+                runCatching {
+                    SyncFrequency.valueOf(context.dataStore.get(SyncFrequencyKey, SyncFrequency.ALWAYS.name))
+                }.getOrDefault(SyncFrequency.ALWAYS)
+            when (frequency) {
+                SyncFrequency.OFF -> return@launch
+                SyncFrequency.ON_WIFI -> if (!context.isWifiConnected()) return@launch
+                SyncFrequency.ALWAYS, SyncFrequency.DAILY -> Unit
+            }
+
             val lastSync = context.dataStore.get(LastFullSyncKey, 0L)
             val effectiveLastSync = maxOf(lastSync, cachedLastSyncEpoch)
             val currentTime = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
+            if (frequency == SyncFrequency.DAILY && effectiveLastSync > 0 &&
+                (currentTime - effectiveLastSync) < DAILY_SYNC_INTERVAL
+            ) {
+                return@launch
+            }
             if (effectiveLastSync > 0 && (currentTime - effectiveLastSync) < SYNC_COOLDOWN) {
                 return@launch
             }

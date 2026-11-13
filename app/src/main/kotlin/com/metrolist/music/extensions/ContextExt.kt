@@ -33,3 +33,10 @@ fun Context.isInternetConnected(): Boolean {
     val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
     return networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ?: false
 }
+
+/** True when the active network is Wi-Fi (used by the "sync on Wi-Fi only" preference). */
+fun Context.isWifiConnected(): Boolean {
+    val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+    return networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ?: false
+}

@@ -88,6 +88,12 @@ fun SettingsScreen(
                     icon = painterResource(R.drawable.palette),
                     title = { Text(stringResource(R.string.appearance)) },
                     onClick = { navController.navigate("settings/appearance") }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.grid_view),
+                    title = { Text(stringResource(R.string.gallery_title)) },
+                    description = { Text(stringResource(R.string.gallery_how_to)) },
+                    onClick = { navController.navigate("settings/widgets") }
                 )
             )
         )

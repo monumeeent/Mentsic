@@ -83,6 +83,7 @@ import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.NavigationTitle
+import com.metrolist.music.ui.component.SmartPlaylistRow
 import com.metrolist.music.ui.component.shimmer.GridItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
 
@@ -93,6 +94,7 @@ import com.metrolist.music.utils.StreakState
 import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberStreakState
 import com.metrolist.music.viewmodels.HomeViewModel
+import com.metrolist.music.viewmodels.SmartPlaylistViewModel
 import java.time.LocalDate
 import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,6 +118,12 @@ fun NewHomeScreen(
     val shuffles by viewModel.shuffles.collectAsStateWithLifecycle()
     val topListened by viewModel.topListened.collectAsStateWithLifecycle()
     val remixes by viewModel.remixes.collectAsStateWithLifecycle()
+
+    // Auto-generated mixes (Release Radar / Weekly Mix). The generator caches for a week, so this
+    // first load is not repeated when the user switches tabs.
+    val smartPlaylistViewModel: SmartPlaylistViewModel = hiltViewModel()
+    val smartPlaylists by smartPlaylistViewModel.playlists.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { smartPlaylistViewModel.refresh() }
 
     // Remixes = upcoming queue tracks + a random unlisted sample. Recomputed when the queue
     // length or the current track changes, so the row always reflects what is playing.
@@ -280,6 +288,26 @@ fun NewHomeScreen(
                                 isPlaying = isPlaying,
                                 onItemClick = { item ->
                                     playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route -> navController.navigate(route) }
+                                },
+                            )
+                        }
+                    }
+
+                    if (smartPlaylists.isNotEmpty()) {
+                        item(key = "new_home_smart_playlists") {
+                            HomeSectionHeaderV2(title = stringResource(R.string.smart_playlists))
+                            SmartPlaylistRow(
+                                playlists = smartPlaylists,
+                                onPlaylistClick = { navController.navigate("smart_playlist/${it.id}") },
+                                onPlayAll = { playlist ->
+                                    playlist.songs.firstOrNull()?.let { first ->
+                                        playerConnection.playQueue(
+                                            YouTubeQueue(
+                                                endpoint = WatchEndpoint(videoId = first.id),
+                                                preloadItem = first.toMediaMetadata(),
+                                            ),
+                                        )
+                                    }
                                 },
                             )
                         }

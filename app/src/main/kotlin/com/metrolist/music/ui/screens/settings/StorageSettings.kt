@@ -53,6 +53,7 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.EnableSongCacheKey
 import com.metrolist.music.constants.MaxImageCacheSizeKey
 import com.metrolist.music.constants.MaxSongCacheSizeKey
+import com.metrolist.music.constants.SyncFrequencyKey
 import com.metrolist.music.extensions.tryOrNull
 import com.metrolist.music.ui.component.ActionPromptDialog
 import com.metrolist.music.ui.component.LongClickIconButton
@@ -60,6 +61,7 @@ import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import android.text.format.Formatter
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.SyncFrequency
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -99,6 +101,15 @@ fun StorageSettings(
 
     var clearDownloads by remember { mutableStateOf(false) }
     var clearCacheDialog by remember { mutableStateOf(false) }
+
+    // Background sync frequency (stored as the enum name so it survives DataStore untouched).
+    val syncFrequencyRaw by rememberPreference(SyncFrequencyKey, SyncFrequency.ALWAYS.name)
+    val syncFrequency =
+        remember(syncFrequencyRaw) {
+            runCatching { SyncFrequency.valueOf(syncFrequencyRaw) }.getOrDefault(SyncFrequency.ALWAYS)
+        }
+    var syncMenuVisible by remember { mutableStateOf(false) }
+    val syncUtils = LocalPlayerConnection.current?.service?.syncUtils
     var clearImageCacheDialog by remember { mutableStateOf(false) }
 
     // State for the confirmation dialog
@@ -245,6 +256,48 @@ fun StorageSettings(
         )
     }
 
+    // Sync frequency picker
+    if (syncMenuVisible) {
+        AlertDialog(
+            onDismissRequest = { syncMenuVisible = false },
+            title = { Text(stringResource(R.string.sync_frequency)) },
+            text = {
+                Column {
+                    SyncFrequency.entries.forEach { option ->
+                        val label =
+                            when (option) {
+                                SyncFrequency.OFF -> stringResource(R.string.sync_off)
+                                SyncFrequency.ON_WIFI -> stringResource(R.string.sync_on_wifi)
+                                SyncFrequency.ALWAYS -> stringResource(R.string.sync_always)
+                                SyncFrequency.DAILY -> stringResource(R.string.sync_daily)
+                            }
+                        TextButton(
+                            onClick = {
+                                syncFrequencyRaw = option.name
+                                syncMenuVisible = false
+                            },
+                        ) {
+                            Text(
+                                text = label,
+                                color =
+                                    if (option == syncFrequency) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { syncMenuVisible = false }) {
+                    Text(stringResource(R.string.dismiss))
+                }
+            },
+        )
+    }
+
     // Confirmation Dialog
     if (showCacheWarningDialog) {
         AlertDialog(
@@ -296,6 +349,42 @@ fun StorageSettings(
                 ),
             ),
         )
+
+        // Background sync frequency.
+        Material3SettingsGroup(
+            title = stringResource(R.string.sync_settings),
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.sync),
+                        title = { Text(stringResource(R.string.sync_frequency)) },
+                        description = {
+                            Text(
+                                text = when (syncFrequency) {
+                                    SyncFrequency.OFF -> stringResource(R.string.sync_off)
+                                    SyncFrequency.ON_WIFI -> stringResource(R.string.sync_on_wifi)
+                                    SyncFrequency.ALWAYS -> stringResource(R.string.sync_always)
+                                    SyncFrequency.DAILY -> stringResource(R.string.sync_daily)
+                                },
+                            )
+                        },
+                        onClick = { syncMenuVisible = true },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.refresh),
+                        title = { Text(stringResource(R.string.sync_now)) },
+                        onClick = {
+                            syncUtils?.let { util -> coroutineScope.launch { util.tryAutoSync() } }
+                            Toast
+                                .makeText(context, R.string.sync_now_requested, Toast.LENGTH_SHORT)
+                                .show()
+                        },
+                    ),
+                ),
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Material3SettingsGroup(
             title = stringResource(R.string.storage),
             items =

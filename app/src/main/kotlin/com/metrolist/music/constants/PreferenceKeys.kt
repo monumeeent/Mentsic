@@ -18,6 +18,19 @@ val EnableLandscapeScalingKey = booleanPreferencesKey("enableLandscapeScaling")
 val EnableAudioVisualizerKey = booleanPreferencesKey("enableAudioVisualizer")
 val DynamicThemeKey = booleanPreferencesKey("dynamicTheme")
 val SelectedThemeColorKey = intPreferencesKey("selectedThemeColor")
+
+// Derives the app palette from the current track's album art. Separate from DynamicThemeKey,
+// which is Material You wallpaper theming. Defaults to true so existing users keep the
+// album-art behaviour they already had.
+val AlbumArtThemeKey = booleanPreferencesKey("albumArtTheme")
+
+// How often the library auto-syncs. Stored as the enum name; ALWAYS preserves the previous
+// behaviour for existing installs.
+val SyncFrequencyKey = stringPreferencesKey("syncFrequency")
+
+// Epoch millis of the last smart-playlist generation; drives the weekly rotation.
+val SmartPlaylistRefreshKey = longPreferencesKey("smartPlaylistRefresh")
+
 val EnableOrbitThemeKey = booleanPreferencesKey("enableOrbitTheme")
 val DarkModeKey = stringPreferencesKey("darkMode")
 val PureBlackKey = booleanPreferencesKey("pureBlack")

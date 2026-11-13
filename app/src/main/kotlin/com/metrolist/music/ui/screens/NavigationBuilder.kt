@@ -38,6 +38,7 @@ import com.metrolist.music.ui.screens.playlist.AutoPlaylistScreen
 import com.metrolist.music.ui.screens.playlist.CachePlaylistScreen
 import com.metrolist.music.ui.screens.playlist.LocalPlaylistScreen
 import com.metrolist.music.ui.screens.playlist.OnlinePlaylistScreen
+import com.metrolist.music.ui.screens.playlist.SmartPlaylistScreen
 import com.metrolist.music.ui.screens.playlist.TopPlaylistScreen
 import com.metrolist.music.ui.screens.podcast.OnlinePodcastScreen
 import com.metrolist.music.ui.screens.recognition.RecognitionHistoryScreen
@@ -57,6 +58,7 @@ import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
 import com.metrolist.music.ui.screens.settings.StorageSettings
 import com.metrolist.music.ui.screens.settings.ThemeScreen
+import com.metrolist.music.ui.screens.settings.WidgetsScreen
 import com.metrolist.music.ui.screens.settings.UpdaterScreen
 import com.metrolist.music.ui.screens.settings.integrations.DiscordSettings
 import com.metrolist.music.ui.screens.settings.integrations.IntegrationScreen
@@ -288,6 +290,23 @@ fun NavGraphBuilder.navigationBuilder(
         ArtistItemsScreen(navController)
     }
 
+    // Generated mixes (Release Radar / Weekly Mix). Kept off the YouTube playlist route so the
+    // screen never falls through to the network fetch in OnlinePlaylistViewModel.
+    composable(
+        route = "smart_playlist/{smartPlaylistId}",
+        arguments =
+            listOf(
+                navArgument("smartPlaylistId") {
+                    type = NavType.StringType
+                },
+            ),
+    ) { backStackEntry ->
+        SmartPlaylistScreen(
+            smartPlaylistId = backStackEntry.arguments?.getString("smartPlaylistId").orEmpty(),
+            navController = navController,
+        )
+    }
+
     composable(
         route = "online_playlist/{playlistId}",
         arguments =
@@ -387,6 +406,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/appearance/theme") {
         ThemeScreen(navController)
+    }
+
+    composable("settings/widgets") {
+        WidgetsScreen(navController)
     }
 
     composable("settings/content") {

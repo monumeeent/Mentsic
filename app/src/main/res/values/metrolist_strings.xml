@@ -264,6 +264,20 @@
     <string name="streak_rule_2">Each day you listen, your streak increases by one.</string>
     <string name="streak_rule_3">Missing a day will reset your streak to 0.</string>
 
+    <!-- Appearance: album-art theming -->
+    <string name="album_art_theme">Album art colors</string>
+    <string name="album_art_theme_desc">Tint the app with colors from the current track\'s artwork. Overrides the selected palette while music plays.</string>
+
+    <!-- Background sync -->
+    <string name="sync_settings">Sync</string>
+    <string name="sync_frequency">Sync frequency</string>
+    <string name="sync_off">Never</string>
+    <string name="sync_on_wifi">Wi-Fi only</string>
+    <string name="sync_always">Always</string>
+    <string name="sync_daily">Once a day</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_now_requested">Sync started</string>
+
     <!-- Home feed sections -->
     <string name="shuffles">Shuffles</string>
     <string name="top_listened">Top listened</string>
@@ -583,6 +597,46 @@
     <string name="turntable_widget_description">Circular music widget with play and like controls</string>
     <string name="widget_music_player">Music Player</string>
     <string name="widget_turntable">Turntable</string>
+
+    <!-- Listening report (weekly / monthly recap) -->
+    <string name="report_title">Your listening recap</string>
+    <string name="report_this_week">This week</string>
+    <string name="report_last_week">Last week</string>
+    <string name="report_minutes">minutes</string>
+    <string name="report_plays">plays</string>
+    <string name="report_artists">artists</string>
+    <string name="report_top_tracks">Top tracks</string>
+    <string name="report_top_artists">Top artists</string>
+    <string name="report_active_days">Active days</string>
+    <string name="report_unique_songs">Unique songs</string>
+    <string name="report_songs">songs</string>
+    <string name="report_share">Share recap</string>
+    <string name="report_share_title">Mentsic Wrapped</string>
+    <string name="report_share_text">My listening recap (%1$s): %2$d minutes on Mentsic.</string>
+    <string name="report_badge">Mentsic · listening recap</string>
+    <string name="report_empty">No listening yet this period. Play something and check back.</string>
+    <string name="report_share_failed">Could not create the image. Try again.</string>
+
+    <!-- Smart playlists (auto-generated mixes) -->
+    <string name="smart_playlists">Made for you</string>
+    <string name="smart_playlist_badge">Auto</string>
+    <string name="smart_release_radar">Release Radar</string>
+    <string name="smart_release_radar_desc">New releases from artists you follow</string>
+    <string name="smart_weekly_mix">Weekly Mix</string>
+    <string name="smart_weekly_mix_desc">Fresh picks built from what you play most</string>
+    <string name="smart_playlist_empty">Not enough listening history yet. Play a few songs and this mix will fill up.</string>
+    <string name="smart_playlist_loading">Building your mix…</string>
+    <string name="smart_playlist_refresh">Refresh mix</string>
+
+    <!-- Widget gallery (Settings → Widgets) -->
+    <string name="gallery_title">Widgets</string>
+    <string name="gallery_how_to">Pin a widget to your home screen to control playback without opening the app.</string>
+    <string name="gallery_add_to_home">Add to home screen</string>
+    <string name="gallery_widget_player_desc">Full player with artwork, title, progress and playback controls.</string>
+    <string name="gallery_widget_turntable_desc">Circular control with play and like buttons.</string>
+    <string name="gallery_widget_playlists_desc">Playlist shortcuts for the music you open most.</string>
+    <string name="gallery_widget_unavailable">Add this widget from your launcher\'s widget picker</string>
+    <string name="gallery_widget_pin_unsupported">Your launcher does not support pinning. Add widgets from its widget picker instead.</string>
 
     <!-- Music Recognizer Widget strings -->
     <string name="widget_recognizer_name">Music Recognizer</string>

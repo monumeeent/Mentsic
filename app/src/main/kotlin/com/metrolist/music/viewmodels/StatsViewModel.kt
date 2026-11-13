@@ -19,7 +19,12 @@ import com.metrolist.music.constants.ShowMostStatsPlaylistsKey
 import com.metrolist.music.constants.StatPeriod
 import com.metrolist.music.constants.statToPeriod
 import com.metrolist.music.db.MusicDatabase
+import com.metrolist.music.db.entities.Artist
+import com.metrolist.music.db.entities.DailyPlayCount
 import com.metrolist.music.db.entities.PlaylistEntity
+import com.metrolist.music.db.entities.SongWithStats
+import com.metrolist.music.models.ListeningReport
+import com.metrolist.music.models.ReportHighlight
 import com.metrolist.music.ui.screens.OptionStats
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.safeDataStoreEdit
@@ -37,8 +42,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -58,12 +65,60 @@ constructor(
     val database: MusicDatabase,
 ) : ViewModel() {
     private val periodicMostPlaylistSyncMutex = Mutex()
+
+    /** Milliseconds in a week, used as the heatmap cutoff for the recap card. */
+    private val WEEK_MILLIS = 7L * 24L * 60L * 60L * 1000L
     val selectedOption = MutableStateFlow(OptionStats.CONTINUOUS)
     val indexChips = MutableStateFlow(0)
     private val showMostStatsPlaylists =
         context.dataStore.data
             .map { it[ShowMostStatsPlaylistsKey] ?: true }
             .distinctUntilChanged()
+
+    // Weekly recap card. Fixed to the current rolling week so it never changes when the user
+    // toggles the period chips above the lists.
+    val weeklyReport: StateFlow<ListeningReport?> =
+        combine(
+            database.mostPlayedSongs(fromTimeStamp = LocalDateTime.now().minusWeeks(1), limit = -1),
+            database.mostPlayedArtists(fromTimeStamp = LocalDateTime.now().minusWeeks(1), limit = -1),
+            database
+                .dailyPlayCounts(
+                    cutoffMillis = System.currentTimeMillis() - WEEK_MILLIS,
+                )
+        ) { songs, artists, daily ->
+            Triple(songs, artists, daily)
+        }.map { (songs, artists, daily): Triple<List<SongWithStats>, List<Artist>, List<DailyPlayCount>> ->
+            val periodStart = LocalDate.now().minusDays(6)
+            val activeDays =
+                daily
+                    .filter { entry ->
+                        runCatching { LocalDate.parse(entry.day) }
+                            .getOrNull()
+                            ?.isBefore(periodStart) == false
+                    }.size
+
+            ListeningReport(
+                // The card is always the rolling last seven days; the label is filled in by the UI.
+                periodLabel = "",
+                totalPlays = songs.sumOf { it.song.playCount },
+                totalMinutes = songs.sumOf { it.timeListened ?: 0L } / 60_000L,
+                uniqueArtists = artists.size,
+                topSongs =
+                    songs.take(5).map { song ->
+                        ReportHighlight(
+                            id = song.song.id,
+                            title = song.song.title,
+                            artistName = song.artists.joinToString { it.name },
+                            thumbnailUrl = song.song.thumbnailUrl.orEmpty(),
+                            playCount = song.song.playCount,
+                            minutesListened = (song.timeListened ?: 0L) / 60_000L,
+                        )
+                    },
+                topArtistNames = artists.take(4).map { it.artist.name },
+                activeDays = activeDays,
+                periodDays = 7,
+            )
+        }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val mostPlayedSongsStats =
         combine(

@@ -58,6 +58,7 @@ import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.DensityScale
 import com.metrolist.music.constants.DensityScaleKey
+import com.metrolist.music.constants.AlbumArtThemeKey
 import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableDynamicIconKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
@@ -130,6 +131,11 @@ fun AppearanceSettings(
     val (dynamicTheme, onDynamicThemeChange) =
         rememberPreference(
             DynamicThemeKey,
+            defaultValue = true,
+        )
+    val (albumArtTheme, onAlbumArtThemeChange) =
+        rememberPreference(
+            AlbumArtThemeKey,
             defaultValue = true,
         )
     val (enableDynamicIcon, onEnableDynamicIconPrefChange) =
@@ -986,6 +992,32 @@ fun AppearanceSettings(
                             ),
                         )
                     }
+                    // Album-art theming is independent of the palette choice, so it stays visible
+                    // even when a custom color is selected (it overrides that color while playing).
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.palette),
+                            title = { Text(stringResource(R.string.album_art_theme)) },
+                            description = { Text(stringResource(R.string.album_art_theme_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = albumArtTheme,
+                                    onCheckedChange = onAlbumArtThemeChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter =
+                                                painterResource(
+                                                    id = if (albumArtTheme) R.drawable.check else R.drawable.close,
+                                                ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onAlbumArtThemeChange(!albumArtTheme) },
+                        ),
+                    )
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.palette),
