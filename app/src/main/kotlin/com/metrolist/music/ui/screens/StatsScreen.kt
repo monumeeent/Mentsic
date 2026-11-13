@@ -358,17 +358,22 @@ fun StatsScreen(
                         artist.name.contains(query.text, ignoreCase = true)
                     }
 
-            val todayLabel = stringResource(R.string.report_this_week)
             if (!isSearching && sArtists.isEmpty()) {
                 item(key = "weekly_report") {
+                    // stringResource and animateItem are scoped to this composable item, not the
+                    // LazyListScope builder that surrounds it.
                     val report = weeklyReport
+                    val cardModifier =
+                        Modifier
+                            .padding(horizontal = 4.dp, vertical = 8.dp)
+                            .animateItem()
                     if (report == null) {
-                        ListeningReportPlaceholder(modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).animateItem())
+                        ListeningReportPlaceholder(modifier = cardModifier)
                     } else {
                         ListeningReportCard(
-                            report = report.copy(periodLabel = todayLabel),
+                            report = report.copy(periodLabel = stringResource(R.string.report_this_week)),
                             onShare = onShareReport,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).animateItem(),
+                            modifier = cardModifier,
                         )
                     }
                 }

@@ -46,7 +46,7 @@ class SmartPlaylistViewModel @Inject constructor(
 
     /** Single mix by its stable id, for the detail screen. */
     suspend fun getById(id: String): SmartPlaylist? {
-        val type = SmartPlaylistType.typeFromId(id) ?: return null
+        val type = SmartPlaylistType.fromRouteId(id) ?: return null
         val existing = generator.cachedNow().firstOrNull { it.type == type }
         if (existing != null && existing.isPlayable) return existing
         return generator.load().firstOrNull { it.type == type }

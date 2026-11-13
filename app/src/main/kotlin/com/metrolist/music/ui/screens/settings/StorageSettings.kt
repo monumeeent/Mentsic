@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -60,6 +61,7 @@ import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import android.text.format.Formatter
+import android.widget.Toast
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.SyncFrequency
 import com.metrolist.music.utils.rememberPreference
@@ -103,7 +105,8 @@ fun StorageSettings(
     var clearCacheDialog by remember { mutableStateOf(false) }
 
     // Background sync frequency (stored as the enum name so it survives DataStore untouched).
-    val syncFrequencyRaw by rememberPreference(SyncFrequencyKey, SyncFrequency.ALWAYS.name)
+    val (syncFrequencyRaw, onSyncFrequencyChange) =
+        rememberPreference(SyncFrequencyKey, SyncFrequency.ALWAYS.name)
     val syncFrequency =
         remember(syncFrequencyRaw) {
             runCatching { SyncFrequency.valueOf(syncFrequencyRaw) }.getOrDefault(SyncFrequency.ALWAYS)
@@ -273,7 +276,7 @@ fun StorageSettings(
                             }
                         TextButton(
                             onClick = {
-                                syncFrequencyRaw = option.name
+                                onSyncFrequencyChange(option.name)
                                 syncMenuVisible = false
                             },
                         ) {

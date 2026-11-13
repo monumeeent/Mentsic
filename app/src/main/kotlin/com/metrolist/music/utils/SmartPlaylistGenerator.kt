@@ -23,10 +23,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
+import java.time.LocalDateTime
 import java.util.Random
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -97,15 +95,9 @@ class SmartPlaylistGenerator @Inject constructor(
             regenerated
         }
 
-    private suspend fun isStale(): Boolean {
+    private fun isStale(): Boolean {
         val lastRefresh = context.dataStore.get(SmartPlaylistRefreshKey, 0L)
-        if (lastRefresh == 0L) return true
-        val lastDate =
-            Instant
-                .ofEpochMilli(lastRefresh)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
-        return ChronoUnit.DAYS.between(lastDate, LocalDate.now()) >= REFRESH_DAYS
+        return SmartPlaylist.isStale(lastRefresh, refreshDays = REFRESH_DAYS)
     }
 
     private suspend fun buildReleaseRadar(): SmartPlaylist? {
@@ -162,8 +154,10 @@ class SmartPlaylistGenerator @Inject constructor(
     private suspend fun buildWeeklyMix(): SmartPlaylist {
         val seeds =
             database
-                .mostPlayedSongs(limit = WEEKLY_MIX_SEEDS)
-                .first()
+                .mostPlayedSongs(
+                    fromTimeStamp = LocalDateTime.now().minusWeeks(4),
+                    limit = WEEKLY_MIX_SEEDS,
+                ).first()
 
         val seedItems =
             seeds.map { song ->

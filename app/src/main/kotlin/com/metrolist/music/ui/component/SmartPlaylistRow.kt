@@ -150,7 +150,7 @@ private fun SmartPlaylistCard(
 
 /** 2x2 collage when four covers exist, otherwise the first cover, otherwise a tonal placeholder. */
 @Composable
-private fun CollageCover(thumbnailUrls: List<String?>) {
+private fun CollageCover(thumbnailUrls: List<String>) {
     val scheme = MaterialTheme.colorScheme
     when {
         thumbnailUrls.size >= 4 ->

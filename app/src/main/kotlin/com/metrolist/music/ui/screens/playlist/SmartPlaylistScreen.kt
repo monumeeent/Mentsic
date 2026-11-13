@@ -7,9 +7,7 @@ package com.metrolist.music.ui.screens.playlist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -38,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,7 +50,8 @@ import com.metrolist.music.models.SmartPlaylist
 import com.metrolist.music.models.SmartPlaylistType
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.LongClickIconButton
-import com.metrolist.music.ui.component.SmartPlaylistRow
+import com.metrolist.music.ui.component.subtitle
+import com.metrolist.music.ui.component.title
 import com.metrolist.music.ui.component.YouTubeListItem
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.ui.theme.Spacing
@@ -72,11 +70,10 @@ fun SmartPlaylistScreen(
     viewModel: SmartPlaylistViewModel = hiltViewModel(),
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
-    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val listState = rememberLazyListState()
 
-    val type = remember(smartPlaylistId) { SmartPlaylistType.typeFromId(smartPlaylistId) }
+    val type: SmartPlaylistType? = remember(smartPlaylistId) { SmartPlaylistType.fromRouteId(smartPlaylistId) }
     var playlist by remember(smartPlaylistId) { mutableStateOf<SmartPlaylist?>(null) }
     var isLoading by remember(smartPlaylistId) { mutableStateOf(true) }
 
@@ -103,7 +100,7 @@ fun SmartPlaylistScreen(
             item(key = "smart_header") {
                 Spacer(Modifier.height(Spacing.medium))
                 Text(
-                    text = type?.subtitle() ?: "",
+                    text = type?.let { it.subtitle() } ?: "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Start,
@@ -192,7 +189,7 @@ fun SmartPlaylistScreen(
     }
 
     TopAppBar(
-        title = { Text(type?.title() ?: stringResource(R.string.smart_playlists)) },
+        title = { Text(type?.let { it.title() } ?: stringResource(R.string.smart_playlists)) },
         navigationIcon = {
             LongClickIconButton(
                 onClick = navController::navigateUp,
@@ -207,18 +204,4 @@ fun SmartPlaylistScreen(
     )
 }
 
-@Composable
-fun SmartPlaylistSection(
-    playlists: List<SmartPlaylist>,
-    onOpen: (SmartPlaylist) -> Unit,
-    onPlayAll: (SmartPlaylist) -> Unit,
-) {
-    if (playlists.isEmpty()) return
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Top) {
-        SmartPlaylistRow(
-            playlists = playlists,
-            onPlaylistClick = onOpen,
-            onPlayAll = onPlayAll,
-        )
-    }
-}
+

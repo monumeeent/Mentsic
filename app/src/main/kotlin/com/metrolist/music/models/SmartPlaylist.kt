@@ -6,6 +6,9 @@
 package com.metrolist.music.models
 
 import com.metrolist.innertube.models.SongItem
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 /** The auto-generated mixes offered by the smart-playlist engine. */
 enum class SmartPlaylistType {
@@ -14,6 +17,20 @@ enum class SmartPlaylistType {
 
     /** Fresh picks derived from the user's most played tracks ("Weekly Mix"). */
     WEEKLY_MIX,
+    ;
+
+    /** Stable id used for navigation and list keys. */
+    val routeId: String
+        get() =
+            when (this) {
+                RELEASE_RADAR -> "smart_release_radar"
+                WEEKLY_MIX -> "smart_weekly_mix"
+            }
+
+    companion object {
+        /** Resolves a navigation argument back to its mix, or `null` for an unknown id. */
+        fun fromRouteId(id: String): SmartPlaylistType? = entries.firstOrNull { it.routeId == id }
+    }
 }
 
 /**
@@ -38,14 +55,27 @@ data class SmartPlaylist(
     val isPlayable: Boolean
         get() = songs.isNotEmpty()
 
-    companion object {
-        fun idFor(type: SmartPlaylistType): String =
-            when (type) {
-                SmartPlaylistType.RELEASE_RADAR -> "smart_release_radar"
-                SmartPlaylistType.WEEKLY_MIX -> "smart_weekly_mix"
-            }
+    /**
+     * Whether the persisted [lastRefreshMillis] stamp is old enough to regenerate the mix.
+     * Pure so the weekly cadence can be reasoned about (and tested) without DataStore.
+     */
+    fun isStale(
+        lastRefreshMillis: Long,
+        refreshDays: Long = 7L,
+        now: LocalDate = LocalDate.now(),
+    ): Boolean {
+        if (lastRefreshMillis <= 0L) return true
+        val lastDate =
+            Instant
+                .ofEpochMilli(lastRefreshMillis)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+        return java.time.temporal.ChronoUnit.DAYS.between(lastDate, now) >= refreshDays
+    }
 
-        fun typeFromId(id: String): SmartPlaylistType? =
-            SmartPlaylistType.entries.firstOrNull { idFor(it) == id }
+    companion object {
+        fun idFor(type: SmartPlaylistType): String = type.routeId
+
+        fun typeFromId(id: String): SmartPlaylistType? = SmartPlaylistType.fromRouteId(id)
     }
 }
