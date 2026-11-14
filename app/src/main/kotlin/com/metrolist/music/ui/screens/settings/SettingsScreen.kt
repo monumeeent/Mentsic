@@ -83,23 +83,29 @@ fun SettingsScreen(
         // User Interface Section
         Material3SettingsGroup(
             title = stringResource(R.string.settings_section_ui),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.palette),
-                    title = { Text(stringResource(R.string.appearance)) },
-                    onClick = { navController.navigate("settings/appearance") }
-                ),
+            // buildList (not listOf) because the trailing entry is conditional, and a trailing
+            // `if` without `else` inside listOf() is parsed as an expression.
+            items = buildList {
+                add(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.palette),
+                        title = { Text(stringResource(R.string.appearance)) },
+                        onClick = { navController.navigate("settings/appearance") }
+                    )
+                )
                 // Widget gallery is a developer surface: it advertises widgets whose
                 // configuration is still being worked on, so it stays out of the normal UI.
                 if (developerMode) {
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.grid_view),
-                        title = { Text(stringResource(R.string.gallery_title)) },
-                        description = { Text(stringResource(R.string.gallery_how_to)) },
-                        onClick = { navController.navigate("settings/widgets") },
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.grid_view),
+                            title = { Text(stringResource(R.string.gallery_title)) },
+                            description = { Text(stringResource(R.string.gallery_how_to)) },
+                            onClick = { navController.navigate("settings/widgets") },
+                        )
                     )
                 }
-            )
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
