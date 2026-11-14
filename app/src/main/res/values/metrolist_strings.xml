@@ -598,6 +598,35 @@
     <string name="widget_music_player">Music Player</string>
     <string name="widget_turntable">Turntable</string>
 
+    <!-- Extra palette seeds + colour-harmony style picker (Theme screen) -->
+    <string name="palette_mauve">Mauve</string>
+    <string name="palette_soft_rose">Soft rose</string>
+    <string name="palette_sea_green">Sea green</string>
+    <string name="palette_sand">Sand</string>
+    <string name="palette_slate">Slate</string>
+    <string name="palette_cream">Cream</string>
+    <string name="theme_palette_style">Colour harmony</string>
+    <string name="theme_palette_style_desc">How the seed colour is expanded into the full palette.</string>
+    <string name="style_tonal_spot">Tonal spot</string>
+    <string name="style_vibrant">Vibrant</string>
+    <string name="style_expressive">Expressive</string>
+    <string name="style_monochrome">Monochrome</string>
+
+    <!-- Tactical Command Hub (Settings → Appearance → Home layout) -->
+    <string name="tactical_hub">Tactical Command Hub</string>
+    <string name="tactical_hub_dark">Alternative home layout</string>
+    <string name="tactical_hub_dark_desc">Swap the feed for the zone-based Command Hub</string>
+    <string name="tactical_hub_enable">Use Command Hub layout</string>
+    <string name="tactical_hub_enabled_desc">Home shows Speed Dial, Active Session, filter tabs and your listening heatmap.</string>
+    <string name="tactical_hub_disabled_desc">Home uses the standard feed layout.</string>
+    <string name="tactical_hub_zones">What you get</string>
+    <string name="hub_heatmap_collapsed">Start with heatmap collapsed</string>
+    <string name="hub_heatmap_collapsed_desc">Show the heatmap as a single row until tapped.</string>
+    <string name="hub_zone_speed_dial">Zone 1 · Speed Dial shortcuts</string>
+    <string name="hub_zone_active_session">Zone 2 · Continue listening and Quick Picks</string>
+    <string name="hub_zone_filters">Zone 3 · Filter tabs for Discovery, Library, Moods, Podcasts</string>
+    <string name="hub_zone_heatmap">Zone 4 · Collapsible listening heatmap</string>
+
     <!-- Listening report (weekly / monthly recap) -->
     <string name="report_title">Your listening recap</string>
     <string name="report_this_week">This week</string>

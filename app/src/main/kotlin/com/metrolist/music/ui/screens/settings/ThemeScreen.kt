@@ -22,6 +22,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,6 +44,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -81,6 +83,7 @@ import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.PureBlackMiniPlayerKey
 import com.metrolist.music.constants.SelectedThemeColorKey
+import com.metrolist.music.constants.ThemePaletteStyleKey
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.MetrolistTheme
 import com.metrolist.music.ui.theme.OrbitColors
@@ -113,7 +116,41 @@ val PaletteColors = listOf(
     ThemePalette(R.string.palette_brown, Color(0xFF6D4C41)),
     ThemePalette(R.string.palette_grey, Color(0xFF757575)),
     ThemePalette(R.string.palette_blue_grey, Color(0xFF546E7A)),
+    // Softer, less saturated seeds for users who find the Material set too loud.
+    ThemePalette(R.string.palette_mauve, Color(0xFFAD7FDB)),
+    ThemePalette(R.string.palette_soft_rose, Color(0xFFD46A8C)),
+    ThemePalette(R.string.palette_sea_green, Color(0xFF2E9E8F)),
+    ThemePalette(R.string.palette_sand, Color(0xFFC9A227)),
+    ThemePalette(R.string.palette_slate, Color(0xFF5A6B7C)),
+    ThemePalette(R.string.palette_cream, Color(0xFFE8DCC8)),
 )
+
+/**
+ * Colour-harmony schemes offered in the palette picker. [PaletteStyle.TONAL_SPOT] is the app's
+ * historical default, so it leads the list and an unknown persisted value falls back to it.
+ */
+val PaletteStyleOptions =
+    listOf(
+        PaletteStyle.TONAL_SPOT,
+        PaletteStyle.VIBRANT,
+        PaletteStyle.EXPRESSIVE,
+        PaletteStyle.MONOCHROME,
+    )
+
+/** Human-readable chip label for a [PaletteStyle]. */
+@Composable
+private fun styleLabel(style: PaletteStyle): String =
+    stringResource(
+        when (style) {
+            PaletteStyle.TONAL_SPOT -> R.string.style_tonal_spot
+            PaletteStyle.VIBRANT -> R.string.style_vibrant
+            PaletteStyle.EXPRESSIVE -> R.string.style_expressive
+            PaletteStyle.MONOCHROME -> R.string.style_monochrome
+            // Newer Material versions may add styles; fall back to the enum name rather than
+            // breaking the when-expression on a library upgrade.
+            else -> R.string.style_tonal_spot
+        },
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -432,6 +469,40 @@ fun ThemeControls(
                 }
             }
 
+            // Colour-harmony style: how the seed colour is turned into the full palette.
+            val (paletteStyleName, onPaletteStyleChange) =
+                rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
+            val currentStyle =
+                remember(paletteStyleName) {
+                    runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
+                }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.theme_palette_style),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(R.string.theme_palette_style_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PaletteStyleOptions.forEach { style ->
+                        FilterChip(
+                            selected = style == currentStyle,
+                            onClick = { onPaletteStyleChange(style.name) },
+                            label = {
+                                Text(
+                                    text = styleLabel(style),
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+
             // Orbit Theme Toggle
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
@@ -725,11 +796,19 @@ fun ThemeMockup(
         DarkMode.ON -> true
         DarkMode.OFF -> false
     }
+    // The preview must honour the harmony picker, otherwise switching style looks like a no-op
+    // until the user leaves the screen.
+    val (paletteStyleName) = rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
+    val previewStyle =
+        remember(paletteStyleName) {
+            runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
+        }
 
     MetrolistTheme(
         darkTheme = useDark,
         
-        themeColor = themeColor
+        themeColor = themeColor,
+        paletteStyle = previewStyle,
     ) {
         Card(
             modifier = Modifier
@@ -833,11 +912,17 @@ fun ThemeMockupPortrait(
         DarkMode.ON -> true
         DarkMode.OFF -> false
     }
+    val (paletteStyleName) = rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
+    val previewStyle =
+        remember(paletteStyleName) {
+            runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
+        }
 
     MetrolistTheme(
         darkTheme = useDark,
         
-        themeColor = themeColor
+        themeColor = themeColor,
+        paletteStyle = previewStyle,
     ) {
         Card(
             modifier = Modifier

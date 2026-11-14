@@ -133,6 +133,7 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.request.crossfade
 import coil3.toBitmap
+import com.materialkolor.PaletteStyle
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.WatchEndpoint
@@ -151,6 +152,7 @@ import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
+import com.metrolist.music.constants.ThemePaletteStyleKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
@@ -631,6 +633,14 @@ class MainActivity : FragmentActivity() {
 
         val enableOrbitTheme by rememberPreference(EnableOrbitThemeKey, defaultValue = false)
 
+        // Material colour-harmony style applied to the seed colour. TONAL_SPOT is the previous
+        // behaviour, so existing installs look identical until the user changes it.
+        val (paletteStyleName) = rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
+        val paletteStyle =
+            remember(paletteStyleName) {
+                runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
+            }
+
         val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
         val selectedThemeColor = Color(selectedThemeColorInt)
 
@@ -698,6 +708,7 @@ class MainActivity : FragmentActivity() {
             darkTheme = useDarkTheme,
             themeColor = themeColor,
             enableOrbitTheme = enableOrbitTheme,
+            paletteStyle = paletteStyle,
         ) {
             val currentDensity = LocalDensity.current
             val windowInfo = LocalWindowInfo.current

@@ -56,6 +56,8 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.ChipSortTypeKey
 import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.DefaultOpenTabKey
+import com.metrolist.music.constants.DeveloperModeKey
+import com.metrolist.music.constants.HubModeEnabledKey
 import com.metrolist.music.constants.DensityScale
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.AlbumArtThemeKey
@@ -128,6 +130,10 @@ fun AppearanceSettings(
     navController: NavController,
     snackbarHostState: SnackbarHostState,
 ) {
+    // Gates the experimental Command Hub entry below.
+    val (developerMode) = rememberPreference(DeveloperModeKey, defaultValue = false)
+    // Only used to phrase the entry's description; the toggle itself lives on the hub screen.
+    val (hubModeEnabled) = rememberPreference(HubModeEnabledKey, defaultValue = false)
     val (dynamicTheme, onDynamicThemeChange) =
         rememberPreference(
             DynamicThemeKey,
@@ -1050,6 +1056,28 @@ fun AppearanceSettings(
                             onClick = { navController.navigate("settings/appearance/theme") },
                         ),
                     )
+                    // Home layout is only offered while developer mode is on: the Command Hub
+                    // is still an unfinished surface, and the route itself is gated too.
+                    if (developerMode) {
+                        add(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.grid_view),
+                                title = { Text(stringResource(R.string.tactical_hub_dark)) },
+                                description = {
+                                    Text(
+                                        stringResource(
+                                            if (hubModeEnabled) {
+                                                R.string.tactical_hub_enabled_desc
+                                            } else {
+                                                R.string.tactical_hub_dark_desc
+                                            },
+                                        ),
+                                    )
+                                },
+                                onClick = { navController.navigate("settings/appearance/tactical") },
+                            ),
+                        )
+                    }
                 },
         )
 

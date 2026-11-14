@@ -34,13 +34,14 @@ fun MetrolistTheme(
     pureBlack: Boolean = false,
     themeColor: Color = DefaultThemeColor,
     enableOrbitTheme: Boolean = false,
+    paletteStyle: PaletteStyle = PaletteStyle.TonalSpot,
     content: @Composable () -> Unit,
 ) {
     val baseColorScheme = rememberDynamicColorScheme(
         seedColor = themeColor,
         isDark = darkTheme,
         specVersion = ColorSpec.SpecVersion.SPEC_2025,
-        style = PaletteStyle.TonalSpot,
+        style = paletteStyle,
     )
 
     val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {

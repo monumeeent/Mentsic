@@ -15,6 +15,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -57,6 +58,7 @@ import com.metrolist.music.ui.screens.settings.PlayerSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
 import com.metrolist.music.ui.screens.settings.StorageSettings
+import com.metrolist.music.ui.screens.settings.TacticalHubSettings
 import com.metrolist.music.ui.screens.settings.ThemeScreen
 import com.metrolist.music.ui.screens.settings.WidgetsScreen
 import com.metrolist.music.ui.screens.settings.UpdaterScreen
@@ -429,6 +431,11 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/widgets") {
         WidgetsScreen(navController)
+    }
+
+    // Tactical Command Hub is an experimental home layout, so it stays developer-gated.
+    composable("settings/appearance/tactical") {
+        DeveloperOnlyRoute(navController) { TacticalHubSettings(navController) }
     }
 
     // The three "advanced" settings screens are developer-mode only. The rows are hidden in

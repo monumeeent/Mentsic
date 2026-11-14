@@ -31,6 +31,10 @@ val SyncFrequencyKey = stringPreferencesKey("syncFrequency")
 // Epoch millis of the last smart-playlist generation; drives the weekly rotation.
 val SmartPlaylistRefreshKey = longPreferencesKey("smartPlaylistRefresh")
 
+// Which Material colour-harmony scheme turns the seed colour into a palette.
+// Stored as the PaletteStyle enum name; TONAL_SPOT preserves the previous look.
+val ThemePaletteStyleKey = stringPreferencesKey("themePaletteStyle")
+
 val EnableOrbitThemeKey = booleanPreferencesKey("enableOrbitTheme")
 val DarkModeKey = stringPreferencesKey("darkMode")
 val PureBlackKey = booleanPreferencesKey("pureBlack")
