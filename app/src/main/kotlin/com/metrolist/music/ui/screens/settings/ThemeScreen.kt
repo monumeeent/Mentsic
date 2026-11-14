@@ -87,6 +87,7 @@ import com.metrolist.music.constants.ThemePaletteStyleKey
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.MetrolistTheme
 import com.metrolist.music.ui.theme.OrbitColors
+import com.metrolist.music.ui.theme.ThemePaletteStyle
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 
@@ -125,30 +126,18 @@ val PaletteColors = listOf(
     ThemePalette(R.string.palette_cream, Color(0xFFE8DCC8)),
 )
 
-/**
- * Colour-harmony schemes offered in the palette picker. [PaletteStyle.TONAL_SPOT] is the app's
- * historical default, so it leads the list and an unknown persisted value falls back to it.
- */
-val PaletteStyleOptions =
-    listOf(
-        PaletteStyle.TONAL_SPOT,
-        PaletteStyle.VIBRANT,
-        PaletteStyle.EXPRESSIVE,
-        PaletteStyle.MONOCHROME,
-    )
+/** Colour-harmony schemes offered in the palette picker, Tonal spot (the default) first. */
+val PaletteStyleOptions = ThemePaletteStyle.entries
 
-/** Human-readable chip label for a [PaletteStyle]. */
+/** Human-readable chip label for a [ThemePaletteStyle]. */
 @Composable
-private fun styleLabel(style: PaletteStyle): String =
+private fun styleLabel(style: ThemePaletteStyle): String =
     stringResource(
         when (style) {
-            PaletteStyle.TONAL_SPOT -> R.string.style_tonal_spot
-            PaletteStyle.VIBRANT -> R.string.style_vibrant
-            PaletteStyle.EXPRESSIVE -> R.string.style_expressive
-            PaletteStyle.MONOCHROME -> R.string.style_monochrome
-            // Newer Material versions may add styles; fall back to the enum name rather than
-            // breaking the when-expression on a library upgrade.
-            else -> R.string.style_tonal_spot
+            ThemePaletteStyle.TONAL_SPOT -> R.string.style_tonal_spot
+            ThemePaletteStyle.VIBRANT -> R.string.style_vibrant
+            ThemePaletteStyle.EXPRESSIVE -> R.string.style_expressive
+            ThemePaletteStyle.MONOCHROME -> R.string.style_monochrome
         },
     )
 
@@ -470,12 +459,9 @@ fun ThemeControls(
             }
 
             // Colour-harmony style: how the seed colour is turned into the full palette.
-            val (paletteStyleName, onPaletteStyleChange) =
-                rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
-            val currentStyle =
-                remember(paletteStyleName) {
-                    runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
-                }
+            val (paletteStyleKey, onPaletteStyleChange) =
+                rememberPreference(ThemePaletteStyleKey, ThemePaletteStyle.Default.key)
+            val currentStyle = ThemePaletteStyle.fromKey(paletteStyleKey)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = stringResource(R.string.theme_palette_style),
@@ -491,7 +477,7 @@ fun ThemeControls(
                     PaletteStyleOptions.forEach { style ->
                         FilterChip(
                             selected = style == currentStyle,
-                            onClick = { onPaletteStyleChange(style.name) },
+                            onClick = { onPaletteStyleChange(style.key) },
                             label = {
                                 Text(
                                     text = styleLabel(style),
@@ -674,11 +660,15 @@ fun PaletteItem(
     onClick: () -> Unit
 ) {
     val isSystemDark = isSystemInDarkTheme()
-    
+    // Swatches preview each seed *in the harmony the user has chosen*, otherwise picking a style
+    // appears to have no effect on the palette grid until the screen is reopened.
+    val (paletteStyleKey) = rememberPreference(ThemePaletteStyleKey, ThemePaletteStyle.Default.key)
+    val swatchStyle = ThemePaletteStyle.fromKey(paletteStyleKey).style
+
     val colorScheme = rememberDynamicColorScheme(
         seedColor = palette.seedColor,
         isDark = isSystemDark,
-        style = PaletteStyle.TonalSpot
+        style = swatchStyle
     )
     
     val cornerRadius by animateDpAsState(
@@ -798,11 +788,8 @@ fun ThemeMockup(
     }
     // The preview must honour the harmony picker, otherwise switching style looks like a no-op
     // until the user leaves the screen.
-    val (paletteStyleName) = rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
-    val previewStyle =
-        remember(paletteStyleName) {
-            runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
-        }
+    val (paletteStyleKey) = rememberPreference(ThemePaletteStyleKey, ThemePaletteStyle.Default.key)
+    val previewStyle = ThemePaletteStyle.fromKey(paletteStyleKey).style
 
     MetrolistTheme(
         darkTheme = useDark,
@@ -912,11 +899,8 @@ fun ThemeMockupPortrait(
         DarkMode.ON -> true
         DarkMode.OFF -> false
     }
-    val (paletteStyleName) = rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
-    val previewStyle =
-        remember(paletteStyleName) {
-            runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
-        }
+    val (paletteStyleKey) = rememberPreference(ThemePaletteStyleKey, ThemePaletteStyle.Default.key)
+    val previewStyle = ThemePaletteStyle.fromKey(paletteStyleKey).style
 
     MetrolistTheme(
         darkTheme = useDark,

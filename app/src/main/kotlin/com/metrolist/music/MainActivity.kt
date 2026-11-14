@@ -133,7 +133,6 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.request.crossfade
 import coil3.toBitmap
-import com.materialkolor.PaletteStyle
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.WatchEndpoint
@@ -207,6 +206,7 @@ import com.metrolist.music.widget.MusicWidgetReceiver
 import com.metrolist.music.ui.theme.ColorSaver
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.theme.ThemePaletteStyle
 import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
 import com.metrolist.music.ui.utils.resetHeightOffset
@@ -635,11 +635,9 @@ class MainActivity : FragmentActivity() {
 
         // Material colour-harmony style applied to the seed colour. TONAL_SPOT is the previous
         // behaviour, so existing installs look identical until the user changes it.
-        val (paletteStyleName) = rememberPreference(ThemePaletteStyleKey, PaletteStyle.TONAL_SPOT.name)
+        val (paletteStyleKey) = rememberPreference(ThemePaletteStyleKey, ThemePaletteStyle.Default.key)
         val paletteStyle =
-            remember(paletteStyleName) {
-                runCatching { PaletteStyle.valueOf(paletteStyleName) }.getOrDefault(PaletteStyle.TONAL_SPOT)
-            }
+            remember(paletteStyleKey) { ThemePaletteStyle.fromKey(paletteStyleKey).style }
 
         val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
         val selectedThemeColor = Color(selectedThemeColorInt)

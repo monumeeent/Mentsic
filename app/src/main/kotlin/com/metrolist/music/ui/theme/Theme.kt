@@ -28,6 +28,32 @@ import com.materialkolor.score.Score
 
 val DefaultThemeColor = Color(0xFF8B5CF6)
 
+/**
+ * Colour-harmony schemes exposed in the theme picker.
+ *
+ * materialkolor's [PaletteStyle] is a sealed class of `data object`s, not an enum, so it has no
+ * `name`/`valueOf`. These entries carry an explicit, stable [key] that is what DataStore stores.
+ */
+enum class ThemePaletteStyle(
+    val key: String,
+    val style: PaletteStyle,
+) {
+    TONAL_SPOT("tonal_spot", PaletteStyle.TonalSpot),
+    VIBRANT("vibrant", PaletteStyle.Vibrant),
+    EXPRESSIVE("expressive", PaletteStyle.Expressive),
+    MONOCHROME("monochrome", PaletteStyle.Monochrome),
+    ;
+
+    companion object {
+        /** Default matches the app's historical look. */
+        val Default = TONAL_SPOT
+
+        /** Resolves a persisted key, tolerating unknown or legacy values. */
+        fun fromKey(key: String?): ThemePaletteStyle =
+            entries.firstOrNull { it.key == key } ?: Default
+    }
+}
+
 @Composable
 fun MetrolistTheme(
     darkTheme: Boolean = androidx.compose.foundation.isSystemInDarkTheme(),
