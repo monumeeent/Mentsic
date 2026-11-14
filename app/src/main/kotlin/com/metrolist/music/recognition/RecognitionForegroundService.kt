@@ -508,6 +508,19 @@ class RecognitionForegroundService : Service() {
 
     private fun saveWidgetState(state: Int) {
         widgetPreferences().edit().putInt(PREF_STATE, state).apply()
+        notifyWidgetStateChanged()
+    }
+
+    /**
+     * Nudges any placed Recognizer widget to repaint.
+     *
+     * The widget cannot observe SharedPreferences, and polling from a RemoteViews provider is not
+     * possible, so every state transition broadcasts instead.
+     */
+    private fun notifyWidgetStateChanged() {
+        sendBroadcast(
+            Intent(ACTION_WIDGET_STATE_CHANGED).setPackage(packageName),
+        )
     }
 
     private fun createNotificationChannel() {
@@ -531,6 +544,9 @@ class RecognitionForegroundService : Service() {
 
         const val ACTION_START_WIDGET_RECOGNITION = "com.metrolist.music.widget.recognizer.START"
         const val ACTION_STOP_WIDGET_RECOGNITION = "com.metrolist.music.widget.recognizer.STOP"
+
+        /** Sent after any widget-visible state change so the provider can repaint. */
+        const val ACTION_WIDGET_STATE_CHANGED = "com.metrolist.music.widget.recognizer.STATE_CHANGED"
         const val PREFS_NAME = "recognizer_widget_prefs"
         const val PREF_STATE = "state"
         const val PREF_SONG_TITLE = "song_title"

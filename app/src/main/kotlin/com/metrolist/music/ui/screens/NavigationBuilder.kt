@@ -430,7 +430,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings/widgets") {
-        WidgetsScreen(navController)
+        DeveloperOnlyRoute(navController) { WidgetsScreen(navController) }
     }
 
     // Tactical Command Hub is an experimental home layout, so it stays developer-gated.

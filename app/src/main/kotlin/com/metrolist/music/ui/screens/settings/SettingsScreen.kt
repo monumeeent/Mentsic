@@ -89,12 +89,16 @@ fun SettingsScreen(
                     title = { Text(stringResource(R.string.appearance)) },
                     onClick = { navController.navigate("settings/appearance") }
                 ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.grid_view),
-                    title = { Text(stringResource(R.string.gallery_title)) },
-                    description = { Text(stringResource(R.string.gallery_how_to)) },
-                    onClick = { navController.navigate("settings/widgets") }
-                )
+                // Widget gallery is a developer surface: it advertises widgets whose
+                // configuration is still being worked on, so it stays out of the normal UI.
+                if (developerMode) {
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.grid_view),
+                        title = { Text(stringResource(R.string.gallery_title)) },
+                        description = { Text(stringResource(R.string.gallery_how_to)) },
+                        onClick = { navController.navigate("settings/widgets") },
+                    )
+                }
             )
         )
 

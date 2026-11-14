@@ -304,6 +304,40 @@
                 android:resource="@xml/music_widget_info" />
         </receiver>
 
+        <!-- Turntable (circular) widget. The provider and layout existed but were never
+             registered, so the launcher could not offer it. -->
+        <receiver
+            android:name=".widget.TurntableWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_turntable">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.metrolist.music.widget.TURNTABLE_PLAY_PAUSE" />
+                <action android:name="com.metrolist.music.widget.TURNTABLE_NEXT" />
+                <action android:name="com.metrolist.music.widget.TURNTABLE_PREVIOUS" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/turntable_widget_info" />
+        </receiver>
+
+        <!-- Music Recognizer widget: the service side already existed; this exposes it. -->
+        <receiver
+            android:name=".widget.RecognizerWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_recognizer_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.metrolist.music.widget.recognizer.TOGGLE" />
+                <action android:name="com.metrolist.music.widget.recognizer.STATE_CHANGED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/recognizer_widget_info" />
+        </receiver>
+
 
         <service
             android:name=".recognition.RecognitionForegroundService"

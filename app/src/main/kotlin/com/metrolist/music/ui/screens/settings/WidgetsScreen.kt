@@ -56,6 +56,7 @@ import com.metrolist.music.ui.component.mentsic.WidgetPreview
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.widget.MusicWidgetReceiver
+import com.metrolist.music.widget.RecognizerWidgetReceiver
 import com.metrolist.music.widget.TurntableWidgetReceiver
 
 /**
@@ -89,13 +90,11 @@ fun WidgetsScreen(navController: NavController) {
                     titleRes = R.string.widget_turntable,
                     descriptionRes = R.string.gallery_widget_turntable_desc,
                 ),
-                // Playlist and recognizer widgets are added from the launcher's own picker, so the
-                // gallery can advertise them but not pin them on the user's behalf.
                 GalleryEntry(
                     kind = WidgetKind.LIST,
-                    receiver = null,
-                    titleRes = R.string.widget_playlists,
-                    descriptionRes = R.string.gallery_widget_playlists_desc,
+                    receiver = RecognizerWidgetReceiver::class.java,
+                    titleRes = R.string.widget_recognizer_name,
+                    descriptionRes = R.string.widget_recognizer_description,
                 ),
             )
         }
