@@ -26,6 +26,7 @@ import com.metrolist.innertube.pages.ExplorePage
 import com.metrolist.innertube.pages.HomePage
 import com.metrolist.innertube.utils.completed
 import com.metrolist.music.constants.AccountNameKey
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.HideYoutubeShortsKey
@@ -79,7 +80,8 @@ data class CommunityPlaylistItem(
 private const val REMIX_RANDOM_SAMPLE = 10
 
 /** Number of cells in the Home "Shuffles" grid (3x3). */
-private const val SHUFFLE_GRID_SIZE = 9
+// 3x2 grid: was 9 cells, which pushed the feed down for a section meant to be a quick sampler.
+private const val SHUFFLE_GRID_SIZE = 6
 
 internal fun buildSpeedDialItems(
     pinned: List<YTItem>,
@@ -112,8 +114,12 @@ class HomeViewModel @Inject constructor(
     val keepListening = MutableStateFlow<List<LocalItem>?>(null)
     val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
 
-    /** 9-song shuffle grid, re-rolled on every refresh. */
-    val shuffles = MutableStateFlow<List<Song>>(emptyList())
+    /**
+     * Shuffle grid pool: the running queue first, then a random slice of the whole library.
+     * Typed as [YTItem] because the queue holds [SongItem] and the library holds [Song]; the
+     * grid only needs `id`/`thumbnail`/`title`, so one shared type avoids converting either way.
+     */
+    val shuffles = MutableStateFlow<List<YTItem>>(emptyList())
 
     /** Most-played songs of the last 30 days, at most 4. */
     val topListened = MutableStateFlow<List<Song>>(emptyList())
@@ -573,7 +579,13 @@ class HomeViewModel @Inject constructor(
         // Phase 2: Heavy multi-request operations — run in background without blocking the UI.
         viewModelScope.launch(Dispatchers.IO) { getDailyDiscover() }
 
-        viewModelScope.launch(Dispatchers.IO) { getCommunityPlaylists() }
+        // "From the Community" is a developer-only surface, so it is not even fetched for
+        // regular users: the request fans out over public playlists and costs several calls.
+        viewModelScope.launch(Dispatchers.IO) {
+            if (context.dataStore.get(DeveloperModeKey, false)) {
+                getCommunityPlaylists()
+            }
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             YouTube.explore().onSuccess { page ->
@@ -869,24 +881,46 @@ class HomeViewModel @Inject constructor(
      * library that was synced but never played, therefore yields an empty pool and the whole
      * section vanished from Home. Falling back to the song table keeps the grid populated.
      */
-    private suspend fun loadShuffles() {
+    private suspend fun loadShuffles(queueItems: List<YTItem> = emptyList()) {
+        // Upcoming queue tracks lead the grid, so the section always reflects what is playing.
+        val queueFirst = queueItems.distinctBy { it.id }
+
         val historyPool =
             buildList {
                 addAll(database.quickPicks().first())
                 addAll(database.forgottenFavorites().first())
             }.distinctBy { it.id }
 
-        val pool =
+        val libraryPool =
             historyPool.ifEmpty {
                 database.allSongs().first()
             }.distinctBy { it.id }
 
-        shuffles.value =
-            if (pool.isEmpty()) {
-                emptyList()
-            } else {
-                pool.shuffled().take(SHUFFLE_GRID_SIZE)
+        val libraryItems: List<YTItem> =
+            libraryPool.map { song ->
+                SongItem(
+                    id = song.id,
+                    title = song.title,
+                    artists = song.artists.map { Artist(name = it.name, id = it.id) },
+                    thumbnail = song.thumbnailUrl.orEmpty(),
+                )
             }
+
+        // Queue entries are kept in order; the library half is shuffled so the grid rotates.
+        val pool =
+            (queueFirst + libraryItems.shuffled())
+                .distinctBy { it.id }
+                .take(SHUFFLE_GRID_SIZE)
+
+        shuffles.value = pool
+    }
+
+    /** Re-rolls the grid for a new queue, keeping the queue's upcoming tracks at the front. */
+    fun updateShuffles(queueItems: List<YTItem>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { loadShuffles(queueItems) }
+                .onFailure { Timber.w(it, "Failed to refresh shuffles") }
+        }
     }
 
     /**

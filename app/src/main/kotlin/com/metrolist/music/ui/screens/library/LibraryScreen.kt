@@ -34,8 +34,10 @@ import androidx.compose.ui.unit.dp
 fun LibraryScreen() {
     val navController = LocalNavController.current
     var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
-    var libraryViewType by rememberEnumPreference(AlbumViewTypeKey, LibraryViewType.GRID)
-    var playlistViewType by rememberEnumPreference(PlaylistViewTypeKey, LibraryViewType.GRID)
+    // List is the default: a list shows ~2x more rows per screen than a grid, which is what a
+    // library user scanning titles/artists actually wants. Grid remains one tap away.
+    var libraryViewType by rememberEnumPreference(AlbumViewTypeKey, LibraryViewType.LIST)
+    var playlistViewType by rememberEnumPreference(PlaylistViewTypeKey, LibraryViewType.LIST)
 
     val filterContent = @Composable {
         Surface(

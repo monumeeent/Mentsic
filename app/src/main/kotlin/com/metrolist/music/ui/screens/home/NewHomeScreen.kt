@@ -28,13 +28,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -77,13 +77,14 @@ import com.metrolist.music.db.entities.Song
 import com.metrolist.music.extensions.getQueueWindows
 import com.metrolist.music.extensions.metadata
 import com.metrolist.music.extensions.toMediaItem
+import com.metrolist.music.models.SmartPlaylist
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.NavigationTitle
-import com.metrolist.music.ui.component.SmartPlaylistRow
+import com.metrolist.music.ui.component.title
 import com.metrolist.music.ui.component.shimmer.GridItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
 
@@ -97,6 +98,22 @@ import com.metrolist.music.viewmodels.HomeViewModel
 import com.metrolist.music.viewmodels.SmartPlaylistViewModel
 import java.time.LocalDate
 import java.util.Calendar
+
+/** Shuffle sampler geometry: 3 columns x 2 rows = 6 cells. */
+private const val SHUFFLE_COLUMNS = 3
+private const val SHUFFLE_ROWS = 2
+private const val SHUFFLE_CELLS = SHUFFLE_COLUMNS * SHUFFLE_ROWS
+
+/** Speed Dial geometry: 5 columns x 3 rows = 15 artwork-only tiles. */
+private const val SPEED_DIAL_COLUMNS = 5
+private const val SPEED_DIAL_ROWS = 3
+private const val SPEED_DIAL_CELLS = SPEED_DIAL_COLUMNS * SPEED_DIAL_ROWS
+
+/**
+ * Trailing inset on horizontal rows so the next card peeks in. Sized to show ~15% of a card:
+ * enough to read the edge of the artwork, not enough to imply a second visible item.
+ */
+private val PEEK_PADDING = 72.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewHomeScreen(
@@ -145,6 +162,26 @@ fun NewHomeScreen(
     }
 
     LaunchedEffect(Unit) { viewModel.loadHomeData() }
+
+    // Queue tracks lead the shuffle grid, and the grid re-rolls whenever the queue changes so
+    // it always samples what is playing right now alongside the rest of the library.
+    val queueSnapshot = remember(mediaMetadata?.id, playerConnection.player.mediaItemCount) {
+        playerConnection.player.getQueueWindows()
+            .drop(1)
+            .mapNotNull { window -> window.mediaItem.metadata }
+            .map { metadata ->
+                SongItem(
+                    id = metadata.id,
+                    title = metadata.title,
+                    artists = metadata.artists.map { Artist(name = it.name, id = it.id) },
+                    thumbnail = metadata.thumbnailUrl.orEmpty(),
+                )
+            }
+    }
+
+    LaunchedEffect(queueSnapshot) {
+        viewModel.updateShuffles(queueSnapshot)
+    }
 
     val greeting = remember {
         when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
@@ -231,7 +268,7 @@ fun NewHomeScreen(
                     // InnerTube chips are the only filter the ViewModel can actually fetch, so the
                     // row is built from live chips with an always-available "All" reset.
                     val chipTitles = uiState.homePage?.chips?.map { it.title }.orEmpty()
-                    HomeFilterRow(
+                    HomeFilterTabs(
                         filters = listOf("All") + chipTitles,
                         selected = selectedChip?.title ?: "All",
                         onSelected = { title ->
@@ -276,42 +313,42 @@ fun NewHomeScreen(
                                 } ?: navController.navigate("account")
                             },
                             onOpenPersonalSpace = { navController.navigate("account") },
+                            smartPlaylists = smartPlaylists,
+                            onOpenSmartPlaylist = { navController.navigate("smart_playlist/${it.id}") },
+                            onPlaySmartPlaylist = { playlist ->
+                                playlist.songs.firstOrNull()?.let { first ->
+                                    playerConnection.playQueue(
+                                        YouTubeQueue(
+                                            endpoint = WatchEndpoint(videoId = first.id),
+                                            preloadItem = first.toMediaMetadata(),
+                                        ),
+                                    )
+                                }
+                            },
                         )
                     }
 
                     if (uiState.speedDialItems.isNotEmpty()) {
                         item(key = "new_home_speed_dial") {
                             HomeSectionHeaderV2(title = stringResource(R.string.speed_dial))
-                            HomeSpeedDialRow(
-                                items = uiState.speedDialItems.take(6),
+                            HomeSpeedDialGrid(
+                                items = uiState.speedDialItems,
                                 activeId = mediaMetadata?.id,
                                 isPlaying = isPlaying,
                                 onItemClick = { item ->
-                                    playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route -> navController.navigate(route) }
-                                },
-                            )
-                        }
-                    }
-
-                    if (smartPlaylists.isNotEmpty()) {
-                        item(key = "new_home_smart_playlists") {
-                            HomeSectionHeaderV2(title = stringResource(R.string.smart_playlists))
-                            SmartPlaylistRow(
-                                playlists = smartPlaylists,
-                                onPlaylistClick = { navController.navigate("smart_playlist/${it.id}") },
-                                onPlayAll = { playlist ->
-                                    playlist.songs.firstOrNull()?.let { first ->
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                endpoint = WatchEndpoint(videoId = first.id),
-                                                preloadItem = first.toMediaMetadata(),
-                                            ),
-                                        )
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                    // Speed Dial is a 1-tap shuffle surface: a song starts its radio
+                                    // immediately; albums/playlists/artists route to their page
+                                    // because only songs carry a playable endpoint here.
+                                    playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route ->
+                                        navController.navigate(route)
                                     }
                                 },
                             )
                         }
                     }
+
+
 
                     // 3x3 thumbnail-only shuffle grid, re-rolled on every refresh. The header and
                     // an empty 9-cell grid stay on screen while the library/history query is still
@@ -322,7 +359,11 @@ fun NewHomeScreen(
                             songs = shuffles,
                             activeId = mediaMetadata?.id,
                             isPlaying = isPlaying,
-                            onSongClick = { playSong(it, playerConnection, mediaMetadata?.id) },
+                            onSongClick = { item ->
+                                playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route ->
+                                    navController.navigate(route)
+                                }
+                            },
                         )
                     }
 
@@ -530,21 +571,33 @@ private fun StreakChip(days: Int, onClick: () -> Unit) {
     }
 }
 
+/**
+ * Home filter strip. Uses a [ScrollableTabRow] rather than chips so the strip reads as navigation
+ * (it swaps the feed's contents) rather than as optional filters, and matches the Command Hub.
+ * Chips also wrapped badly once InnerTube returned six or more genre chips.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HomeFilterRow(filters: List<String>, selected: String, onSelected: (String) -> Unit) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = Spacing.medium),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+private fun HomeFilterTabs(filters: List<String>, selected: String, onSelected: (String) -> Unit) {
+    val selectedIndex = filters.indexOf(selected).coerceAtLeast(0)
+    ScrollableTabRow(
+        selectedTabIndex = selectedIndex,
+        edgePadding = Spacing.medium,
+        divider = { },
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
     ) {
-        items(filters, key = { it }) { filter ->
-            FilterChip(
-                selected = filter == selected,
+        filters.forEachIndexed { index, filter ->
+            Tab(
+                selected = index == selectedIndex,
                 onClick = { onSelected(filter) },
-                label = { Text(filter, style = MaterialTheme.typography.labelMedium) },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
+                text = {
+                    Text(
+                        text = filter,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
             )
         }
     }
@@ -583,10 +636,17 @@ private fun PersonalSpacePager(
     target: ResumeTarget?,
     isPlaying: Boolean,
     topArtists: List<String>,
+    smartPlaylists: List<SmartPlaylist>,
     onResume: () -> Unit,
     onOpenPersonalSpace: () -> Unit,
+    onOpenSmartPlaylist: (SmartPlaylist) -> Unit,
+    onPlaySmartPlaylist: (SmartPlaylist) -> Unit,
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    // A fourth, conditional page hosts the generated mixes. It only exists when the generator
+    // produced something, so the pager does not show an empty card for logged-out users.
+    val hasMadeForYou = smartPlaylists.isNotEmpty()
+    val pageCount = if (hasMadeForYou) 4 else 3
+    val pagerState = rememberPagerState(pageCount = { pageCount })
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -707,7 +767,7 @@ private fun PersonalSpacePager(
                     }
                 }
 
-                else -> PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
+                2 -> PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
                     Column {
                         Text(
                             text = stringResource(R.string.top_artists),
@@ -733,6 +793,48 @@ private fun PersonalSpacePager(
                         }
                     }
                 }
+
+                else -> PersonalSpaceSlide(respond = { smartPlaylists.firstOrNull()?.let(onPlaySmartPlaylist) }) {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.smart_playlists),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.height(Spacing.small))
+                        smartPlaylists.forEach { playlist ->
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clip(MaterialTheme.shapes.small)
+                                        .clickable { onOpenSmartPlaylist(playlist) }
+                                        .padding(vertical = Spacing.tiny),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                AsyncImage(
+                                    model = playlist.thumbnailUrls.firstOrNull(),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.size(32.dp).clip(MaterialTheme.shapes.small),
+                                )
+                                Text(
+                                    text = playlist.type.title(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(start = Spacing.small).weight(1f),
+                                )
+                                Icon(
+                                    painter = painterResource(R.drawable.play),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -740,7 +842,7 @@ private fun PersonalSpacePager(
             modifier = Modifier.fillMaxWidth().padding(top = Spacing.small),
             horizontalArrangement = Arrangement.Center,
         ) {
-            repeat(3) { index ->
+            repeat(pageCount) { index ->
                 Box(
                     modifier = Modifier
                         .padding(horizontal = Spacing.tiny)
@@ -791,7 +893,8 @@ private fun HomeSongRow(
     onSongClick: (Song) -> Unit,
 ) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = Spacing.medium),
+        // Extra trailing padding lets the next card peek in, which signals the row scrolls.
+        contentPadding = PaddingValues(start = Spacing.medium, end = PEEK_PADDING),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
         items(songs.distinctBy { it.id }, key = { it.id }) { song ->
@@ -851,7 +954,7 @@ private fun HomeSongCard(song: Song, isActive: Boolean, isPlaying: Boolean, onCl
 @Composable
 private fun HomeYouTubeRow(items: List<YTItem>, onItemClick: (YTItem) -> Unit) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = Spacing.medium),
+        contentPadding = PaddingValues(start = Spacing.medium, end = PEEK_PADDING),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
         items(items.distinctBy { it.id }, key = { it.id }) { item ->
@@ -876,27 +979,77 @@ private fun HomeYouTubeRow(items: List<YTItem>, onItemClick: (YTItem) -> Unit) {
     }
 }
 
+/**
+ * Speed Dial: a dense 5-column grid of artwork-only shortcuts (15 items, 3 rows).
+ *
+ * The previous 156x72dp pill row fitted barely two items per screen width and carried a title
+ * block that made each entry tall. Titles are dropped deliberately — the artwork is the identifier
+ * and tapping starts shuffle playback immediately.
+ */
 @Composable
-private fun HomeSpeedDialRow(items: List<YTItem>, activeId: String?, isPlaying: Boolean, onItemClick: (YTItem) -> Unit) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = Spacing.medium),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+private fun HomeSpeedDialGrid(
+    items: List<YTItem>,
+    activeId: String?,
+    isPlaying: Boolean,
+    onItemClick: (YTItem) -> Unit,
+) {
+    val cells = items.distinctBy { it.id }.take(SPEED_DIAL_CELLS)
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        items(items.distinctBy { it.id }, key = { it.id }) { item ->
-            Surface(
-                onClick = { onItemClick(item) },
-                shape = MaterialTheme.shapes.medium,
-                color = if (item.id == activeId) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-                modifier = Modifier.width(156.dp).height(72.dp),
-            ) {
-                Row(modifier = Modifier.padding(Spacing.small), verticalAlignment = Alignment.CenterVertically) {
-                    AsyncImage(model = item.thumbnail, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(56.dp).clip(MaterialTheme.shapes.small))
-                    Column(modifier = Modifier.padding(start = Spacing.small).weight(1f)) {
-                        Text(item.title, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        if (item.id == activeId && isPlaying) {
-                            Text("PLAYING", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        repeat(SPEED_DIAL_ROWS) { rowIndex ->
+            val rowItems = cells.drop(rowIndex * SPEED_DIAL_COLUMNS).take(SPEED_DIAL_COLUMNS)
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                rowItems.forEach { item ->
+                    val isActive = item.id == activeId
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.small)
+                                .clickable { onItemClick(item) },
+                    ) {
+                        AsyncImage(
+                            model = item.thumbnail,
+                            contentDescription = item.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        // A scrim + play glyph marks the tile that is currently sounding.
+                        if (isActive) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f)),
+                            )
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.align(Alignment.Center).size(24.dp),
+                            ) {
+                                Icon(
+                                    painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                                    contentDescription = stringResource(R.string.play_pause),
+                                    modifier = Modifier.padding(4.dp),
+                                )
+                            }
                         }
                     }
+                }
+                // Keep the last row flush when it has fewer than 5 tiles.
+                repeat(SPEED_DIAL_COLUMNS - rowItems.size) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    )
                 }
             }
         }
@@ -906,42 +1059,46 @@ private fun HomeSpeedDialRow(items: List<YTItem>, activeId: String?, isPlaying: 
 
 
 /**
- * 3x3 thumbnail-only shuffle grid.
+ * Compact shuffle sampler: 3 columns x 2 rows (6 cells).
  *
- * A LazyVerticalGrid cannot be nested in the feed's LazyColumn, so this is a fixed
- * Column of three Rows — the grid is always exactly 9 cells.
+ * A LazyVerticalGrid cannot be nested in the feed's LazyColumn, so this is a fixed Column of two
+ * Rows. It used to be 3x3, which put a large block of artwork between the user and the real
+ * content; the grid only needs to offer a quick tap-in, not be a destination.
  */
 @Composable
 private fun ShuffleGrid(
-    songs: List<Song>,
+    songs: List<YTItem>,
     activeId: String?,
     isPlaying: Boolean,
-    onSongClick: (Song) -> Unit,
+    onSongClick: (YTItem) -> Unit,
 ) {
-    val cells = songs.take(9)
+    val cells = songs.take(SHUFFLE_CELLS)
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.medium),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        // Always three rows of three. `chunked(3)` over an empty list produces no rows at all,
-        // which collapsed the section to a bare header whenever the pool was still loading.
-        repeat(3) { rowIndex ->
-            val rowSongs = cells.drop(rowIndex * 3).take(3)
+        // Always two full rows. Building rows from `chunked(3)` produced no rows at all for an
+        // empty list, which collapsed the section to a bare header while the pool loaded.
+        repeat(SHUFFLE_ROWS) { rowIndex ->
+            val rowSongs = cells.drop(rowIndex * SHUFFLE_COLUMNS).take(SHUFFLE_COLUMNS)
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 rowSongs.forEach { song ->
                     val isActive = song.id == activeId
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
-                            .clip(MaterialTheme.shapes.medium)
-                            .clickable { onSongClick(song) },
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                // 4:3 instead of square shaves ~25% off the row height.
+                                .aspectRatio(4f / 3f)
+                                .clip(MaterialTheme.shapes.medium)
+                                .clickable { onSongClick(song) },
                     ) {
                         AsyncImage(
-                            model = song.thumbnailUrl,
-                            contentDescription = "${song.title}, ${song.orderedArtists.joinToString { it.name }}",
+                            model = song.thumbnail,
+                            contentDescription = song.title,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize(),
                         )
@@ -950,28 +1107,28 @@ private fun ShuffleGrid(
                                 color = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary,
                                 shape = CircleShape,
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(Spacing.tiny)
-                                    .size(24.dp),
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(Spacing.tiny)
+                                        .size(20.dp),
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.pause),
-                                    contentDescription = "Now playing",
-                                    modifier = Modifier.padding(Spacing.tiny),
+                                    contentDescription = stringResource(R.string.pause),
+                                    modifier = Modifier.padding(2.dp),
                                 )
                             }
                         }
                     }
                 }
-                // Missing cells keep their footprint as tonal placeholders so the grid stays
-                // square and aligned instead of showing ragged blank space.
-                repeat(3 - rowSongs.size) {
+                // Missing cells keep their footprint as placeholders so the grid stays aligned.
+                repeat(SHUFFLE_COLUMNS - rowSongs.size) {
                     Box(
                         modifier =
                             Modifier
                                 .weight(1f)
-                                .aspectRatio(1f)
+                                .aspectRatio(4f / 3f)
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceContainerLow),
                     )
@@ -995,7 +1152,8 @@ private fun TopListenedRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.medium),
+            // Same right inset as the peeking rows above so the 4th cell lines up with theirs.
+            .padding(start = Spacing.medium, end = PEEK_PADDING),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
         repeat(4) { index ->
