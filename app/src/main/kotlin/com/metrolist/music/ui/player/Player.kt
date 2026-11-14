@@ -172,6 +172,7 @@ import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.Lyrics
 import com.metrolist.music.ui.component.PlayerSliderTrack
+import com.metrolist.music.ui.component.QuickDownloadButton
 import com.metrolist.music.ui.component.ResizableIconButton
 import com.metrolist.music.ui.component.SquigglySlider
 import com.metrolist.music.ui.component.WavySlider
@@ -1263,6 +1264,14 @@ fun BottomSheetPlayer(
                                 }
                             }
                         }
+
+                        // Quick download sits last in the cluster: it is the most used action
+                        // after Like, and both are one tap from thumb reach.
+                        QuickDownloadButton(
+                            songId = mediaMetadata.id,
+                            containerColor = textButtonColor,
+                            contentColor = iconButtonColor,
+                        )
                     }
                 } else {
                     AnimatedContent(targetState = showInlineLyrics, label = "ShareButton") { showLyrics ->
@@ -1366,6 +1375,16 @@ fun BottomSheetPlayer(
                             )
                         }
                     }
+
+                    // Quick download accompanies the legacy layout too, so both player designs
+                    // expose the same one-tap offline control.
+                    Spacer(modifier = Modifier.size(12.dp))
+
+                    QuickDownloadButton(
+                        songId = mediaMetadata.id,
+                        containerColor = textButtonColor,
+                        contentColor = iconButtonColor,
+                    )
                 }
             }
 

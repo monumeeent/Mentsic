@@ -598,6 +598,21 @@
     <string name="widget_music_player">Music Player</string>
     <string name="widget_turntable">Turntable</string>
 
+    <!-- Custom profile picture (feature #64) -->
+    <string name="avatar_section">Profile picture</string>
+    <string name="avatar_change">Change picture</string>
+    <string name="avatar_shape">Picture shape</string>
+    <string name="avatar_reset">Use account picture</string>
+    <string name="avatar_reset_desc">Remove your custom picture and fall back to the YouTube avatar.</string>
+    <string name="avatar_shape_circle">Circle</string>
+    <string name="avatar_shape_squircle">Squircle</string>
+    <string name="avatar_shape_rounded">Rounded square</string>
+    <string name="avatar_shape_hexagon">Hexagon</string>
+    <string name="avatar_shape_blob">Blob</string>
+
+    <!-- Stats discoverability -->
+    <string name="stats_account_desc">Top songs, artists, albums and your weekly recap</string>
+
     <!-- Extra palette seeds + colour-harmony style picker (Theme screen) -->
     <string name="palette_mauve">Mauve</string>
     <string name="palette_soft_rose">Soft rose</string>

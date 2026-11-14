@@ -152,6 +152,8 @@ import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.ThemePaletteStyleKey
+import com.metrolist.music.constants.AvatarShapeKey
+import com.metrolist.music.constants.CustomAvatarPathKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
@@ -206,6 +208,8 @@ import com.metrolist.music.widget.MusicWidgetReceiver
 import com.metrolist.music.ui.theme.ColorSaver
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.component.AvatarShape
+import com.metrolist.music.ui.component.ProfileAvatar
 import com.metrolist.music.ui.theme.ThemePaletteStyle
 import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
@@ -638,6 +642,11 @@ class MainActivity : FragmentActivity() {
         val (paletteStyleKey) = rememberPreference(ThemePaletteStyleKey, ThemePaletteStyle.Default.key)
         val paletteStyle =
             remember(paletteStyleKey) { ThemePaletteStyle.fromKey(paletteStyleKey).style }
+
+        // Custom profile picture: a local file path that overrides the YouTube account image.
+        val (customAvatarPath) = rememberPreference(CustomAvatarPathKey, "")
+        val (avatarShapeKey) = rememberPreference(AvatarShapeKey, AvatarShape.Default.key)
+        val avatarShape = remember(avatarShapeKey) { AvatarShape.fromKey(avatarShapeKey) }
 
         val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
         val selectedThemeColor = Color(selectedThemeColorInt)
@@ -1125,22 +1134,16 @@ class MainActivity : FragmentActivity() {
                                                         Badge()
                                                     }
                                                 }) {
-                                                    if (accountImageUrl != null) {
-                                                        AsyncImage(
-                                                            model = accountImageUrl,
-                                                            contentDescription = stringResource(R.string.account),
-                                                            modifier =
-                                                                Modifier
-                                                                    .size(24.dp)
-                                                                    .clip(CircleShape),
-                                                        )
-                                                    } else {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.account),
-                                                            contentDescription = stringResource(R.string.account),
-                                                            modifier = Modifier.size(24.dp),
-                                                        )
-                                                    }
+                                                    // Custom picture overrides the account image;
+                                                    // the chosen mask applies here and in the
+                                                    // account sheet alike.
+                                                    ProfileAvatar(
+                                                        // The pref defaults to "", not null, so
+                                                        // `?:` would never fall back.
+                                                        imageUrl = customAvatarPath.ifBlank { accountImageUrl },
+                                                        shape = avatarShape,
+                                                        size = 24.dp,
+                                                    )
                                                 }
                                             }
                                         },

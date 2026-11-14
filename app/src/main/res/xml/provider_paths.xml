@@ -6,6 +6,10 @@
     <cache-path
         name="cache"
         path="." />
+    <!-- Profile picture: written to filesDir so clearing the cache does not delete it. -->
+    <files-path
+        name="internal_files"
+        path="." />
     <external-cache-path
         name="external_cache"
         path="." />

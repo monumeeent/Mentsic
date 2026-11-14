@@ -15,7 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -39,7 +40,6 @@ import com.metrolist.music.utils.reportException
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -49,7 +49,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.utils.parseCookieString
 import com.metrolist.music.BuildConfig
@@ -57,6 +56,8 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.AccountChannelHandleKey
 import com.metrolist.music.constants.AccountEmailKey
 import com.metrolist.music.constants.AccountNameKey
+import com.metrolist.music.constants.AvatarShapeKey
+import com.metrolist.music.constants.CustomAvatarPathKey
 import com.metrolist.music.constants.DataSyncIdKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.InnerTubeAuthUserKey
@@ -64,8 +65,12 @@ import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.UseLoginForBrowse
 import com.metrolist.music.constants.VisitorDataKey
 import com.metrolist.music.constants.YtmSyncKey
+import com.metrolist.music.ui.component.AvatarShape
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.InfoLabel
+import com.metrolist.music.ui.component.ProfileAvatar
+import com.metrolist.music.ui.component.label
+import com.metrolist.music.ui.component.rememberAvatarPicker
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.TextFieldDialog
@@ -108,6 +113,57 @@ fun AccountSettings(
     var showTokenEditor by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // ---- Profile picture -------------------------------------------------------------
+    val (customAvatarPath, onCustomAvatarChange) = rememberPreference(CustomAvatarPathKey, "")
+    val (avatarShapeKey, onAvatarShapeChange) = rememberPreference(AvatarShapeKey, AvatarShape.Default.key)
+    val avatarShape = remember(avatarShapeKey) { AvatarShape.fromKey(avatarShapeKey) }
+    var showShapeDialog by remember { mutableStateOf(false) }
+    val avatarPicker = rememberAvatarPicker(onCropped = onCustomAvatarChange)
+
+    if (showShapeDialog) {
+        DefaultDialog(
+            onDismiss = { showShapeDialog = false },
+            title = { Text(stringResource(R.string.avatar_shape)) },
+            content = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    AvatarShape.entries.forEach { shape ->
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        onAvatarShapeChange(shape.key)
+                                        showShapeDialog = false
+                                    }
+                                    .padding(vertical = 8.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ProfileAvatar(
+                                imageUrl = customAvatarPath.ifBlank { accountImageUrl },
+                                shape = shape,
+                                size = 36.dp,
+                            )
+                            Text(
+                                text = shape.label(),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f).padding(start = 12.dp),
+                            )
+                            if (shape == avatarShape) {
+                                Icon(
+                                    painter = painterResource(R.drawable.check),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -255,6 +311,44 @@ fun AccountSettings(
             )
         }
 
+        // Profile picture: pick a local image (cropped square) and choose its mask. Only
+        // meaningful for a signed-in account or when a custom picture already exists.
+        if (isLoggedIn || customAvatarPath.isNotBlank()) {
+            Material3SettingsGroup(
+                title = stringResource(R.string.avatar_section),
+                items =
+                    buildList {
+                        add(
+                            Material3SettingsItem(
+                                title = { Text(stringResource(R.string.avatar_change)) },
+                                icon = painterResource(R.drawable.person),
+                                onClick = { avatarPicker.open() },
+                            ),
+                        )
+                        add(
+                            Material3SettingsItem(
+                                title = { Text(stringResource(R.string.avatar_shape)) },
+                                description = { Text(avatarShape.label()) },
+                                icon = painterResource(R.drawable.crop),
+                                onClick = { showShapeDialog = true },
+                            ),
+                        )
+                        if (customAvatarPath.isNotBlank()) {
+                            add(
+                                Material3SettingsItem(
+                                    title = { Text(stringResource(R.string.avatar_reset)) },
+                                    description = { Text(stringResource(R.string.avatar_reset_desc)) },
+                                    icon = painterResource(R.drawable.close),
+                                    onClick = { onCustomAvatarChange("") },
+                                ),
+                            )
+                        }
+                    },
+            )
+
+            Spacer(Modifier.height(8.dp))
+        }
+
         Material3SettingsGroup(
             items = listOfNotNull(
                 Material3SettingsItem(
@@ -262,12 +356,13 @@ fun AccountSettings(
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (isLoggedIn && accountImageUrl != null) {
-                                AsyncImage(
-                                    model = accountImageUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.size(40.dp).clip(CircleShape)
+                            // Custom picture wins over the account image; the mask comes from
+                            // the avatar-shape preference so both surfaces stay in sync.
+                            if (isLoggedIn || customAvatarPath.isNotBlank()) {
+                                ProfileAvatar(
+                                    imageUrl = customAvatarPath.ifBlank { accountImageUrl },
+                                    shape = avatarShape,
+                                    size = 40.dp,
                                 )
 
                                 Spacer(Modifier.width(12.dp))
@@ -409,6 +504,19 @@ fun AccountSettings(
                         )
                     )
                 }
+                // Listening stats were only reachable from the top-app-bar icon, which is easy
+                // to miss. The Account sheet is where users look for "my listening data".
+                add(
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.stats)) },
+                        description = { Text(stringResource(R.string.stats_account_desc)) },
+                        icon = painterResource(R.drawable.stats),
+                        onClick = {
+                            onClose()
+                            navController.navigate("stats")
+                        }
+                    )
+                )
                 add(
                     Material3SettingsItem(
                         title = { Text(stringResource(R.string.settings)) },
