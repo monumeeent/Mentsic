@@ -614,6 +614,8 @@
     <string name="report_share_title">Mentsic Wrapped</string>
     <string name="report_share_text">My listening recap (%1$s): %2$d minutes on Mentsic.</string>
     <string name="report_badge">Mentsic · listening recap</string>
+    <!-- Watermark drawn in the bottom-right corner of the shared recap image. -->
+    <string name="report_watermark" translatable="false">@monumeeent</string>
     <string name="report_empty">No listening yet this period. Play something and check back.</string>
     <string name="report_share_failed">Could not create the image. Try again.</string>
 

@@ -58,6 +58,7 @@ import com.metrolist.music.constants.AccountChannelHandleKey
 import com.metrolist.music.constants.AccountEmailKey
 import com.metrolist.music.constants.AccountNameKey
 import com.metrolist.music.constants.DataSyncIdKey
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.InnerTubeAuthUserKey
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.UseLoginForBrowse
@@ -95,6 +96,8 @@ fun AccountSettings(
     }
     val (useLoginForBrowse, onUseLoginForBrowseChange) = rememberPreference(UseLoginForBrowse, true)
     val (ytmSync, onYtmSyncChange) = rememberPreference(YtmSyncKey, true)
+    // Gates the raw token/credential rows below.
+    val (developerMode) = rememberPreference(DeveloperModeKey, defaultValue = false)
 
     val homeViewModel: HomeViewModel = hiltViewModel()
     val accountSettingsViewModel: AccountSettingsViewModel = hiltViewModel()
@@ -318,24 +321,28 @@ fun AccountSettings(
         Spacer(Modifier.height(8.dp))
 
         Material3SettingsGroup(
-            items = listOf(
-                Material3SettingsItem(
-                    title = {
-                        Text(
-                            when {
-                                !isLoggedIn -> stringResource(R.string.advanced_login)
-                                showToken -> stringResource(R.string.token_shown)
-                                else -> stringResource(R.string.token_hidden)
-                            }
-                        )
-                    },
-                    icon = painterResource(R.drawable.token),
-                    onClick = {
-                        if (!isLoggedIn) showTokenEditor = true
-                        else if (!showToken) showToken = true
-                        else showTokenEditor = true
-                    }
-                ),
+            items = listOfNotNull(
+                // Raw session-token inspection is a developer tool: it exposes the account
+                // credential, and a hand-edited cookie breaks the whole streaming engine.
+                if (developerMode) {
+                    Material3SettingsItem(
+                        title = {
+                            Text(
+                                when {
+                                    !isLoggedIn -> stringResource(R.string.advanced_login)
+                                    showToken -> stringResource(R.string.token_shown)
+                                    else -> stringResource(R.string.token_hidden)
+                                }
+                            )
+                        },
+                        icon = painterResource(R.drawable.token),
+                        onClick = {
+                            if (!isLoggedIn) showTokenEditor = true
+                            else if (!showToken) showToken = true
+                            else showTokenEditor = true
+                        }
+                    )
+                } else null,
                 Material3SettingsItem(
                     title = { Text(stringResource(R.string.more_content)) },
                     icon = painterResource(R.drawable.cached),
@@ -389,16 +396,19 @@ fun AccountSettings(
 
         Material3SettingsGroup(
             items = buildList {
-                add(
-                    Material3SettingsItem(
-                        title = { Text(stringResource(R.string.integrations)) },
-                        icon = painterResource(R.drawable.integration),
-                        onClick = {
-                            onClose()
-                            navController.navigate("settings/integrations")
-                        }
+                // Discord / Last.fm / Listen Together are developer-mode entry points.
+                if (developerMode) {
+                    add(
+                        Material3SettingsItem(
+                            title = { Text(stringResource(R.string.integrations)) },
+                            icon = painterResource(R.drawable.integration),
+                            onClick = {
+                                onClose()
+                                navController.navigate("settings/integrations")
+                            }
+                        )
                     )
-                )
+                }
                 add(
                     Material3SettingsItem(
                         title = { Text(stringResource(R.string.settings)) },

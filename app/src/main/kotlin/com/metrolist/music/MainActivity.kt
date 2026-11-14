@@ -151,6 +151,7 @@ import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
 import com.metrolist.music.constants.ListenTogetherInTopBarKey
@@ -752,7 +753,12 @@ class MainActivity : FragmentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
-                val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
+                val (listenTogetherInTopBarPref) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
+                // "Listen Together" below the main tabs (and its top-bar button) is a developer
+                // entry point. Guests can still reach an existing room via an invite link, which
+                // routes to the same screen; only the discovery affordance is hidden.
+                val (developerModeForNav) = rememberPreference(DeveloperModeKey, defaultValue = false)
+                val listenTogetherInTopBar = listenTogetherInTopBarPref && developerModeForNav
                 val navigationItems =
                     remember(listenTogetherInTopBar) {
                         if (listenTogetherInTopBar) {

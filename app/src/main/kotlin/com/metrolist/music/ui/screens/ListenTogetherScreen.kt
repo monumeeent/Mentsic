@@ -89,6 +89,7 @@ import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.AppBarHeight
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.listentogether.ConnectionState
@@ -129,6 +130,8 @@ fun ListenTogetherScreen(
 
     val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
     val shouldShowTopBar = showTopBar || listenTogetherInTopBar
+    // Room creation is a developer feature; joining stays open to everybody.
+    val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
 
     var savedUsername by rememberPreference(ListenTogetherUsernameKey, "")
     var roomCodeInput by rememberSaveable { mutableStateOf("") }
@@ -381,6 +384,7 @@ fun ListenTogetherScreen(
                             Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
                         }
                     },
+                    canCreateRoom = developerMode,
                     onJoinRoom = {
                         val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
                         val finalUsername = listenTogetherName(username)
@@ -1066,6 +1070,8 @@ private fun JoinCreateRoomSection(
     onCreateRoom: () -> Unit,
     onJoinRoom: () -> Unit,
     onFieldFocused: () -> Unit = {},
+    // Hosting is a developer-only capability; joining stays available to everyone.
+    canCreateRoom: Boolean = false,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1231,8 +1237,9 @@ private fun JoinCreateRoomSection(
             val hasUsername = usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()
             val hasRoomCode = roomCodeInput.length == 8
 
-            // Create Room button - visible when username is provided
-            AnimatedVisibility(visible = hasUsername && !hasRoomCode) {
+            // Create Room button - developer mode only, and visible when username is provided.
+            // Guests can still join any room they have a code or invite link for.
+            AnimatedVisibility(visible = canCreateRoom && hasUsername && !hasRoomCode) {
                 Button(
                     onClick = onCreateRoom,
                     modifier = Modifier.fillMaxWidth(),

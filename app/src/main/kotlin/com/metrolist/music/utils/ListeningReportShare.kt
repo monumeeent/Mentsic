@@ -180,6 +180,22 @@ object ListeningReportShare {
             canvas.drawRoundRect(badge, 36f, 36f, badgePaint)
             canvas.drawText(context.getString(R.string.report_badge), 104f, HEIGHT - 120f, accentPaint)
 
+            // Bottom-right watermark. Deliberately small and low-contrast so it reads as a
+            // signature rather than a second badge competing with the one on the left.
+            val watermarkPaint =
+                Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = Color.parseColor("#59FFFFFF")
+                    textSize = 26f
+                    typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
+                    textAlign = Paint.Align.RIGHT
+                }
+            canvas.drawText(
+                context.getString(R.string.report_watermark),
+                WIDTH - 72f,
+                HEIGHT - 120f,
+                watermarkPaint,
+            )
+
             bitmap
         }.getOrNull()
 

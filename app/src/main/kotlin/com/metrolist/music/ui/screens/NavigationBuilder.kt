@@ -72,6 +72,25 @@ import com.metrolist.music.ui.screens.MoodAndGenresScreen
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 
+/**
+ * Wraps a settings destination that must not be reachable unless Developer Mode is on.
+ *
+ * Hiding the entry row is not enough on its own: a restored back stack or a deep link can still
+ * land on the route, so the destination pops itself instead of rendering.
+ */
+@Composable
+private fun DeveloperOnlyRoute(
+    navController: NavHostController,
+    content: @Composable () -> Unit,
+) {
+    val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
+    if (developerMode) {
+        content()
+    } else {
+        LaunchedEffect(Unit) { navController.navigateUp() }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.navigationBuilder(
     navController: NavHostController,
@@ -412,15 +431,18 @@ fun NavGraphBuilder.navigationBuilder(
         WidgetsScreen(navController)
     }
 
+    // The three "advanced" settings screens are developer-mode only. The rows are hidden in
+    // SettingsScreen, and the routes are guarded here as well so a restored back stack (or a
+    // stale deep link) cannot reopen them after developer mode is switched off.
     composable("settings/content") {
-        ContentSettings(navController)
+        DeveloperOnlyRoute(navController) { ContentSettings(navController) }
     }
 
     composable("settings/content/romanization") {
     }
 
     composable("settings/ai") {
-        AiSettings(navController)
+        DeveloperOnlyRoute(navController) { AiSettings(navController) }
     }
 
     // Hidden developer area. Guarded here as well as in SettingsScreen so a stale deep link
@@ -435,7 +457,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings/player") {
-        PlayerSettings(navController)
+        DeveloperOnlyRoute(navController) { PlayerSettings(navController) }
     }
 
     composable("settings/storage") {
@@ -451,7 +473,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings/integrations") {
-        IntegrationScreen(navController)
+        DeveloperOnlyRoute(navController) { IntegrationScreen(navController) }
     }
 
     composable("settings/integrations/discord") {
@@ -512,6 +534,6 @@ fun NavGraphBuilder.navigationBuilder(
         RecognitionHistoryScreen(navController)
     }
     composable("settings/android_auto") {
-        AndroidAutoSettings(navController)
+        DeveloperOnlyRoute(navController) { AndroidAutoSettings(navController) }
     }
 }

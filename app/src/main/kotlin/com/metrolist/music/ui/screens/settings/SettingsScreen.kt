@@ -100,32 +100,35 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Player & Content Section (moved up and combined with content)
-        Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_player_content),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.play),
-                    title = { Text(stringResource(R.string.player_and_audio)) },
-                    onClick = { navController.navigate("settings/player") }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.language),
-                    title = { Text(stringResource(R.string.content)) },
-                    onClick = { navController.navigate("settings/content") }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.translate),
-                    title = { Text(stringResource(R.string.ai_lyrics_translation)) },
-                    onClick = { navController.navigate("settings/ai") }
+        // Player & Content Section. These three screens expose developer-grade knobs (audio
+        // pipeline, hiding filters, AI translation keys), so they are developer-mode only.
+        if (developerMode) {
+            Material3SettingsGroup(
+                title = stringResource(R.string.settings_section_player_content),
+                items = listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.play),
+                        title = { Text(stringResource(R.string.player_and_audio)) },
+                        onClick = { navController.navigate("settings/player") }
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.language),
+                        title = { Text(stringResource(R.string.content)) },
+                        onClick = { navController.navigate("settings/content") }
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.translate),
+                        title = { Text(stringResource(R.string.ai_lyrics_translation)) },
+                        onClick = { navController.navigate("settings/ai") }
+                    )
                 )
             )
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
-        // Android Auto Section — only shown if Android Auto is installed
-        if (hasAndroidAuto) {
+        // Android Auto Section — only shown if installed, and only in developer mode.
+        if (hasAndroidAuto && developerMode) {
             Material3SettingsGroup(
                 title = "Android Auto",
                 items = listOf(
@@ -177,7 +180,9 @@ fun SettingsScreen(
         Material3SettingsGroup(
             title = stringResource(R.string.settings_section_system),
             items = buildList {
-                if (isAndroid12OrLater) {
+                // "Open supported links" rewrites the OS intent filters, so it stays a
+                // developer-only tool: a wrong choice silently breaks YouTube link handling.
+                if (isAndroid12OrLater && developerMode) {
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.link),
