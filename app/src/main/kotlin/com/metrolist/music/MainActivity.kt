@@ -260,6 +260,16 @@ class MainActivity : FragmentActivity() {
         const val EXTRA_AUTO_START_RECOGNITION = "auto_start_recognition"
         const val EXTRA_WIDGET_TARGET_TYPE = "widget_target_type"
         const val EXTRA_WIDGET_TARGET_ID = "widget_target_id"
+
+        /**
+         * Master switch for the GitHub-release update check.
+         *
+         * Deliberately `false`: auto-update is being reworked and will return as a GitHub-release
+         * download rather than an in-app updater. Every consumer of `latestVersionName` is inert
+         * while this is off, so re-enabling is a one-line change plus restoring
+         * `settings/updater` in NavigationBuilder.
+         */
+        const val UPDATE_CHECKING_ENABLED = false
     }
 
     @Inject
@@ -277,18 +287,6 @@ class MainActivity : FragmentActivity() {
     private lateinit var navController: NavHostController
     private var pendingIntent: Intent? = null
     private var latestVersionName by mutableStateOf(BuildConfig.BASE_VERSION_NAME)
-
-    private companion object {
-        /**
-         * Master switch for the GitHub-release update check.
-         *
-         * Deliberately `false`: auto-update is being reworked and will return as a GitHub-release
-         * download rather than an in-app updater. Every consumer of [latestVersionName] is inert
-         * while this is off, so re-enabling is a one-line change plus restoring
-         * `settings/updater` in NavigationBuilder.
-         */
-        const val UPDATE_CHECKING_ENABLED = false
-    }
 
     // Keep PlayerConnection as regular property - NOT mutableStateOf to prevent UI recomposition
     // when it becomes null during onStop. Only update the snapshot for Compose when needed.
