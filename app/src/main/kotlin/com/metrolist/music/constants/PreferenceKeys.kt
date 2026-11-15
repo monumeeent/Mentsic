@@ -35,9 +35,9 @@ val SmartPlaylistRefreshKey = longPreferencesKey("smartPlaylistRefresh")
 // Stored as the PaletteStyle enum name; TONAL_SPOT preserves the previous look.
 val ThemePaletteStyleKey = stringPreferencesKey("themePaletteStyle")
 
-// Custom profile picture. The image is copied into app storage and its local path stored here;
-// an empty value means "use the YouTube account picture".
-val CustomAvatarPathKey = stringPreferencesKey("customAvatarPath")
+// Chosen built-in avatar preset (see AvatarPreset). Empty means "use the YouTube account
+// picture". Presets rather than uploads: no storage permissions, no orphaned files.
+val AvatarPresetKey = stringPreferencesKey("avatarPreset")
 
 // Mask applied to the profile picture: circle, squircle, rounded square, hexagon or blob.
 val AvatarShapeKey = stringPreferencesKey("avatarShape")

@@ -1529,6 +1529,15 @@ interface DatabaseDao {
     fun dailyPlayCounts(cutoffMillis: Long): Flow<List<DailyPlayCount>>
 
     /**
+     * Total milliseconds listened since [sinceMillis].
+     *
+     * Used by the Personal Space "minutes today" counter. playTime is per-event milliseconds,
+     * so this is real listening time rather than a play count.
+     */
+    @Query("SELECT COALESCE(SUM(playTime), 0) FROM event WHERE timestamp >= :sinceMillis")
+    fun listenedMillisSince(sinceMillis: Long): Flow<Long>
+
+    /**
      * Returns all songs played on a specific date, ordered by most recent first.
      * Used by the heatmap to load tracks when a day is tapped.
      */

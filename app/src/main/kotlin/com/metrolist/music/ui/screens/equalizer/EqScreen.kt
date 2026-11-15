@@ -197,6 +197,14 @@ private fun EqScreenContent(
                     }
                 },
                 actions = {
+                    // The wizard was only reachable from the "+" menu, which nobody opens when
+                    // looking for "auto-create a profile". Surface it as a top-level action.
+                    IconButton(onClick = onWizardClicked) {
+                        Icon(
+                            painter = painterResource(R.drawable.discover_tune),
+                            contentDescription = stringResource(R.string.eq_wizard),
+                        )
+                    }
                     Box {
                         IconButton(onClick = onAddClicked) {
                             Icon(

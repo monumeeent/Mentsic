@@ -152,8 +152,8 @@ import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.ThemePaletteStyleKey
+import com.metrolist.music.constants.AvatarPresetKey
 import com.metrolist.music.constants.AvatarShapeKey
-import com.metrolist.music.constants.CustomAvatarPathKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
@@ -277,6 +277,18 @@ class MainActivity : FragmentActivity() {
     private lateinit var navController: NavHostController
     private var pendingIntent: Intent? = null
     private var latestVersionName by mutableStateOf(BuildConfig.BASE_VERSION_NAME)
+
+    private companion object {
+        /**
+         * Master switch for the GitHub-release update check.
+         *
+         * Deliberately `false`: auto-update is being reworked and will return as a GitHub-release
+         * download rather than an in-app updater. Every consumer of [latestVersionName] is inert
+         * while this is off, so re-enabling is a one-line change plus restoring
+         * `settings/updater` in NavigationBuilder.
+         */
+        const val UPDATE_CHECKING_ENABLED = false
+    }
 
     // Keep PlayerConnection as regular property - NOT mutableStateOf to prevent UI recomposition
     // when it becomes null during onStop. Only update the snapshot for Compose when needed.
@@ -511,7 +523,10 @@ class MainActivity : FragmentActivity() {
         val checkForUpdates by rememberPreference(CheckForUpdatesKey, defaultValue = true)
         var availableUpdate by remember { mutableStateOf<AvailableUpdate?>(null) }
 
-        if (BuildConfig.UPDATER_AVAILABLE) {
+        // Auto-update is disabled for now: no GitHub polling, no badge, no download prompt.
+        // Flip UPDATE_CHECKING_ENABLED back on (and restore the settings route) when the release
+        // channel is ready. The Updater helper and its cache stay available for that day.
+        if (UPDATE_CHECKING_ENABLED && BuildConfig.UPDATER_AVAILABLE) {
             LaunchedEffect(checkForUpdates) {
                 if (checkForUpdates) {
                     val preferences = dataStore.data.first()
@@ -643,8 +658,8 @@ class MainActivity : FragmentActivity() {
         val paletteStyle =
             remember(paletteStyleKey) { ThemePaletteStyle.fromKey(paletteStyleKey).style }
 
-        // Custom profile picture: a local file path that overrides the YouTube account image.
-        val (customAvatarPath) = rememberPreference(CustomAvatarPathKey, "")
+        // Chosen built-in avatar preset; empty falls back to the YouTube account picture.
+        val (avatarPresetKey) = rememberPreference(AvatarPresetKey, "")
         val (avatarShapeKey) = rememberPreference(AvatarShapeKey, AvatarShape.Default.key)
         val avatarShape = remember(avatarShapeKey) { AvatarShape.fromKey(avatarShapeKey) }
 
@@ -1129,22 +1144,15 @@ class MainActivity : FragmentActivity() {
                                                 }
                                             }
                                             IconButton(onClick = { showAccountDialog = true }) {
-                                                BadgedBox(badge = {
-                                                    if (latestVersionName != BuildConfig.BASE_VERSION_NAME) {
-                                                        Badge()
-                                                    }
-                                                }) {
-                                                    // Custom picture overrides the account image;
-                                                    // the chosen mask applies here and in the
-                                                    // account sheet alike.
-                                                    ProfileAvatar(
-                                                        // The pref defaults to "", not null, so
-                                                        // `?:` would never fall back.
-                                                        imageUrl = customAvatarPath.ifBlank { accountImageUrl },
-                                                        shape = avatarShape,
-                                                        size = 24.dp,
-                                                    )
-                                                }
+                                                // No update badge while auto-update is disabled.
+                                                // Preset overrides the account image; the chosen
+                                                // mask applies here and in the account sheet.
+                                                ProfileAvatar(
+                                                    presetKey = avatarPresetKey,
+                                                    accountImageUrl = accountImageUrl,
+                                                    shape = avatarShape,
+                                                    size = 24.dp,
+                                                )
                                             }
                                         },
                                         scrollBehavior = topAppBarScrollBehavior,

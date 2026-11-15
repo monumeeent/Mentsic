@@ -135,6 +135,7 @@ fun NewHomeScreen(
     val shuffles by viewModel.shuffles.collectAsStateWithLifecycle()
     val topListened by viewModel.topListened.collectAsStateWithLifecycle()
     val remixes by viewModel.remixes.collectAsStateWithLifecycle()
+    val todayMinutes by viewModel.todayMinutes.collectAsStateWithLifecycle()
 
     // Auto-generated mixes (Release Radar / Weekly Mix). The generator caches for a week, so this
     // first load is not repeated when the user switches tabs.
@@ -296,6 +297,7 @@ fun NewHomeScreen(
                                 .filter { it.isNotBlank() }
                                 .distinct()
                                 .take(3),
+                            todayMinutes = todayMinutes,
                             onResume = {
                                 activeSong?.let { target ->
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -636,6 +638,7 @@ private fun PersonalSpacePager(
     target: ResumeTarget?,
     isPlaying: Boolean,
     topArtists: List<String>,
+    todayMinutes: Long,
     smartPlaylists: List<SmartPlaylist>,
     onResume: () -> Unit,
     onOpenPersonalSpace: () -> Unit,
@@ -657,8 +660,29 @@ private fun PersonalSpacePager(
                 text = stringResource(R.string.personal_space),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f),
             )
+            // Page dots live in the header so the card itself can be shorter.
+            Row(
+                modifier = Modifier.padding(start = Spacing.small).weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                repeat(pageCount) { index ->
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(if (pagerState.currentPage == index) 7.dp else 5.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (pagerState.currentPage == index) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceContainerHighest
+                                    },
+                                ),
+                    )
+                }
+            }
             TextButton(onClick = onOpenPersonalSpace) {
                 Text(
                     text = stringResource(R.string.streak_view_details),
@@ -672,9 +696,11 @@ private fun PersonalSpacePager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = Spacing.medium),
             pageSpacing = Spacing.small,
+            // 168dp -> 116dp: the old card reserved space for two lines of body text and a
+            // large streak number, most of which sat empty. Content is tightened to match.
             modifier = Modifier
                 .fillMaxWidth()
-                .height(168.dp),
+                .height(116.dp),
         ) { page ->
             when (page) {
                 0 -> PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
@@ -697,6 +723,13 @@ private fun PersonalSpacePager(
                                     stringResource(R.string.streak_longest) + " " + streakState.longest,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            // Today's real listening time, not just a play count.
+                            Text(
+                                text = stringResource(R.string.today_minutes, todayMinutes),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = Spacing.tiny),
                             )
                         }
                     }
@@ -838,26 +871,6 @@ private fun PersonalSpacePager(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = Spacing.small),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            repeat(pageCount) { index ->
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = Spacing.tiny)
-                        .size(if (pagerState.currentPage == index) 8.dp else 6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (pagerState.currentPage == index) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
-                            },
-                        ),
-                )
-            }
-        }
     }
 }
 

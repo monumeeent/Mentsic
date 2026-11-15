@@ -114,17 +114,25 @@ fun WidgetsScreen(navController: NavController) {
                         android.app.PendingIntent.FLAG_IMMUTABLE or
                             android.app.PendingIntent.FLAG_UPDATE_CURRENT,
                     )
+                // The Bundle argument is per-instance *extras*, delivered to the provider via
+                // onAppWidgetOptionsChanged — it is NOT where you set the widget size. Passing
+                // OPTION_APPWIDGET_MIN_WIDTH/HEIGHT here made several launchers reject the pin
+                // outright. The footprint now comes from targetCellWidth/Height in each
+                // appwidget-provider XML, which is the supported mechanism.
                 val requested =
-                    appWidgetManager.requestPinAppWidget(
-                        ComponentName(context, receiver),
-                        Bundle().apply {
-                            // Ask for the widest default footprint both providers support.
-                            putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
-                            putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 140)
-                        },
-                        successCallback,
-                    )
-                if (!requested) toast(context, R.string.gallery_widget_pin_unsupported)
+                    runCatching {
+                        appWidgetManager.requestPinAppWidget(
+                            ComponentName(context, receiver),
+                            null,
+                            successCallback,
+                        )
+                    }.getOrDefault(false)
+
+                if (!requested) {
+                    // Launchers may refuse silently (no widget picker, restricted profile, or the
+                    // provider was disabled). Point the user at the picker instead of dead-ending.
+                    toast(context, R.string.gallery_widget_pin_unsupported)
+                }
             }
         }
     }

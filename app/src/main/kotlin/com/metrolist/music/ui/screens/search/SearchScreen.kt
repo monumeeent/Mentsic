@@ -378,8 +378,10 @@ fun SearchScreen(
 
             HideOnScrollFAB(
                 lazyListState = lazyListState,
-                icon = R.drawable.mic,
-                onClick = { navController.navigate("recognition") },
+                icon = R.drawable.search,
+                onClick = { searchSource = SearchSource.LOCAL },
+                // Recognition is offered as its own always-visible FAB, not a search shortcut.
+                onRecognitionClick = { navController.navigate("recognition") },
             )
         }
     }

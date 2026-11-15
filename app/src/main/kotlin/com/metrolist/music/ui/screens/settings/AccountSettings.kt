@@ -7,6 +7,7 @@ package com.metrolist.music.ui.screens.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -42,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,8 +58,8 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.AccountChannelHandleKey
 import com.metrolist.music.constants.AccountEmailKey
 import com.metrolist.music.constants.AccountNameKey
+import com.metrolist.music.constants.AvatarPresetKey
 import com.metrolist.music.constants.AvatarShapeKey
-import com.metrolist.music.constants.CustomAvatarPathKey
 import com.metrolist.music.constants.DataSyncIdKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.InnerTubeAuthUserKey
@@ -66,15 +67,14 @@ import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.UseLoginForBrowse
 import com.metrolist.music.constants.VisitorDataKey
 import com.metrolist.music.constants.YtmSyncKey
+import com.metrolist.music.ui.component.AvatarPreset
 import com.metrolist.music.ui.component.AvatarShape
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.InfoLabel
 import com.metrolist.music.ui.component.ProfileAvatar
-import com.metrolist.music.ui.component.rememberAvatarPicker
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.TextFieldDialog
-import com.metrolist.music.utils.Updater
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.AccountSettingsViewModel
 import com.metrolist.music.viewmodels.HomeViewModel
@@ -86,7 +86,6 @@ fun AccountSettings(
     latestVersionName: String
 ) {
     val context = LocalContext.current
-    val uriHandler = LocalUriHandler.current
 
     val (accountNamePref, onAccountNameChange) = rememberPreference(AccountNameKey, "")
     val (accountEmail, onAccountEmailChange) = rememberPreference(AccountEmailKey, "")
@@ -115,11 +114,45 @@ fun AccountSettings(
     val scope = rememberCoroutineScope()
 
     // ---- Profile picture -------------------------------------------------------------
-    val (customAvatarPath, onCustomAvatarChange) = rememberPreference(CustomAvatarPathKey, "")
+    val (avatarPresetKey, onAvatarPresetChange) = rememberPreference(AvatarPresetKey, "")
     val (avatarShapeKey, onAvatarShapeChange) = rememberPreference(AvatarShapeKey, AvatarShape.Default.key)
     val avatarShape = remember(avatarShapeKey) { AvatarShape.fromKey(avatarShapeKey) }
     var showShapeDialog by remember { mutableStateOf(false) }
-    val avatarPicker = rememberAvatarPicker(onCropped = onCustomAvatarChange)
+    var showAvatarDialog by remember { mutableStateOf(false) }
+
+    if (showAvatarDialog) {
+        DefaultDialog(
+            onDismiss = { showAvatarDialog = false },
+            title = { Text(stringResource(R.string.avatar_choose)) },
+            content = {
+                // Grid of built-in presets plus a "use account picture" entry.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    maxItemsInEachRow = 4,
+                ) {
+                    AvatarPreset.entries.forEach { preset ->
+                        Box(
+                            modifier =
+                                Modifier
+                                    .padding(vertical = 6.dp)
+                                    .clip(avatarShape.toShape())
+                                    .clickable {
+                                        onAvatarPresetChange(preset.key)
+                                        showAvatarDialog = false
+                                    },
+                        ) {
+                            ProfileAvatar(
+                                presetKey = preset.key,
+                                accountImageUrl = accountImageUrl,
+                                shape = avatarShape,
+                                size = 56.dp,
+                            )
+                        }
+                    }
+                }
+            },
+        )
+    }
 
     if (showShapeDialog) {
         DefaultDialog(
@@ -141,7 +174,8 @@ fun AccountSettings(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             ProfileAvatar(
-                                imageUrl = customAvatarPath.ifBlank { accountImageUrl },
+                                presetKey = avatarPresetKey,
+                                accountImageUrl = accountImageUrl,
                                 shape = shape,
                                 size = 36.dp,
                             )
@@ -311,18 +345,18 @@ fun AccountSettings(
             )
         }
 
-        // Profile picture: pick a local image (cropped square) and choose its mask. Only
-        // meaningful for a signed-in account or when a custom picture already exists.
-        if (isLoggedIn || customAvatarPath.isNotBlank()) {
+        // Profile picture: choose one of the built-in avatars and pick its mask. Presets only —
+        // no gallery upload, so there is no photo permission and no orphaned file to clean up.
+        if (isLoggedIn || avatarPresetKey.isNotBlank()) {
             Material3SettingsGroup(
                 title = stringResource(R.string.avatar_section),
                 items =
                     buildList {
                         add(
                             Material3SettingsItem(
-                                title = { Text(stringResource(R.string.avatar_change)) },
+                                title = { Text(stringResource(R.string.avatar_choose)) },
                                 icon = painterResource(R.drawable.person),
-                                onClick = { avatarPicker.open() },
+                                onClick = { showAvatarDialog = true },
                             ),
                         )
                         add(
@@ -333,13 +367,13 @@ fun AccountSettings(
                                 onClick = { showShapeDialog = true },
                             ),
                         )
-                        if (customAvatarPath.isNotBlank()) {
+                        if (avatarPresetKey.isNotBlank()) {
                             add(
                                 Material3SettingsItem(
                                     title = { Text(stringResource(R.string.avatar_reset)) },
                                     description = { Text(stringResource(R.string.avatar_reset_desc)) },
                                     icon = painterResource(R.drawable.close),
-                                    onClick = { onCustomAvatarChange("") },
+                                    onClick = { onAvatarPresetChange("") },
                                 ),
                             )
                         }
@@ -358,9 +392,10 @@ fun AccountSettings(
                         ) {
                             // Custom picture wins over the account image; the mask comes from
                             // the avatar-shape preference so both surfaces stay in sync.
-                            if (isLoggedIn || customAvatarPath.isNotBlank()) {
+                            if (isLoggedIn || avatarPresetKey.isNotBlank()) {
                                 ProfileAvatar(
-                                    imageUrl = customAvatarPath.ifBlank { accountImageUrl },
+                                    presetKey = avatarPresetKey,
+                                    accountImageUrl = accountImageUrl,
                                     shape = avatarShape,
                                     size = 40.dp,
                                 )
@@ -521,30 +556,14 @@ fun AccountSettings(
                     Material3SettingsItem(
                         title = { Text(stringResource(R.string.settings)) },
                         icon = painterResource(R.drawable.settings),
-                        showBadge = BuildConfig.UPDATER_AVAILABLE &&
-                            latestVersionName != BuildConfig.BASE_VERSION_NAME,
+                        // No update badge: auto-update is deliberately disabled for now and will
+                        // ship as a GitHub-release download later.
                         onClick = {
                             onClose()
                             navController.navigate("settings")
                         }
                     )
                 )
-
-                if (BuildConfig.UPDATER_AVAILABLE && latestVersionName != BuildConfig.BASE_VERSION_NAME) {
-                    val releaseInfo = Updater.getCachedLatestRelease()
-                    val downloadUrl = releaseInfo?.let { Updater.getDownloadUrlForCurrentVariant(it) }
-                    if (downloadUrl != null) {
-                        add(
-                            Material3SettingsItem(
-                                title = { Text(stringResource(R.string.new_version_available)) },
-                                description = { Text(latestVersionName) },
-                                icon = painterResource(R.drawable.update),
-                                showBadge = true,
-                                onClick = { uriHandler.openUri(downloadUrl) }
-                            )
-                        )
-                    }
-                }
             },
             useLowContrast = true
         )

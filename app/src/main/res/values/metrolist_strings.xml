@@ -598,12 +598,15 @@
     <string name="widget_music_player">Music Player</string>
     <string name="widget_turntable">Turntable</string>
 
+    <!-- Personal Space: daily listening time -->
+    <string name="today_minutes">Today · %1$d min</string>
+
     <!-- Custom profile picture (feature #64) -->
     <string name="avatar_section">Profile picture</string>
-    <string name="avatar_change">Change picture</string>
+    <string name="avatar_choose">Choose avatar</string>
     <string name="avatar_shape">Picture shape</string>
     <string name="avatar_reset">Use account picture</string>
-    <string name="avatar_reset_desc">Remove your custom picture and fall back to the YouTube avatar.</string>
+    <string name="avatar_reset_desc">Remove your chosen avatar and fall back to the YouTube picture.</string>
     <string name="avatar_shape_circle">Circle</string>
     <string name="avatar_shape_squircle">Squircle</string>
     <string name="avatar_shape_rounded">Rounded square</string>

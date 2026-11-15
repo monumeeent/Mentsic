@@ -62,6 +62,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -123,6 +124,14 @@ class HomeViewModel @Inject constructor(
 
     /** Most-played songs of the last 30 days, at most 4. */
     val topListened = MutableStateFlow<List<Song>>(emptyList())
+
+    /**
+     * Minutes listened since local midnight, for the Personal Space counter.
+     *
+     * Recomputed on every load/refresh; the event table grows while music plays, so a stale
+     * value would be obvious on screen.
+     */
+    val todayMinutes = MutableStateFlow(0L)
 
     /**
      * Remixes: the running queue's upcoming tracks merged with a random unlisted sample.
@@ -865,6 +874,17 @@ class HomeViewModel @Inject constructor(
      * Most-played songs of the last 30 days for the Top Listened row (at most 4).
      * The UI pads short rows with placeholders.
      */
+    /** Sums today's playTime and converts it to whole minutes. */
+    private suspend fun loadTodayMinutes() {
+        val startOfDay =
+            LocalDate
+                .now()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        todayMinutes.value = database.listenedMillisSince(startOfDay).first() / 60_000L
+    }
+
     private suspend fun loadTopListened() {
         topListened.value = database.mostPlayedSongs(
             fromTimeStamp = LocalDateTime.now().minusDays(30),
@@ -972,6 +992,8 @@ class HomeViewModel @Inject constructor(
                 .onFailure { Timber.w(it, "Failed to load top listened") }
             runCatching { loadShuffles() }
                 .onFailure { Timber.w(it, "Failed to load shuffles") }
+            runCatching { loadTodayMinutes() }
+                .onFailure { Timber.w(it, "Failed to load today's listening time") }
         }
     }
 }

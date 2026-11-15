@@ -61,7 +61,6 @@ import com.metrolist.music.ui.screens.settings.StorageSettings
 import com.metrolist.music.ui.screens.settings.TacticalHubSettings
 import com.metrolist.music.ui.screens.settings.ThemeScreen
 import com.metrolist.music.ui.screens.settings.WidgetsScreen
-import com.metrolist.music.ui.screens.settings.UpdaterScreen
 import com.metrolist.music.ui.screens.settings.integrations.DiscordSettings
 import com.metrolist.music.ui.screens.settings.integrations.IntegrationScreen
 import com.metrolist.music.ui.screens.settings.integrations.LastFMSettings
@@ -495,9 +494,8 @@ fun NavGraphBuilder.navigationBuilder(
         ListenTogetherSettings(navController)
     }
 
-    composable("settings/updater") {
-        UpdaterScreen(navController)
-    }
+    // Auto-update is intentionally not wired: no route, no settings entry, no badge. It returns
+    // via GitHub releases later; see the note in Updater.kt.
 
     composable("settings/about") {
         AboutScreen(navController)
