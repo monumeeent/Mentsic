@@ -46,6 +46,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -180,19 +181,26 @@ fun OnlineSearchResult(
         mutableStateOf(TextFieldValue(decodedQuery, TextRange(decodedQuery.length)))
     }
 
+    // The onSearch lambda is wrapped in `remember { }`, which captures its captures once on first
+    // composition. Reading `developerMode` directly inside it always saw the initial `false`, so
+    // the secret code could switch dev mode on but never off. rememberUpdatedState gives the
+    // long-lived lambda a live reference instead.
+    val currentDeveloperMode by rememberUpdatedState(developerMode)
+
     val onSearch: (String) -> Unit =
         remember {
             search@{ searchQuery ->
                 // Secret developer-mode toggle. Intercepted here as well as in SearchScreen,
                 // because this screen is the one that receives the IME's search action.
                 if (isDeveloperUnlockCode(searchQuery)) {
-                    developerMode = !developerMode
+                    developerMode = !currentDeveloperMode
                     query = TextFieldValue("")
                     isSearchFocused = false
                     focusManager.clearFocus()
                     Toast.makeText(
                         context,
-                        if (developerMode) "Developer options enabled" else "Developer options disabled",
+                        // Report the state we just switched *to*, not the stale captured value.
+                        if (!currentDeveloperMode) "Developer options enabled" else "Developer options disabled",
                         Toast.LENGTH_SHORT,
                     ).show()
                     return@search
