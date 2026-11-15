@@ -22,8 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.metrolist.music.R
-import com.metrolist.music.constants.DarkMode
 import com.metrolist.music.constants.DarkModeKey
+import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.utils.rememberEnumPreference
 import com.yalantis.ucrop.UCrop
 import java.io.File
@@ -46,7 +46,9 @@ class AvatarPicker internal constructor(
 fun rememberAvatarPicker(onCropped: (String) -> Unit): AvatarPicker {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
-    val (darkMode, _) = rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    // DarkMode lives in AppearanceSettings; the explicit type argument keeps
+    // rememberEnumPreference from failing to infer T from its defaulted parameter here.
+    val (darkMode, _) = rememberEnumPreference<DarkMode>(DarkModeKey, defaultValue = DarkMode.AUTO)
     val darkTheme = darkMode == DarkMode.ON || (darkMode == DarkMode.AUTO && isSystemInDarkTheme())
 
     var pendingDest by remember { mutableStateOf<Uri?>(null) }

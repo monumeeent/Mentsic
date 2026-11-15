@@ -6,6 +6,7 @@
 package com.metrolist.music.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -69,7 +70,6 @@ import com.metrolist.music.ui.component.AvatarShape
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.InfoLabel
 import com.metrolist.music.ui.component.ProfileAvatar
-import com.metrolist.music.ui.component.label
 import com.metrolist.music.ui.component.rememberAvatarPicker
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
