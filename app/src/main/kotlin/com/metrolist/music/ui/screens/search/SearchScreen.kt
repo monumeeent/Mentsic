@@ -154,13 +154,16 @@ fun SearchScreen(
         // Secret developer-mode toggle. Handled before anything else so the code never reaches
         // InnerTube and is never written to the search history.
         if (isDeveloperUnlockCode(searchQuery)) {
-            developerMode = !developerMode
+            // Compute the target state first: the write is dispatched asynchronously, so reading
+            // `developerMode` again below would still return the pre-toggle value.
+            val enabled = !developerMode
+            developerMode = enabled
             query = TextFieldValue("")
             focusManager.clearFocus()
             keyboardController?.hide()
             Toast.makeText(
                 context,
-                if (developerMode) "Developer options enabled" else "Developer options disabled",
+                if (enabled) "Developer options enabled" else "Developer options disabled",
                 Toast.LENGTH_SHORT,
             ).show()
             return

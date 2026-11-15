@@ -107,7 +107,11 @@ fun <T> rememberPreference(
                 .distinctUntilChanged()
         }.collectAsStateWithLifecycle(defaultValue)
 
-    return remember {
+    // Keyed on `state` and `key`: `collectAsStateWithLifecycle` hands back a NEW State object
+    // whenever its flow is rebuilt, and an un-keyed `remember` would keep a delegate pointing at
+    // the very first (now detached) one — reads would go stale and writes would target a dead
+    // scope. That silently broke preference toggles such as developer mode.
+    return remember(state, key) {
         object : MutableState<T> {
             override var value: T
                 get() = state.value
@@ -141,7 +145,8 @@ inline fun <reified T : Enum<T>> rememberEnumPreference(
                 .distinctUntilChanged()
         }.collectAsStateWithLifecycle(defaultValue)
 
-    return remember {
+    // Same staleness hazard as rememberPreference above: key the delegate on the State object.
+    return remember(state, key) {
         object : MutableState<T> {
             override var value: T
                 get() = state.value
