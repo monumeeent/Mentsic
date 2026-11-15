@@ -81,6 +81,7 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.CONTENT_TYPE_ARTIST
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.StatPeriod
 import com.metrolist.music.extensions.toMediaItem
@@ -227,6 +228,9 @@ fun StatsScreen(
         }
     }
     val selectedOption by viewModel.selectedOption.collectAsStateWithLifecycle()
+
+    // Gates the Time Transfer entry in the top bar.
+    val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
 
     var showTimeTransfer by rememberSaveable { mutableStateOf(false) }
     var prevOptionOrdinal by rememberSaveable { mutableStateOf<OptionStats?>(null) }
@@ -851,14 +855,18 @@ fun StatsScreen(
                         contentDescription = "Search Button",
                     )
                 }
-                LongClickIconButton(
-                    onClick = { showTimeTransfer = true },
-                    onLongClick = { showTimeTransfer = true },
-                ) {
-                    Icon(
-                        painterResource(R.drawable.sync),
-                        contentDescription = "Time Transfer",
-                    )
+                // Time Transfer rewrites play counts between songs — a destructive, developer
+                // grade tool, so it is only offered while developer mode is on.
+                if (developerMode) {
+                    LongClickIconButton(
+                        onClick = { showTimeTransfer = true },
+                        onLongClick = { showTimeTransfer = true },
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.sync),
+                            contentDescription = "Time Transfer",
+                        )
+                    }
                 }
             }
         },

@@ -230,13 +230,10 @@ fun AboutScreen(
                         )
                     },
                     description = {
-                        Text("View the license and required legal notices.")
+                        Text("This app is distributed under the GNU General Public License v3.0.")
                     },
-                    onClick = {
-                        uriHandler.openUri(
-                            "https://github.com/MetrolistGroup/Metrolist/blob/main/LICENSE"
-                        )
-                    },
+                    // Deliberately not clickable: the licence banner stays for attribution, but
+                    // it no longer sends users off to an external page.
                 )
             ),
         )

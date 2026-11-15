@@ -18,7 +18,12 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.metrolist.music.utils.dataStore
+import com.metrolist.music.utils.get
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -78,6 +83,11 @@ import com.metrolist.music.utils.rememberPreference
  *
  * Hiding the entry row is not enough on its own: a restored back stack or a deep link can still
  * land on the route, so the destination pops itself instead of rendering.
+ *
+ * The gate must not act on the *initial* value. Preferences load asynchronously from DataStore
+ * and `collectAsStateWithLifecycle(defaultValue)` reports `defaultValue` for the first frames, so
+ * popping on `!developerMode` immediately bounced users back out even with the mode enabled.
+ * We render nothing until the real value is known, then decide once.
  */
 @Composable
 private fun DeveloperOnlyRoute(
@@ -85,11 +95,27 @@ private fun DeveloperOnlyRoute(
     content: @Composable () -> Unit,
 ) {
     val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
-    if (developerMode) {
+
+    // Read the preference directly from DataStore once, rather than trusting the state value
+    // during the first frames while the flow is still collecting.
+    val context = LocalContext.current
+    var resolved by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(Unit) {
+        // Nullable read: `null` means "key absent", which is a definite OFF, while "not yet
+        // read" is tracked separately by the initial null of `resolved`.
+        resolved = context.dataStore.get(DeveloperModeKey) ?: false
+    }
+
+    val enabled = resolved ?: developerMode
+
+    if (enabled) {
         content()
-    } else {
+    } else if (resolved != null) {
+        // Genuinely off, and we know it for certain: leave rather than show a dead screen.
         LaunchedEffect(Unit) { navController.navigateUp() }
     }
+    // resolved == null: render nothing for the first frame instead of popping. Popping on the
+    // collecting-time default was the bug that made every gated screen unopenable.
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
