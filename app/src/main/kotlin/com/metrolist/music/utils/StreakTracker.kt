@@ -12,10 +12,18 @@ import java.time.temporal.ChronoUnit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import com.metrolist.music.constants.InnerTubeCookieKey
+import com.metrolist.music.constants.streakCurrentKey
+import com.metrolist.music.constants.streakHistoryKey
+import com.metrolist.music.constants.streakLongestKey
+import com.metrolist.music.constants.streakMigratedKey
+import com.metrolist.music.constants.streakTotalKey
 import com.metrolist.music.constants.StreakCurrentKey
 import com.metrolist.music.constants.StreakHistoryKey
 import com.metrolist.music.constants.StreakLongestKey
 import com.metrolist.music.constants.StreakTotalKey
+import com.metrolist.innertube.utils.parseCookieString
+import java.security.MessageDigest
 
 /**
  * Daily listening streak.
@@ -124,17 +132,35 @@ object StreakTracker {
 }
 
 /**
- * Reads the persisted streak from DataStore and exposes it as a [StreakState].
+ * Stable tag identifying the signed-in account, or "" when logged out.
+ *
+ * Derived from the InnerTube cookie rather than the display name: names change, and two accounts
+ * can share one. Only the `SAPISID` value is hashed, so the raw credential never becomes a
+ * DataStore key.
+ */
+fun streakAccountTag(cookie: String?): String {
+    if (cookie.isNullOrBlank()) return ""
+    val sapisid = parseCookieString(cookie)["SAPISID"] ?: return ""
+    val digest =
+        MessageDigest.getInstance("SHA-256").digest(sapisid.toByteArray())
+    // 12 hex chars is plenty to avoid collisions between a user's own accounts.
+    return digest.take(6).joinToString("") { "%02x".format(it) }
+}
+
+/**
+ * Reads the persisted streak for the current account (or the device streak when logged out).
  *
  * Shared by the Home header chip and the Personal Space card so both always agree.
  */
 @Composable
 fun rememberStreakState(): StreakState {
-    val current by rememberPreference(StreakCurrentKey, 0)
-    val longest by rememberPreference(StreakLongestKey, 0)
-    val total by rememberPreference(StreakTotalKey, 0)
-    val historyRaw by rememberPreference(StreakHistoryKey, "")
-    return remember(current, longest, total, historyRaw) {
+    val (cookie) = rememberPreference(InnerTubeCookieKey, "")
+    val tag = remember(cookie) { streakAccountTag(cookie) }
+    val current by rememberPreference(streakCurrentKey(tag), 0)
+    val longest by rememberPreference(streakLongestKey(tag), 0)
+    val total by rememberPreference(streakTotalKey(tag), 0)
+    val historyRaw by rememberPreference(streakHistoryKey(tag), "")
+    return remember(current, longest, total, historyRaw, tag) {
         StreakState(
             current = current,
             longest = longest,

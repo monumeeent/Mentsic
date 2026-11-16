@@ -598,6 +598,9 @@
     <string name="widget_music_player">Music Player</string>
     <string name="widget_turntable">Turntable</string>
 
+    <!-- Trending chart row -->
+    <string name="trending_chart">YouTube Chart</string>
+
     <!-- Developer options hub -->
     <string name="developer_diagnostics">Diagnostics</string>
     <string name="developer_stats_desc">Listening stats, recap and time transfer</string>

@@ -114,6 +114,11 @@ private const val SHUFFLE_CELLS = SHUFFLE_COLUMNS * SHUFFLE_ROWS
 /** Ceiling on the shuffle grid's overall width, so 3x3 stays shorter than the old 2-row block. */
 private val SHUFFLE_MAX_WIDTH = 260.dp
 
+/** YouTube Chart geometry: 4 columns x 2 rows = 8 tiles. */
+private const val TRENDING_COLUMNS = 4
+private const val TRENDING_ROWS = 2
+private const val TRENDING_CELLS = TRENDING_COLUMNS * TRENDING_ROWS
+
 /** Speed Dial geometry: 4 columns x 6 rows = 24 artwork-only tiles. */
 private const val SPEED_DIAL_COLUMNS = 4
 private const val SPEED_DIAL_ROWS = 6
@@ -146,6 +151,7 @@ fun NewHomeScreen(
     val topListened by viewModel.topListened.collectAsStateWithLifecycle()
     val remixes by viewModel.remixes.collectAsStateWithLifecycle()
     val todayMinutes by viewModel.todayMinutes.collectAsStateWithLifecycle()
+    val trending by viewModel.trending.collectAsStateWithLifecycle()
 
     // Auto-generated mixes (Release Radar / Weekly Mix). The generator caches for a week, so this
     // first load is not repeated when the user switches tabs.
@@ -348,6 +354,24 @@ fun NewHomeScreen(
                                 }
                             },
                         )
+                    }
+
+                    // "YouTube Chart": region-localised trending. 2 rows x 4 columns, placed
+                    // above Speed Dial because it is the one section that changes day to day.
+                    if (trending.isNotEmpty()) {
+                        item(key = "new_home_trending") {
+                            HomeSectionHeaderV2(title = stringResource(R.string.trending_chart))
+                            TrendingChartGrid(
+                                songs = trending,
+                                activeId = mediaMetadata?.id,
+                                isPlaying = isPlaying,
+                                onSongClick = { item ->
+                                    playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route ->
+                                        navController.navigate(route)
+                                    }
+                                },
+                            )
+                        }
                     }
 
                     if (uiState.speedDialItems.isNotEmpty()) {
@@ -1013,7 +1037,100 @@ private fun HomeYouTubeRow(items: List<YTItem>, onItemClick: (YTItem) -> Unit) {
 }
 
 /**
- * Speed Dial: a dense 5-column grid of artwork-only shortcuts (15 items, 3 rows).
+ * "YouTube Chart": 4 columns x 2 rows of artwork-only tiles.
+ *
+ * Same visual family as Speed Dial, capped at eight items so it never competes with it for
+ * vertical space. Hidden entirely when the chart request fails, which is why the caller checks
+ * for an empty list rather than rendering a placeholder.
+ */
+@Composable
+private fun TrendingChartGrid(
+    songs: List<SongItem>,
+    activeId: String?,
+    isPlaying: Boolean,
+    onSongClick: (SongItem) -> Unit,
+) {
+    val cells = songs.take(TRENDING_CELLS)
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    ) {
+        repeat(TRENDING_ROWS) { rowIndex ->
+            val rowItems = cells.drop(rowIndex * TRENDING_COLUMNS).take(TRENDING_COLUMNS)
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                rowItems.forEach { song ->
+                    ArtworkTile(
+                        title = song.title,
+                        thumbnail = song.thumbnail,
+                        isActive = song.id == activeId,
+                        isPlaying = isPlaying,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSongClick(song) },
+                    )
+                }
+                repeat(TRENDING_COLUMNS - rowItems.size) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Shared artwork-only tile: used by the Trending and Speed Dial grids. */
+@Composable
+private fun ArtworkTile(
+    title: String,
+    thumbnail: String?,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            modifier
+                .aspectRatio(1f)
+                .clip(MaterialTheme.shapes.small)
+                .clickable(onClick = onClick),
+    ) {
+        AsyncImage(
+            model = thumbnail,
+            contentDescription = title,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+        if (isActive) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f)),
+            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.align(Alignment.Center).size(24.dp),
+            ) {
+                Icon(
+                    painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                    contentDescription = stringResource(R.string.play_pause),
+                    modifier = Modifier.padding(4.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Speed Dial: a dense 4-column grid of artwork-only shortcuts (24 items, 6 rows).
  *
  * The previous 156x72dp pill row fitted barely two items per screen width and carried a title
  * block that made each entry tall. Titles are dropped deliberately — the artwork is the identifier
@@ -1035,45 +1152,16 @@ private fun HomeSpeedDialGrid(
             val rowItems = cells.drop(rowIndex * SPEED_DIAL_COLUMNS).take(SPEED_DIAL_COLUMNS)
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 rowItems.forEach { item ->
-                    val isActive = item.id == activeId
-                    Box(
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .clip(MaterialTheme.shapes.small)
-                                .clickable { onItemClick(item) },
-                    ) {
-                        AsyncImage(
-                            model = item.thumbnail,
-                            contentDescription = item.title,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                        // A scrim + play glyph marks the tile that is currently sounding.
-                        if (isActive) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f)),
-                            )
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.align(Alignment.Center).size(24.dp),
-                            ) {
-                                Icon(
-                                    painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                                    contentDescription = stringResource(R.string.play_pause),
-                                    modifier = Modifier.padding(4.dp),
-                                )
-                            }
-                        }
-                    }
+                    ArtworkTile(
+                        title = item.title,
+                        thumbnail = item.thumbnail,
+                        isActive = item.id == activeId,
+                        isPlaying = isPlaying,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onItemClick(item) },
+                    )
                 }
-                // Keep the last row flush when it has fewer than 5 tiles.
+                // Keep the last row flush when it has fewer than 4 tiles.
                 repeat(SPEED_DIAL_COLUMNS - rowItems.size) {
                     Box(
                         modifier =

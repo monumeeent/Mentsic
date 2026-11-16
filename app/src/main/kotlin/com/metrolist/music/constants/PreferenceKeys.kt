@@ -31,6 +31,9 @@ val SyncFrequencyKey = stringPreferencesKey("syncFrequency")
 // Epoch millis of the last smart-playlist generation; drives the weekly rotation.
 val SmartPlaylistRefreshKey = longPreferencesKey("smartPlaylistRefresh")
 
+// Epoch millis of the last YouTube chart fetch; the trending row refreshes daily.
+val TrendingRefreshKey = longPreferencesKey("trendingRefresh")
+
 // Which Material colour-harmony scheme turns the seed colour into a palette.
 // Stored as the PaletteStyle enum name; TONAL_SPOT preserves the previous look.
 val ThemePaletteStyleKey = stringPreferencesKey("themePaletteStyle")
@@ -55,6 +58,28 @@ val StreakCurrentKey = intPreferencesKey("streakCurrent")
 val StreakLongestKey = intPreferencesKey("streakLongest")
 val StreakTotalKey = intPreferencesKey("streakTotal")
 val StreakHistoryKey = stringPreferencesKey("streakHistory")
+
+/**
+ * Account-scoped streak keys.
+ *
+ * The four flat keys above are the **guest** (per-device) streak. Once a YouTube account is
+ * signed in, the streak moves to keys suffixed with a stable account id, so two accounts keep
+ * independent histories on one device. `accountTag` is "" for the guest streak.
+ */
+fun streakCurrentKey(accountTag: String) =
+    if (accountTag.isEmpty()) StreakCurrentKey else intPreferencesKey("streakCurrent_$accountTag")
+
+fun streakLongestKey(accountTag: String) =
+    if (accountTag.isEmpty()) StreakLongestKey else intPreferencesKey("streakLongest_$accountTag")
+
+fun streakTotalKey(accountTag: String) =
+    if (accountTag.isEmpty()) StreakTotalKey else intPreferencesKey("streakTotal_$accountTag")
+
+fun streakHistoryKey(accountTag: String) =
+    if (accountTag.isEmpty()) StreakHistoryKey else stringPreferencesKey("streakHistory_$accountTag")
+
+/** Set once we have copied the device streak into a freshly used account. */
+fun streakMigratedKey(accountTag: String) = booleanPreferencesKey("streakMigrated_$accountTag")
 
 // Secret developer mode, toggled by typing the unlock code in the search bar.
 val DeveloperModeKey = booleanPreferencesKey("developerMode")

@@ -206,6 +206,12 @@ import com.metrolist.music.playback.queues.filterExplicit
 import com.metrolist.music.playback.queues.filterVideoSongs
 import com.metrolist.music.constants.LoudnessLevel
 import com.metrolist.music.constants.LoudnessLevelKey
+import com.metrolist.music.constants.InnerTubeCookieKey
+import com.metrolist.music.constants.streakCurrentKey
+import com.metrolist.music.constants.streakHistoryKey
+import com.metrolist.music.constants.streakLongestKey
+import com.metrolist.music.constants.streakMigratedKey
+import com.metrolist.music.constants.streakTotalKey
 import com.metrolist.music.constants.StreakCurrentKey
 import com.metrolist.music.constants.StreakHistoryKey
 import com.metrolist.music.constants.StreakLongestKey
@@ -213,6 +219,7 @@ import com.metrolist.music.constants.StreakTotalKey
 import com.metrolist.music.utils.CoilBitmapLoader
 import com.metrolist.music.utils.StreakState
 import com.metrolist.music.utils.StreakTracker
+import com.metrolist.music.utils.streakAccountTag
 import com.metrolist.music.utils.NetworkConnectivityObserver
 import com.metrolist.music.utils.ScrobbleManager
 import com.metrolist.music.utils.SyncUtils
@@ -2604,27 +2611,54 @@ class MusicService :
     }
 
     /**
-     * Marks today as listened for the daily streak (per device, no account needed).
+     * Marks today as listened for the daily streak.
+     *
+     * The streak is scoped to the signed-in account (see `streakAccountTag`), falling back to the
+     * device streak when logged out. The first time a given account plays, the device streak is
+     * copied into it — that is the "account has no history, adopt what this device has" rule.
      * Idempotent per calendar day, so every play in a session is a cheap no-op.
      */
     private fun recordStreakPlay() {
         scope.launch(Dispatchers.IO) {
             val today = LocalDate.now()
+            val cookie = dataStore[InnerTubeCookieKey]
+            val tag = streakAccountTag(cookie)
+
+            val currentKey = streakCurrentKey(tag)
+            val longestKey = streakLongestKey(tag)
+            val totalKey = streakTotalKey(tag)
+            val historyKey = streakHistoryKey(tag)
+            val migratedKey = streakMigratedKey(tag)
+
+            // Adopt the device streak into a brand-new account streak exactly once.
+            if (tag.isNotEmpty() && dataStore[migratedKey] != true) {
+                val accountHasHistory = (dataStore[currentKey] ?: 0) > 0 || (dataStore[totalKey] ?: 0) > 0
+                safeDataStoreEdit {
+                    if (!accountHasHistory) {
+                        it[currentKey] = dataStore[StreakCurrentKey] ?: 0
+                        it[longestKey] = dataStore[StreakLongestKey] ?: 0
+                        it[totalKey] = dataStore[StreakTotalKey] ?: 0
+                        it[historyKey] = dataStore[StreakHistoryKey] ?: ""
+                    }
+                    it[migratedKey] = true
+                }
+            }
+
             val state =
                 StreakState(
-                    current = dataStore[StreakCurrentKey] ?: 0,
-                    longest = dataStore[StreakLongestKey] ?: 0,
-                    total = dataStore[StreakTotalKey] ?: 0,
-                    history = StreakTracker.decodeHistory(dataStore[StreakHistoryKey]),
+                    current = dataStore[currentKey] ?: 0,
+                    longest = dataStore[longestKey] ?: 0,
+                    total = dataStore[totalKey] ?: 0,
+                    history = StreakTracker.decodeHistory(dataStore[historyKey]),
                 )
             if (state.isActiveOn(today)) return@launch
 
             val updated = StreakTracker.recordPlay(state, today)
             safeDataStoreEdit {
-                it[StreakCurrentKey] = updated.current
-                it[StreakLongestKey] = updated.longest
-                it[StreakTotalKey] = updated.total
-                it[StreakHistoryKey] = StreakTracker.encodeHistory(updated.history)
+                it[currentKey] = updated.current
+                it[longestKey] = updated.longest
+                it[totalKey] = updated.total
+                it[historyKey] = StreakTracker.encodeHistory(updated.history)
             }
         }
     }

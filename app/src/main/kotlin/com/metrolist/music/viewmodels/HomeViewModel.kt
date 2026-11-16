@@ -100,6 +100,7 @@ class HomeViewModel @Inject constructor(
     val database: MusicDatabase,
     val syncUtils: SyncUtils,
     private val networkConnectivity: NetworkConnectivityObserver,
+    private val trendingRepository: com.metrolist.music.utils.TrendingChartRepository,
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
     val isLoading = MutableStateFlow(false)
@@ -124,6 +125,9 @@ class HomeViewModel @Inject constructor(
 
     /** Most-played songs of the last 30 days, at most 4. */
     val topListened = MutableStateFlow<List<Song>>(emptyList())
+
+    /** "YouTube Chart" row: region-localised trending songs, refreshed daily. */
+    val trending = MutableStateFlow<List<SongItem>>(emptyList())
 
     /**
      * Minutes listened since local midnight, for the Personal Space counter.
@@ -1005,6 +1009,8 @@ class HomeViewModel @Inject constructor(
                 .onFailure { Timber.w(it, "Failed to load shuffles") }
             runCatching { loadTodayMinutes() }
                 .onFailure { Timber.w(it, "Failed to load today's listening time") }
+            runCatching { trendingRepository.load().let { trending.value = it } }
+                .onFailure { Timber.w(it, "Failed to load trending") }
         }
     }
 }
