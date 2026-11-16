@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -44,6 +45,7 @@ import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.rememberPreference
+import kotlin.math.roundToInt
 
 /**
  * Settings for the Tactical Command Hub — the alternative Home layout defined by feature #28.
@@ -152,33 +154,34 @@ fun TacticalHubSettings(navController: NavController) {
         val (shColumns, onShColumns) = rememberPreference(ShuffleColumnsKey, 3)
         val (shRows, onShRows) = rememberPreference(ShuffleRowsKey, 3)
 
+        // Each grid gets two independent sliders — columns and rows — instead of a combined
+        // ± stepper: a stepper could only change one dimension at a time and gave no feel for the
+        // range. Sliders snap to whole cells and show the live value above the track.
         Material3SettingsGroup(
             title = stringResource(R.string.grid_customisation),
             items =
                 listOf(
-                    stepperItem(
+                    gridSizeItem(
                         title = stringResource(R.string.speed_dial_grid),
-                        value = "${sdColumns}×${sdRows}",
-                        canDecrease = sdColumns > 2 || sdRows > 1,
-                        onDecrease = {
-                            if (sdColumns > 2) onSdColumns(sdColumns - 1) else onSdRows(sdRows - 1)
-                        },
-                        canIncrease = sdColumns < 6 || sdRows < 10,
-                        onIncrease = {
-                            if (sdColumns < 6) onSdColumns(sdColumns + 1) else onSdRows(sdRows + 1)
-                        },
+                        columns = sdColumns,
+                        rows = sdRows,
+                        onColumns = onSdColumns,
+                        onRows = onSdRows,
+                        minColumns = 2,
+                        maxColumns = 6,
+                        minRows = 1,
+                        maxRows = 10,
                     ),
-                    stepperItem(
+                    gridSizeItem(
                         title = stringResource(R.string.shuffle_grid),
-                        value = "${shColumns}×${shRows}",
-                        canDecrease = shColumns > 2 || shRows > 1,
-                        onDecrease = {
-                            if (shColumns > 2) onShColumns(shColumns - 1) else onShRows(shRows - 1)
-                        },
-                        canIncrease = shColumns < 6 || shRows < 8,
-                        onIncrease = {
-                            if (shColumns < 6) onShColumns(shColumns + 1) else onShRows(shRows + 1)
-                        },
+                        columns = shColumns,
+                        rows = shRows,
+                        onColumns = onShColumns,
+                        onRows = onShRows,
+                        minColumns = 2,
+                        maxColumns = 6,
+                        minRows = 1,
+                        maxRows = 8,
                     ),
                 ),
         )
@@ -217,29 +220,54 @@ fun TacticalHubSettings(navController: NavController) {
     )
 }
 
-/** Row with explicit −/+ controls, used for the numeric grid dimensions. */
+/**
+ * Grid size editor: one row-scoped slider per axis, with the current "C×R" shown as the
+ * description. Sliders snap with `steps`, so every stop is a whole number of cells.
+ */
 @Composable
-private fun stepperItem(
+private fun gridSizeItem(
     title: String,
-    value: String,
-    canDecrease: Boolean,
-    onDecrease: () -> Unit,
-    canIncrease: Boolean,
-    onIncrease: () -> Unit,
+    columns: Int,
+    rows: Int,
+    onColumns: (Int) -> Unit,
+    onRows: (Int) -> Unit,
+    minColumns: Int,
+    maxColumns: Int,
+    minRows: Int,
+    maxRows: Int,
 ) = Material3SettingsItem(
     title = { Text(title) },
-    description = { Text(value) },
-    trailingContent = {
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            IconButton(onClick = onDecrease, enabled = canDecrease) {
-                Icon(painterResource(R.drawable.remove), contentDescription = null)
-            }
-            IconButton(onClick = onIncrease, enabled = canIncrease) {
-                Icon(painterResource(R.drawable.add), contentDescription = null)
-            }
+    description = {
+        Column {
+            Text("$columns × $rows columns")
+
+            Text(
+                text = stringResource(R.string.grid_columns_value, columns),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            androidx.compose.material3.Slider(
+                value = columns.toFloat(),
+                onValueChange = { onColumns(it.roundToInt()) },
+                valueRange = minColumns.toFloat()..maxColumns.toFloat(),
+                // `steps` counts the stops *between* the endpoints.
+                steps = (maxColumns - minColumns - 1).coerceAtLeast(0),
+            )
+
+            Text(
+                text = stringResource(R.string.grid_rows_value, rows),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            androidx.compose.material3.Slider(
+                value = rows.toFloat(),
+                onValueChange = { onRows(it.roundToInt()) },
+                valueRange = minRows.toFloat()..maxRows.toFloat(),
+                steps = (maxRows - minRows - 1).coerceAtLeast(0),
+            )
         }
     },
-    onClick = onIncrease,
+    onClick = {},
 )
 
 /** Non-interactive row describing one zone of the hub layout. */

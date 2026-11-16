@@ -611,6 +611,8 @@
     <string name="grid_customisation">Home grids</string>
     <string name="speed_dial_grid">Speed Dial grid</string>
     <string name="shuffle_grid">Shuffle grid</string>
+    <string name="grid_columns_value">Columns: %1$d</string>
+    <string name="grid_rows_value">Rows: %1$d</string>
 
     <!-- Pinned song-identifier notification -->
     <string name="identifier_notification_channel">Song identifier</string>

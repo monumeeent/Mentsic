@@ -2045,12 +2045,15 @@ enum class LyricsPosition {
  * Drawn as a static mock rather than a disabled Slider: a real Slider needs a drag-capable state
  * and interactive semantics that would make the swatch look tappable-but-broken inside the picker.
  */
+// RowScope extension: the swatch uses Modifier.weight(1f) to share the picker row, which only
+// exists inside a Row.
 @Composable
-private fun NewSliderStyleSwatch(
+private fun androidx.compose.foundation.layout.RowScope.NewSliderStyleSwatch(
     style: SliderStyle,
     @androidx.annotation.StringRes labelRes: Int,
     isSelected: Boolean,
-    colors: com.metrolist.music.ui.theme.SliderColors,
+    // Compose's own slider colour holder (PlayerSliderColors.getSliderColors returns this).
+    colors: androidx.compose.material3.SliderColors,
     onSelect: () -> Unit,
 ) {
     Column(
