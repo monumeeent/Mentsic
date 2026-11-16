@@ -1509,6 +1509,101 @@ fun BottomSheetPlayer(
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                     )
                 }
+
+                // THICK / MINIMAL / SEGMENTED reuse the same Slider mechanics with different
+                // geometry. They exist as separate styles rather than options because each one
+                // changes both the track and the thumb, which a single toggle cannot express.
+                SliderStyle.THICK -> {
+                    val sliderValue = (sliderPosition ?: effectivePosition).toFloat()
+                    Slider(
+                        value = sliderValue,
+                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                        onValueChange = { if (!isListenTogetherGuest) sliderPosition = it.toLong() },
+                        onValueChangeFinished = {
+                            sliderPosition?.let {
+                                playerConnection.player.seekTo(it)
+                                position = it
+                            }
+                            sliderPosition = null
+                        },
+                        enabled = !isListenTogetherGuest,
+                        thumb = {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(22.dp)
+                                        .clip(CircleShape)
+                                        .background(textButtonColor),
+                            )
+                        },
+                        track = { state ->
+                            PlayerSliderTrack(
+                                sliderState = state,
+                                colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                            )
+                        },
+                        modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
+                    )
+                }
+
+                SliderStyle.MINIMAL -> {
+                    val sliderValue = (sliderPosition ?: effectivePosition).toFloat()
+                    Slider(
+                        value = sliderValue,
+                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                        onValueChange = { if (!isListenTogetherGuest) sliderPosition = it.toLong() },
+                        onValueChangeFinished = {
+                            sliderPosition?.let {
+                                playerConnection.player.seekTo(it)
+                                position = it
+                            }
+                            sliderPosition = null
+                        },
+                        enabled = !isListenTogetherGuest,
+                        // No visible handle: the hairline track is the whole control.
+                        thumb = { Spacer(modifier = Modifier.size(0.dp)) },
+                        track = { state ->
+                            PlayerSliderTrack(
+                                sliderState = state,
+                                colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                            )
+                        },
+                        modifier = Modifier.height(20.dp).padding(horizontal = PlayerHorizontalPadding),
+                    )
+                }
+
+                SliderStyle.SEGMENTED -> {
+                    // Blocky progress bar. Built from a Row of segments rather than a Slider: a
+                    // discrete look with a draggable thumb is not expressible with Slider's track
+                    // slot, and the gaps are the whole point of the style.
+                    val total = if (duration == C.TIME_UNSET) 0L else duration
+                    val current = sliderPosition ?: effectivePosition
+                    val segments = 40
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = PlayerHorizontalPadding)
+                                .height(24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        repeat(segments) { index ->
+                            val filled =
+                                total > 0 && current.toFloat() / total >= index.toFloat() / segments
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .height(if (filled) 14.dp else 8.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(
+                                            if (filled) textButtonColor else textButtonColor.copy(alpha = 0.28f),
+                                        ),
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(Modifier.height(4.dp))

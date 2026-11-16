@@ -630,6 +630,10 @@ class MusicService :
 
         playerInitialized.value = false
 
+        // Pin the "Song Identifier" shortcut for as long as the playback service lives. Best
+        // effort: a user who revokes notification permission simply never sees it.
+        runCatching { postIdentifierNotification() }
+
         // Call startForeground() as early as possible to satisfy the
         // 5-second timeout imposed by Context.startForegroundService().
         // On some OEMs (e.g. MIUI), even a DataStore read can be slow
@@ -4259,6 +4263,56 @@ class MusicService :
                 NotificationManager.IMPORTANCE_LOW,
             ),
         )
+        // Separate, minimal channel so the identifier pin can be muted independently of the
+        // transport controls (which users still want in the shade).
+        nm?.createNotificationChannel(
+            NotificationChannel(
+                IDENTIFIER_CHANNEL_ID,
+                getString(R.string.identifier_notification_channel),
+                NotificationManager.IMPORTANCE_MIN,
+            ).apply {
+                setShowBadge(false)
+                description = getString(R.string.identifier_notification_channel_desc)
+            },
+        )
+    }
+
+    /**
+     * Posts (and keeps alive) a one-tap "Song Identifier" entry in the shade.
+     *
+     * It rides the same foreground service that is already running, so this costs no extra
+     * process. `IMPORTANCE_MIN` keeps it collapsed and silent; it is a shortcut, not an alert.
+     */
+    private fun postIdentifierNotification() {
+        ensureForegroundChannelExists()
+        val launch =
+            Intent(this, MainActivity::class.java).apply {
+                action = MainActivity.ACTION_RECOGNITION
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+        val pending =
+            PendingIntent.getActivity(
+                this,
+                IDENTIFIER_REQUEST_CODE,
+                launch,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        val notification =
+            NotificationCompat
+                .Builder(this, IDENTIFIER_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_widget_mic)
+                .setContentTitle(getString(R.string.identifier_notification_title))
+                .setContentText(getString(R.string.identifier_notification_text))
+                .setContentIntent(pending)
+                .setOngoing(true)
+                .setSilent(true)
+                .setShowWhen(false)
+                .build()
+
+        runCatching {
+            NotificationManagerCompat.from(this).notify(IDENTIFIER_NOTIFICATION_ID, notification)
+        }
     }
 
     private fun createFallbackForegroundNotification(): Notification {
@@ -4314,6 +4368,10 @@ class MusicService :
 
     override fun onDestroy() {
         isRunning = false
+        // The identifier pin belongs to this service, so it goes away with it.
+        runCatching {
+            NotificationManagerCompat.from(this).cancel(IDENTIFIER_NOTIFICATION_ID)
+        }
 
         if (!::player.isInitialized) {
             try {
@@ -4971,6 +5029,11 @@ class MusicService :
 
         const val CHANNEL_ID = "music_channel_01"
         const val NOTIFICATION_ID = 888
+
+        /** Shade shortcut that opens the music identifier. */
+        const val IDENTIFIER_CHANNEL_ID = "identifier_channel_01"
+        const val IDENTIFIER_NOTIFICATION_ID = 889
+        private const val IDENTIFIER_REQUEST_CODE = 8891
         const val ERROR_CODE_NO_STREAM = 1000001
         const val CHUNK_LENGTH = 512 * 1024L
         const val PERSISTENT_QUEUE_FILE = "persistent_queue.data"

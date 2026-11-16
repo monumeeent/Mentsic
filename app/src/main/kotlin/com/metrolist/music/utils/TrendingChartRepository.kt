@@ -65,16 +65,19 @@ class TrendingChartRepository @Inject constructor(
                     .getOrNull()
                     ?: return@withContext cached
 
+            // Section titles are localised, so `chartType` is not reliable — it is derived from
+            // the English word "Trending"/"Top". Prefer the typed section when it exists, but
+            // fall back to merging every section so the row is never empty on a non-English
+            // device.
             val sections = page.sections
-            val preferred =
+            val typed =
                 sections.firstOrNull { it.chartType == ChartsPage.ChartType.TRENDING }
                     ?: sections.firstOrNull { it.chartType == ChartsPage.ChartType.TOP }
-                    ?: sections.firstOrNull { it.items.isNotEmpty() }
+
+            val candidates = (typed?.let { listOf(it) } ?: sections).flatMap { it.items }
 
             val songs =
-                preferred
-                    ?.items
-                    .orEmpty()
+                candidates
                     .filterIsInstance<SongItem>()
                     .distinctBy { it.id }
                     .take(ROW_SIZE)

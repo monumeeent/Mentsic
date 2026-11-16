@@ -401,6 +401,18 @@ fun LibraryMixScreen(
 
             Spacer(Modifier.weight(1f))
 
+            // Recognition history lives in Library's header so identified tracks are one tap
+            // away, rather than buried behind the Search screen's FAB.
+            IconButton(
+                onClick = { navController.navigate("recognition_history") },
+                modifier = Modifier.padding(start = 8.dp).size(40.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_widget_mic),
+                    contentDescription = stringResource(R.string.recognition_history),
+                )
+            }
+
             IconButton(
                 onClick = { isSearchActive = true },
                 modifier = Modifier.padding(start = 8.dp).size(40.dp),

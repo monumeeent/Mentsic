@@ -143,6 +143,7 @@ import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.DismissedKmpUpdateKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
+import com.metrolist.music.constants.DensityScale
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.DisableScreenshotKey
 import com.metrolist.music.constants.AlbumArtThemeKey
@@ -596,9 +597,10 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
-        // Album-art theming is its own toggle now; it used to piggyback on DynamicThemeKey.
-        val enableAlbumArtTheme by rememberPreference(AlbumArtThemeKey, defaultValue = true)
+        // Both default OFF, matching the toggles in AppearanceSettings. They used to be on by
+        // default, which made the app re-tint itself on every device and every track.
+        val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = false)
+        val enableAlbumArtTheme by rememberPreference(AlbumArtThemeKey, defaultValue = false)
         val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
 
         LaunchedEffect(enableHighRefreshRate) {
@@ -641,7 +643,7 @@ class MainActivity : FragmentActivity() {
         }
 
         val enableLandscapeScaling by rememberPreference(EnableLandscapeScalingKey, defaultValue = false)
-        val userDensityScale by rememberPreference(DensityScaleKey, defaultValue = 1f)
+        val userDensityScale by rememberPreference(DensityScaleKey, defaultValue = DensityScale.Default.value)
         val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
         val pureBlack =
             remember(pureBlackEnabled, useDarkTheme) {
@@ -789,13 +791,16 @@ class MainActivity : FragmentActivity() {
                 // entry point. Guests can still reach an existing room via an invite link, which
                 // routes to the same screen; only the discovery affordance is hidden.
                 val (developerModeForNav) = rememberPreference(DeveloperModeKey, defaultValue = false)
-                val listenTogetherInTopBar = listenTogetherInTopBarPref && developerModeForNav
+                // Bottom bar only: the top-bar icon competed with Stats/account and pushed the
+                // title off-centre on narrow screens, so the tab exists and the top-bar copy does
+                // not. The preference now merely enables/disables the tab.
+                val showListenTogetherTab = listenTogetherInTopBarPref && developerModeForNav
                 val navigationItems =
-                    remember(listenTogetherInTopBar) {
-                        if (listenTogetherInTopBar) {
-                            Screens.MainScreens.filter { it != Screens.ListenTogether }
-                        } else {
+                    remember(showListenTogetherTab) {
+                        if (showListenTogetherTab) {
                             Screens.MainScreens
+                        } else {
+                            Screens.MainScreens.filter { it != Screens.ListenTogether }
                         }
                     }
                 val routeIndexMap = remember(navigationItems) {
@@ -1020,14 +1025,14 @@ class MainActivity : FragmentActivity() {
 
                 var shouldShowTopBar by rememberSaveable { mutableStateOf(false) }
 
-                LaunchedEffect(navBackStackEntry, listenTogetherInTopBar) {
+                LaunchedEffect(navBackStackEntry, showListenTogetherTab) {
                     val currentRoute = navBackStackEntry?.destination?.route
                     val isListenTogetherScreen =
                         currentRoute == Screens.ListenTogether.route ||
                             currentRoute == "listen_together_from_topbar"
                     shouldShowTopBar = currentRoute in topLevelScreens &&
                         currentRoute != "settings" &&
-                        !(isListenTogetherScreen && listenTogetherInTopBar)
+                        !(isListenTogetherScreen && showListenTogetherTab)
                 }
 
                 val coroutineScope = rememberCoroutineScope()
@@ -1133,14 +1138,7 @@ class MainActivity : FragmentActivity() {
                                                     contentDescription = stringResource(R.string.stats),
                                                 )
                                             }
-                                            if (listenTogetherInTopBar) {
-                                                IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.group_outlined),
-                                                        contentDescription = stringResource(R.string.together),
-                                                    )
-                                                }
-                                            }
+
                                             IconButton(onClick = { showAccountDialog = true }) {
                                                 // No update badge while auto-update is disabled.
                                                 // Preset overrides the account image; the chosen

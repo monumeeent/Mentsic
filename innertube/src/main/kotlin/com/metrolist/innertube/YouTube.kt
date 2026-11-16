@@ -2038,10 +2038,21 @@ object YouTube {
             )
         }
 
+    /**
+     * Classifies a chart section by its title.
+     *
+     * Titles are localised, so this tries the English keywords first and then a handful of
+     * common translations. Anything unrecognised becomes [ChartsPage.ChartType.GENRE], which is
+     * still usable — the trending row merges all sections when no typed one matches.
+     */
     private fun determineChartType(title: String): ChartsPage.ChartType =
         when {
-            title.contains("Trending", ignoreCase = true) -> ChartsPage.ChartType.TRENDING
-            title.contains("Top", ignoreCase = true) -> ChartsPage.ChartType.TOP
+            listOf("Trending", "Tendances", "Tendencias", "Tendenzen", "Top 100", "Тренды")
+                .any { title.contains(it, ignoreCase = true) } -> ChartsPage.ChartType.TRENDING
+
+            listOf("Top", "Meist", "Meilleur", "Lo mejor", "Hits").any { title.contains(it, ignoreCase = true) } ->
+                ChartsPage.ChartType.TOP
+
             else -> ChartsPage.ChartType.GENRE
         }
 

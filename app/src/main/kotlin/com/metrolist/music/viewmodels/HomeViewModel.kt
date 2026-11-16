@@ -57,6 +57,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -154,13 +156,71 @@ class HomeViewModel @Inject constructor(
      */
     val todayMinutes = MutableStateFlow(0L)
 
-    /** Re-reads today's total; called by the 60s ticker in the Home screen. */
+    /** Baseline milliseconds listened today, as last read from the database. */
+    private var todayBaseMillis = 0L
+
+    /** Wall-clock start of the in-flight play session, or 0 when nothing is playing. */
+    private var sessionStartedAt = 0L
+
+    /**
+     * Re-reads today's total from the database.
+     *
+     * Called on load/refresh *and* whenever playback starts or stops. The event row for a track
+     * is only written when the player flushes a report, so the DB value lags real playback.
+     */
     fun tickTodayMinutes() {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { loadTodayMinutes() }
-                .onFailure { Timber.w(it, "Failed to refresh today's minutes") }
+            runCatching {
+                val startOfDay =
+                    LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                todayBaseMillis = database.listenedMillisSince(startOfDay).first()
+                recomputeTodayMinutes(0L)
+            }.onFailure { Timber.w(it, "Failed to refresh today's minutes") }
         }
     }
+
+    /**
+     * Marks a play session as running/stopped and starts extrapolating.
+     *
+     * While a session is open the counter advances from wall-clock time on top of the last known
+     * DB total, so the UI ticks continuously instead of jumping once a report is flushed.
+     */
+    fun setPlaybackRunning(running: Boolean) {
+        if (running) {
+            if (sessionStartedAt == 0L) sessionStartedAt = System.currentTimeMillis()
+        } else if (sessionStartedAt != 0L) {
+            todayBaseMillis += System.currentTimeMillis() - sessionStartedAt
+            sessionStartedAt = 0L
+            recomputeTodayMinutes(0L)
+        }
+    }
+
+    /** Applies the session offset to [todayBaseMillis] and publishes whole minutes. */
+    private fun recomputeTodayMinutes(extra: Long) {
+        val live = if (sessionStartedAt == 0L) 0L else System.currentTimeMillis() - sessionStartedAt
+        val total = todayBaseMillis + extra + live
+        val minutes = total / 60_000L
+        if (minutes != todayMinutes.value) todayMinutes.value = minutes
+    }
+
+    /**
+     * Schedules the per-second counter rerender.
+     *
+     * A 1s tick is cheap: [recomputeTodayMinutes] only assigns when the *minute* changes, so
+     * Compose is not invalidated 60 times a minute.
+     */
+    fun startTodayMinutesTicker() {
+        todayTickerJob?.cancel()
+        todayTickerJob =
+            viewModelScope.launch {
+                while (true) {
+                    delay(1_000L)
+                    if (sessionStartedAt != 0L) recomputeTodayMinutes(0L)
+                }
+            }
+    }
+
+    private var todayTickerJob: Job? = null
 
     /**
      * Remixes: the running queue's upcoming tracks merged with a random unlisted sample.
@@ -903,7 +963,7 @@ class HomeViewModel @Inject constructor(
      * Most-played songs of the last 30 days for the Top Listened row (at most 4).
      * The UI pads short rows with placeholders.
      */
-    /** Sums today's playTime and converts it to whole minutes. */
+    /** Refreshes the DB baseline and republishes the extrapolated total. */
     private suspend fun loadTodayMinutes() {
         val startOfDay =
             LocalDate
@@ -911,7 +971,8 @@ class HomeViewModel @Inject constructor(
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
-        todayMinutes.value = database.listenedMillisSince(startOfDay).first() / 60_000L
+        todayBaseMillis = database.listenedMillisSince(startOfDay).first()
+        recomputeTodayMinutes(0L)
     }
 
     private suspend fun loadTopListened() {

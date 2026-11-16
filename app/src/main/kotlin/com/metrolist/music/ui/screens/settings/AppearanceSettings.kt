@@ -156,20 +156,23 @@ fun AppearanceSettings(
             valueText = { stringResource(it.labelRes) },
         )
     }
+    // All three default OFF: the app ships with its own fixed seed colour, a stable launcher
+    // icon, and no per-track re-tinting, so the UI looks the same on every device until the user
+    // opts in. Existing installs keep whatever they already saved.
     val (dynamicTheme, onDynamicThemeChange) =
         rememberPreference(
             DynamicThemeKey,
-            defaultValue = true,
+            defaultValue = false,
         )
     val (albumArtTheme, onAlbumArtThemeChange) =
         rememberPreference(
             AlbumArtThemeKey,
-            defaultValue = true,
+            defaultValue = false,
         )
     val (enableDynamicIcon, onEnableDynamicIconPrefChange) =
         rememberPreference(
             EnableDynamicIconKey,
-            defaultValue = true,
+            defaultValue = false,
         )
     val iconContext = LocalContext.current
     val onEnableDynamicIconChange: (Boolean) -> Unit = { newValue ->
@@ -313,7 +316,8 @@ fun AppearanceSettings(
             defaultValue = false,
         )
 
-    val (densityScale, onDensityScaleChange) = rememberPreference(DensityScaleKey, defaultValue = 1f)
+    val (densityScale, onDensityScaleChange) =
+        rememberPreference(DensityScaleKey, defaultValue = DensityScale.Default.value)
     var showDensityScaleDialog by rememberSaveable { mutableStateOf(false) }
 
     val (listenTogetherInTopBar, onListenTogetherInTopBarChange) =
@@ -1312,6 +1316,18 @@ fun AppearanceSettings(
 
                                     SliderStyle.SLIM -> {
                                         stringResource(R.string.slim)
+                                    }
+
+                                    SliderStyle.THICK -> {
+                                        stringResource(R.string.slider_thick)
+                                    }
+
+                                    SliderStyle.MINIMAL -> {
+                                        stringResource(R.string.slider_minimal)
+                                    }
+
+                                    SliderStyle.SEGMENTED -> {
+                                        stringResource(R.string.slider_segmented)
                                     }
                                 },
                             )

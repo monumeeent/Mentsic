@@ -33,6 +33,12 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.HubModeEnabledKey
+import com.metrolist.music.constants.ShuffleColumnsKey
+import com.metrolist.music.constants.ShuffleRowsKey
+import com.metrolist.music.constants.SpeedDialColumnsKey
+import com.metrolist.music.constants.SpeedDialRowsKey
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.IconButton
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
@@ -140,6 +146,45 @@ fun TacticalHubSettings(navController: NavController) {
 
         Spacer(modifier = Modifier.height(27.dp))
 
+        // Developer-only grid geometry for the two Home grids.
+        val (sdColumns, onSdColumns) = rememberPreference(SpeedDialColumnsKey, 4)
+        val (sdRows, onSdRows) = rememberPreference(SpeedDialRowsKey, 6)
+        val (shColumns, onShColumns) = rememberPreference(ShuffleColumnsKey, 3)
+        val (shRows, onShRows) = rememberPreference(ShuffleRowsKey, 3)
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.grid_customisation),
+            items =
+                listOf(
+                    stepperItem(
+                        title = stringResource(R.string.speed_dial_grid),
+                        value = "${sdColumns}×${sdRows}",
+                        canDecrease = sdColumns > 2 || sdRows > 1,
+                        onDecrease = {
+                            if (sdColumns > 2) onSdColumns(sdColumns - 1) else onSdRows(sdRows - 1)
+                        },
+                        canIncrease = sdColumns < 6 || sdRows < 10,
+                        onIncrease = {
+                            if (sdColumns < 6) onSdColumns(sdColumns + 1) else onSdRows(sdRows + 1)
+                        },
+                    ),
+                    stepperItem(
+                        title = stringResource(R.string.shuffle_grid),
+                        value = "${shColumns}×${shRows}",
+                        canDecrease = shColumns > 2 || shRows > 1,
+                        onDecrease = {
+                            if (shColumns > 2) onShColumns(shColumns - 1) else onShRows(shRows - 1)
+                        },
+                        canIncrease = shColumns < 6 || shRows < 8,
+                        onIncrease = {
+                            if (shColumns < 6) onShColumns(shColumns + 1) else onShRows(shRows + 1)
+                        },
+                    ),
+                ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
         // Plain-language description of the four zones, so "where / how to use" is answered
         // on the screen that turns the mode on.
         Material3SettingsGroup(
@@ -171,6 +216,31 @@ fun TacticalHubSettings(navController: NavController) {
         },
     )
 }
+
+/** Row with explicit −/+ controls, used for the numeric grid dimensions. */
+@Composable
+private fun stepperItem(
+    title: String,
+    value: String,
+    canDecrease: Boolean,
+    onDecrease: () -> Unit,
+    canIncrease: Boolean,
+    onIncrease: () -> Unit,
+) = Material3SettingsItem(
+    title = { Text(title) },
+    description = { Text(value) },
+    trailingContent = {
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            IconButton(onClick = onDecrease, enabled = canDecrease) {
+                Icon(painterResource(R.drawable.remove), contentDescription = null)
+            }
+            IconButton(onClick = onIncrease, enabled = canIncrease) {
+                Icon(painterResource(R.drawable.add), contentDescription = null)
+            }
+        }
+    },
+    onClick = onIncrease,
+)
 
 /** Non-interactive row describing one zone of the hub layout. */
 @Composable

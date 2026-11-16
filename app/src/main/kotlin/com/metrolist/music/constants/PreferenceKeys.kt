@@ -48,6 +48,12 @@ val AvatarShapeKey = stringPreferencesKey("avatarShape")
 // Home layout preset: FEED (everything), COMPACT (Speed Dial + Shuffles only), HUB or LIBRARY.
 val HomeLayoutPresetKey = stringPreferencesKey("homeLayoutPreset")
 
+// Developer-mode grid geometry for the two Home grids.
+val SpeedDialColumnsKey = intPreferencesKey("speedDialColumns")
+val SpeedDialRowsKey = intPreferencesKey("speedDialRows")
+val ShuffleColumnsKey = intPreferencesKey("shuffleColumns")
+val ShuffleRowsKey = intPreferencesKey("shuffleRows")
+
 val EnableOrbitThemeKey = booleanPreferencesKey("enableOrbitTheme")
 val DarkModeKey = stringPreferencesKey("darkMode")
 val PureBlackKey = booleanPreferencesKey("pureBlack")
@@ -111,7 +117,10 @@ enum class DensityScale(
     ;
 
     companion object {
-        fun fromValue(value: Float): DensityScale = entries.find { it.value == value } ?: NATIVE
+        /** Default for new installs: 85% shows noticeably more content without hurting legibility. */
+        val Default = SLIGHTLY_COMPACT
+
+        fun fromValue(value: Float): DensityScale = entries.find { it.value == value } ?: Default
     }
 }
 
@@ -146,6 +155,15 @@ enum class SliderStyle {
     DEFAULT,
     WAVY,
     SLIM,
+
+    /** Thick rounded track with a large draggable thumb. */
+    THICK,
+
+    /** Hairline track with no thumb until touched. */
+    MINIMAL,
+
+    /** Segmented "tick" bar: progress reads as a row of blocks. */
+    SEGMENTED,
 }
 
 const val SYSTEM_DEFAULT = "SYSTEM_DEFAULT"

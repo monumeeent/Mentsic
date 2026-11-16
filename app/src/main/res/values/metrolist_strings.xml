@@ -602,6 +602,22 @@
     <string name="trending_chart">YouTube Chart</string>
 
     <!-- Developer options hub -->
+    <!-- Extra player slider styles -->
+    <string name="slider_thick">Thick</string>
+    <string name="slider_minimal">Minimal</string>
+    <string name="slider_segmented">Segmented</string>
+
+    <!-- Developer grid customisation -->
+    <string name="grid_customisation">Home grids</string>
+    <string name="speed_dial_grid">Speed Dial grid</string>
+    <string name="shuffle_grid">Shuffle grid</string>
+
+    <!-- Pinned song-identifier notification -->
+    <string name="identifier_notification_channel">Song identifier</string>
+    <string name="identifier_notification_channel_desc">Pinned shortcut that opens music recognition while the player runs.</string>
+    <string name="identifier_notification_title">Song identifier</string>
+    <string name="identifier_notification_text">Tap to identify the music around you</string>
+
     <!-- Home layout presets -->
     <string name="home_preset">Home layout preset</string>
     <string name="preset_feed">Feed</string>

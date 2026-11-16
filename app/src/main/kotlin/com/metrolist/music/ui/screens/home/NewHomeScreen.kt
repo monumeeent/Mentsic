@@ -84,6 +84,7 @@ import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.GlassCard
+import com.metrolist.music.ui.component.ListeningHeatmap
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.title
 import com.metrolist.music.ui.component.shimmer.GridItemPlaceHolder
@@ -154,10 +155,17 @@ fun NewHomeScreen(
     val remixes by viewModel.remixes.collectAsStateWithLifecycle()
     val todayMinutes by viewModel.todayMinutes.collectAsStateWithLifecycle()
     val trending by viewModel.trending.collectAsStateWithLifecycle()
+    val heatmapPlays by viewModel.heatmapPlays.collectAsStateWithLifecycle()
 
     // Home layout preset. Filters which sections render; the feed itself stays one implementation.
     val (homePresetKey) = rememberPreference(HomeLayoutPresetKey, HomeLayoutPreset.Default.key)
     val homePreset = remember(homePresetKey) { HomeLayoutPreset.fromKey(homePresetKey) }
+
+    // Developer-mode grid geometry. Clamped so a bad value cannot break the layout.
+    val (sdColumns) = rememberPreference(SpeedDialColumnsKey, SPEED_DIAL_COLUMNS)
+    val (sdRows) = rememberPreference(SpeedDialRowsKey, SPEED_DIAL_ROWS)
+    val (shuffleCols) = rememberPreference(ShuffleColumnsKey, SHUFFLE_COLUMNS)
+    val (shuffleRows) = rememberPreference(ShuffleRowsKey, SHUFFLE_ROWS)
 
     // Auto-generated mixes (Release Radar / Weekly Mix). The generator caches for a week, so this
     // first load is not repeated when the user switches tabs.
@@ -206,11 +214,14 @@ fun NewHomeScreen(
         viewModel.updateShuffles(queueSnapshot)
     }
 
-    // "Today · N min" must advance while the user is on this screen. The DB row only lands when
-    // a play report is flushed, so poll once a minute while playing instead of requiring a relaunch.
+    // "Today · N min" must advance continuously while a track is running. The view model keeps a
+    // wall-clock session offset so the value grows every second; we only have to tell it when
+    // playback starts and stops, and re-sync against the database periodically (the DB row lands
+    // later than real playback).
+    LaunchedEffect(Unit) { viewModel.startTodayMinutesTicker() }
+    LaunchedEffect(isPlaying) { viewModel.setPlaybackRunning(isPlaying) }
     LaunchedEffect(isPlaying) {
-        if (!isPlaying) return@LaunchedEffect
-        while (true) {
+        while (isPlaying) {
             delay(60_000L)
             viewModel.tickTodayMinutes()
         }
@@ -330,6 +341,7 @@ fun NewHomeScreen(
                                 .distinct()
                                 .take(3),
                             todayMinutes = todayMinutes,
+                            playsByDay = heatmapPlays,
                             onResume = {
                                 activeSong?.let { target ->
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -384,6 +396,8 @@ fun NewHomeScreen(
                         item(key = "new_home_speed_dial") {
                             HomeSectionHeaderV2(title = stringResource(R.string.speed_dial))
                             HomeSpeedDialGrid(
+                                columns = sdColumns.coerceIn(2, 6),
+                                rows = sdRows.coerceIn(1, 10),
                                 items = uiState.speedDialItems,
                                 activeId = mediaMetadata?.id,
                                 isPlaying = isPlaying,
@@ -409,6 +423,8 @@ fun NewHomeScreen(
                         item(key = "new_home_shuffles") {
                             HomeSectionHeaderV2(title = stringResource(R.string.shuffles))
                             ShuffleGrid(
+                                columns = shuffleCols.coerceIn(2, 6),
+                                rows = shuffleRows.coerceIn(1, 8),
                                 songs = shuffles,
                                 activeId = mediaMetadata?.id,
                                 isPlaying = isPlaying,
@@ -694,16 +710,17 @@ private fun PersonalSpacePager(
     isPlaying: Boolean,
     topArtists: List<String>,
     todayMinutes: Long,
+    playsByDay: Map<String, Int>,
     smartPlaylists: List<SmartPlaylist>,
     onResume: () -> Unit,
     onOpenPersonalSpace: () -> Unit,
     onOpenSmartPlaylist: (SmartPlaylist) -> Unit,
     onPlaySmartPlaylist: (SmartPlaylist) -> Unit,
 ) {
-    // A fourth, conditional page hosts the generated mixes. It only exists when the generator
-    // produced something, so the pager does not show an empty card for logged-out users.
+    // Page list: 0 streak, 1 continue listening, 2 top artists, 3 (conditional) Made for you,
+    // then the heatmap last so the pager always ends on it.
     val hasMadeForYou = smartPlaylists.isNotEmpty()
-    val pageCount = if (hasMadeForYou) 4 else 3
+    val pageCount = if (hasMadeForYou) 5 else 4
     val pagerState = rememberPagerState(pageCount = { pageCount })
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -882,7 +899,10 @@ private fun PersonalSpacePager(
                     }
                 }
 
-                else -> PersonalSpaceSlide(respond = { smartPlaylists.firstOrNull()?.let(onPlaySmartPlaylist) }) {
+                // Made-for-you is only reachable when it exists; otherwise the pager has four
+                // pages and the heatmap occupies this slot (see the `else` branch).
+                3 -> if (hasMadeForYou) {
+                    PersonalSpaceSlide(respond = { smartPlaylists.firstOrNull()?.let(onPlaySmartPlaylist) }) {
                     Column {
                         Text(
                             text = stringResource(R.string.smart_playlists),
@@ -921,6 +941,34 @@ private fun PersonalSpacePager(
                                 )
                             }
                         }
+                    }
+                    }
+                } else {
+                    PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.heatmap_title),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Spacer(Modifier.height(Spacing.small))
+                            ListeningHeatmap(playsByDay = playsByDay, weeksToShow = 10)
+                        }
+                    }
+                }
+
+                else -> PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.heatmap_title),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.height(Spacing.small))
+                        ListeningHeatmap(
+                            playsByDay = playsByDay,
+                            weeksToShow = 10,
+                        )
                     }
                 }
             }
@@ -1149,18 +1197,20 @@ private fun ArtworkTile(
  */
 @Composable
 private fun HomeSpeedDialGrid(
+    columns: Int = SPEED_DIAL_COLUMNS,
+    rows: Int = SPEED_DIAL_ROWS,
     items: List<YTItem>,
     activeId: String?,
     isPlaying: Boolean,
     onItemClick: (YTItem) -> Unit,
 ) {
-    val cells = items.distinctBy { it.id }.take(SPEED_DIAL_CELLS)
+    val cells = items.distinctBy { it.id }.take(columns * rows)
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        repeat(SPEED_DIAL_ROWS) { rowIndex ->
-            val rowItems = cells.drop(rowIndex * SPEED_DIAL_COLUMNS).take(SPEED_DIAL_COLUMNS)
+        repeat(rows) { rowIndex ->
+            val rowItems = cells.drop(rowIndex * columns).take(columns)
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 rowItems.forEach { item ->
                     ArtworkTile(
@@ -1172,8 +1222,8 @@ private fun HomeSpeedDialGrid(
                         onClick = { onItemClick(item) },
                     )
                 }
-                // Keep the last row flush when it has fewer than 4 tiles.
-                repeat(SPEED_DIAL_COLUMNS - rowItems.size) {
+                // Keep the last row flush when it has fewer tiles than the column count.
+                repeat(columns - rowItems.size) {
                     Box(
                         modifier =
                             Modifier
@@ -1199,12 +1249,14 @@ private fun HomeSpeedDialGrid(
  */
 @Composable
 private fun ShuffleGrid(
+    columns: Int = SHUFFLE_COLUMNS,
+    rows: Int = SHUFFLE_ROWS,
     songs: List<YTItem>,
     activeId: String?,
     isPlaying: Boolean,
     onSongClick: (YTItem) -> Unit,
 ) {
-    val cells = songs.take(SHUFFLE_CELLS)
+    val cells = songs.take(columns * rows)
     Column(
         modifier =
             Modifier
@@ -1216,8 +1268,8 @@ private fun ShuffleGrid(
     ) {
         // Always three full rows. Building rows from `chunked(3)` produced no rows at all for an
         // empty list, which collapsed the section to a bare header while the pool loaded.
-        repeat(SHUFFLE_ROWS) { rowIndex ->
-            val rowSongs = cells.drop(rowIndex * SHUFFLE_COLUMNS).take(SHUFFLE_COLUMNS)
+        repeat(rows) { rowIndex ->
+            val rowSongs = cells.drop(rowIndex * columns).take(columns)
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
                 rowSongs.forEach { song ->
                     val isActive = song.id == activeId
@@ -1256,7 +1308,7 @@ private fun ShuffleGrid(
                     }
                 }
                 // Missing cells keep their footprint as placeholders so the grid stays aligned.
-                repeat(SHUFFLE_COLUMNS - rowSongs.size) {
+                repeat(columns - rowSongs.size) {
                     Box(
                         modifier =
                             Modifier
