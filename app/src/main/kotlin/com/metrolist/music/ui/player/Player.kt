@@ -55,6 +55,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ContainedLoadingIndicator
@@ -1514,10 +1515,18 @@ fun BottomSheetPlayer(
                 // geometry. They exist as separate styles rather than options because each one
                 // changes both the track and the thumb, which a single toggle cannot express.
                 SliderStyle.THICK -> {
-                    val sliderValue = (sliderPosition ?: effectivePosition).toFloat()
+                    // Custom thumb/track are only exposed by the SliderState overload, so the
+                    // state is built explicitly (same pattern as SLIM above).
+                    val thickRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat())
+                    val thickState = remember(thickRange) {
+                        SliderState(
+                            value = (sliderPosition ?: effectivePosition).toFloat(),
+                            trackRange = thickRange,
+                        )
+                    }
+                    thickState.value = (sliderPosition ?: effectivePosition).toFloat()
                     Slider(
-                        value = sliderValue,
-                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                        state = thickState,
                         onValueChange = { if (!isListenTogetherGuest) sliderPosition = it.toLong() },
                         onValueChangeFinished = {
                             sliderPosition?.let {
@@ -1547,10 +1556,16 @@ fun BottomSheetPlayer(
                 }
 
                 SliderStyle.MINIMAL -> {
-                    val sliderValue = (sliderPosition ?: effectivePosition).toFloat()
+                    val minimalRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat())
+                    val minimalState = remember(minimalRange) {
+                        SliderState(
+                            value = (sliderPosition ?: effectivePosition).toFloat(),
+                            trackRange = minimalRange,
+                        )
+                    }
+                    minimalState.value = (sliderPosition ?: effectivePosition).toFloat()
                     Slider(
-                        value = sliderValue,
-                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                        state = minimalState,
                         onValueChange = { if (!isListenTogetherGuest) sliderPosition = it.toLong() },
                         onValueChangeFinished = {
                             sliderPosition?.let {

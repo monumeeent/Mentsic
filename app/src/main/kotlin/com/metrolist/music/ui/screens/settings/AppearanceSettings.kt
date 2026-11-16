@@ -6,14 +6,17 @@
 package com.metrolist.music.ui.screens.settings
 
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -934,6 +937,42 @@ fun AppearanceSettings(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
+
+                    // The three newer styles were added to SliderStyle but never surfaced in
+                    // this hand-built picker, so they were unreachable from Settings.
+                    NewSliderStyleSwatch(
+                        style = SliderStyle.THICK,
+                        labelRes = R.string.slider_thick,
+                        isSelected = sliderStyle == SliderStyle.THICK,
+                        colors = sliderPreviewColors,
+                        onSelect = {
+                            onSliderStyleChange(SliderStyle.THICK)
+                            onSquigglySliderChange(false)
+                            showSliderOptionDialog = false
+                        },
+                    )
+                    NewSliderStyleSwatch(
+                        style = SliderStyle.MINIMAL,
+                        labelRes = R.string.slider_minimal,
+                        isSelected = sliderStyle == SliderStyle.MINIMAL,
+                        colors = sliderPreviewColors,
+                        onSelect = {
+                            onSliderStyleChange(SliderStyle.MINIMAL)
+                            onSquigglySliderChange(false)
+                            showSliderOptionDialog = false
+                        },
+                    )
+                    NewSliderStyleSwatch(
+                        style = SliderStyle.SEGMENTED,
+                        labelRes = R.string.slider_segmented,
+                        isSelected = sliderStyle == SliderStyle.SEGMENTED,
+                        colors = sliderPreviewColors,
+                        onSelect = {
+                            onSliderStyleChange(SliderStyle.SEGMENTED)
+                            onSquigglySliderChange(false)
+                            showSliderOptionDialog = false
+                        },
+                    )
                 }
             }
         }
@@ -1998,4 +2037,94 @@ enum class LyricsPosition {
     LEFT,
     CENTER,
     RIGHT,
+}
+
+/**
+ * Preview tile for the newer slider styles (Thick / Minimal / Segmented).
+ *
+ * Drawn as a static mock rather than a disabled Slider: a real Slider needs a drag-capable state
+ * and interactive semantics that would make the swatch look tappable-but-broken inside the picker.
+ */
+@Composable
+private fun NewSliderStyleSwatch(
+    style: SliderStyle,
+    @androidx.annotation.StringRes labelRes: Int,
+    isSelected: Boolean,
+    colors: com.metrolist.music.ui.theme.SliderColors,
+    onSelect: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier =
+            Modifier
+                .aspectRatio(1f)
+                .weight(1f)
+                .clip(RoundedCornerShape(16.dp))
+                .border(
+                    1.dp,
+                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    RoundedCornerShape(16.dp),
+                ).clickable(onClick = onSelect)
+                .padding(12.dp),
+    ) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            when (style) {
+                SliderStyle.THICK ->
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(colors.inactiveTrackColor),
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(0.5f)
+                                    .fillMaxHeight()
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(colors.activeTrackColor),
+                        )
+                    }
+
+                SliderStyle.MINIMAL ->
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .background(colors.activeTrackColor),
+                    )
+
+                // SEGMENTED: a short row of blocks reads as the block progress bar.
+                else ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        repeat(7) { index ->
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .height(if (index < 4) 14.dp else 8.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(
+                                            if (index < 4) colors.activeTrackColor else colors.inactiveTrackColor,
+                                        ),
+                            )
+                        }
+                    }
+            }
+        }
+        Text(
+            text = stringResource(labelRes),
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }

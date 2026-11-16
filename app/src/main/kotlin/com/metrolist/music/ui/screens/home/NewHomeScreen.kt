@@ -98,6 +98,10 @@ import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberStreakState
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.constants.HomeLayoutPresetKey
+import com.metrolist.music.constants.ShuffleColumnsKey
+import com.metrolist.music.constants.ShuffleRowsKey
+import com.metrolist.music.constants.SpeedDialColumnsKey
+import com.metrolist.music.constants.SpeedDialRowsKey
 import kotlinx.coroutines.delay
 import com.metrolist.music.viewmodels.HomeViewModel
 import com.metrolist.music.viewmodels.SmartPlaylistViewModel
