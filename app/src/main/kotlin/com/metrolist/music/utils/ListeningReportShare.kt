@@ -5,9 +5,13 @@
 
 package com.metrolist.music.utils
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
@@ -208,5 +212,44 @@ object ListeningReportShare {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
             file
+        }.getOrNull()
+
+    /**
+     * Writes the recap into the device gallery.
+     *
+     * Returns the display name on success, `null` on failure. API 29+ goes through MediaStore with
+     * `IS_PENDING`, which needs no permission; 26–28 falls back to the app's external Pictures
+     * folder, also permission-free for the app's own directory.
+     */
+    fun saveToGallery(context: Context, report: ListeningReport): String? =
+        runCatching {
+            val bitmap = render(context, report) ?: return null
+            val fileName = "mentsic_recap_${System.currentTimeMillis()}.png"
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values =
+                    ContentValues().apply {
+                        put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Mentsic")
+                        put(MediaStore.Images.Media.IS_PENDING, 1)
+                    }
+                val uri =
+                    context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                        ?: return null
+                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                } ?: return null
+                values.clear()
+                values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                context.contentResolver.update(uri, values, null, null)
+            } else {
+                val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Mentsic")
+                dir.mkdirs()
+                FileOutputStream(File(dir, fileName)).use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                }
+            }
+            fileName
         }.getOrNull()
 }

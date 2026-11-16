@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -94,19 +95,28 @@ import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.StreakState
 import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberStreakState
+import kotlinx.coroutines.delay
 import com.metrolist.music.viewmodels.HomeViewModel
 import com.metrolist.music.viewmodels.SmartPlaylistViewModel
 import java.time.LocalDate
 import java.util.Calendar
 
-/** Shuffle sampler geometry: 3 columns x 2 rows = 6 cells. */
+/**
+ * Shuffle sampler geometry: 3 x 3 = 9 cells.
+ *
+ * Nine tiles at full row width made the section tall again, so the grid is width-capped below
+ * (see [SHUFFLE_MAX_WIDTH]): tiles shrink instead of the block growing.
+ */
 private const val SHUFFLE_COLUMNS = 3
-private const val SHUFFLE_ROWS = 2
+private const val SHUFFLE_ROWS = 3
 private const val SHUFFLE_CELLS = SHUFFLE_COLUMNS * SHUFFLE_ROWS
 
-/** Speed Dial geometry: 5 columns x 3 rows = 15 artwork-only tiles. */
-private const val SPEED_DIAL_COLUMNS = 5
-private const val SPEED_DIAL_ROWS = 3
+/** Ceiling on the shuffle grid's overall width, so 3x3 stays shorter than the old 2-row block. */
+private val SHUFFLE_MAX_WIDTH = 260.dp
+
+/** Speed Dial geometry: 4 columns x 6 rows = 24 artwork-only tiles. */
+private const val SPEED_DIAL_COLUMNS = 4
+private const val SPEED_DIAL_ROWS = 6
 private const val SPEED_DIAL_CELLS = SPEED_DIAL_COLUMNS * SPEED_DIAL_ROWS
 
 /**
@@ -182,6 +192,16 @@ fun NewHomeScreen(
 
     LaunchedEffect(queueSnapshot) {
         viewModel.updateShuffles(queueSnapshot)
+    }
+
+    // "Today · N min" must advance while the user is on this screen. The DB row only lands when
+    // a play report is flushed, so poll once a minute while playing instead of requiring a relaunch.
+    LaunchedEffect(isPlaying) {
+        if (!isPlaying) return@LaunchedEffect
+        while (true) {
+            delay(60_000L)
+            viewModel.tickTodayMinutes()
+        }
     }
 
     val greeting = remember {
@@ -1089,24 +1109,25 @@ private fun ShuffleGrid(
     Column(
         modifier =
             Modifier
-                .fillMaxWidth()
+                // 3x3 would be taller than the old 2-row block at full width, so the whole grid
+                // is width-capped and tiles shrink instead of the section growing.
+                .widthIn(max = SHUFFLE_MAX_WIDTH)
                 .padding(horizontal = Spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
     ) {
-        // Always two full rows. Building rows from `chunked(3)` produced no rows at all for an
+        // Always three full rows. Building rows from `chunked(3)` produced no rows at all for an
         // empty list, which collapsed the section to a bare header while the pool loaded.
         repeat(SHUFFLE_ROWS) { rowIndex ->
             val rowSongs = cells.drop(rowIndex * SHUFFLE_COLUMNS).take(SHUFFLE_COLUMNS)
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
                 rowSongs.forEach { song ->
                     val isActive = song.id == activeId
                     Box(
                         modifier =
                             Modifier
                                 .weight(1f)
-                                // 4:3 instead of square shaves ~25% off the row height.
-                                .aspectRatio(4f / 3f)
-                                .clip(MaterialTheme.shapes.medium)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.small)
                                 .clickable { onSongClick(song) },
                     ) {
                         AsyncImage(
@@ -1141,8 +1162,8 @@ private fun ShuffleGrid(
                         modifier =
                             Modifier
                                 .weight(1f)
-                                .aspectRatio(4f / 3f)
-                                .clip(MaterialTheme.shapes.medium)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.small)
                                 .background(MaterialTheme.colorScheme.surfaceContainerLow),
                     )
                 }

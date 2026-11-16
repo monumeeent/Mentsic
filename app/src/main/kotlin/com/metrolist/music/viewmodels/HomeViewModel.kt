@@ -128,10 +128,21 @@ class HomeViewModel @Inject constructor(
     /**
      * Minutes listened since local midnight, for the Personal Space counter.
      *
-     * Recomputed on every load/refresh; the event table grows while music plays, so a stale
-     * value would be obvious on screen.
+     * Backed by a live query rather than a one-shot load: the event table is only written when a
+     * track report is flushed, and the old implementation refreshed exclusively inside
+     * `loadHomeData()` (guarded by `isHomeDataLoaded`), so the counter only moved after a relaunch.
+     * [tickTodayMinutes] additionally forces a recompute on a timer so a long play session shows
+     * the increase without any user interaction.
      */
     val todayMinutes = MutableStateFlow(0L)
+
+    /** Re-reads today's total; called by the 60s ticker in the Home screen. */
+    fun tickTodayMinutes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { loadTodayMinutes() }
+                .onFailure { Timber.w(it, "Failed to refresh today's minutes") }
+        }
+    }
 
     /**
      * Remixes: the running queue's upcoming tracks merged with a random unlisted sample.

@@ -57,7 +57,6 @@ import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.widget.MusicWidgetReceiver
 import com.metrolist.music.widget.RecognizerWidgetReceiver
-import com.metrolist.music.widget.TurntableWidgetReceiver
 
 /**
  * Widget gallery: lists the widgets the app ships with, shows a Compose mock-up of each, and
@@ -84,12 +83,7 @@ fun WidgetsScreen(navController: NavController) {
                     titleRes = R.string.widget_music_player,
                     descriptionRes = R.string.gallery_widget_player_desc,
                 ),
-                GalleryEntry(
-                    kind = WidgetKind.CIRCLE,
-                    receiver = TurntableWidgetReceiver::class.java,
-                    titleRes = R.string.widget_turntable,
-                    descriptionRes = R.string.gallery_widget_turntable_desc,
-                ),
+
                 GalleryEntry(
                     kind = WidgetKind.LIST,
                     receiver = RecognizerWidgetReceiver::class.java,

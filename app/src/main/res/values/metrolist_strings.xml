@@ -598,6 +598,11 @@
     <string name="widget_music_player">Music Player</string>
     <string name="widget_turntable">Turntable</string>
 
+    <!-- Developer options hub -->
+    <string name="developer_diagnostics">Diagnostics</string>
+    <string name="developer_stats_desc">Listening stats, recap and time transfer</string>
+    <string name="developer_unlock_hint">Type the unlock code in the search bar to toggle this area.</string>
+
     <!-- Personal Space: daily listening time -->
     <string name="today_minutes">Today · %1$d min</string>
 
@@ -665,6 +670,9 @@
     <string name="report_watermark" translatable="false">@monumeeent</string>
     <string name="report_empty">No listening yet this period. Play something and check back.</string>
     <string name="report_share_failed">Could not create the image. Try again.</string>
+    <string name="report_save">Save image</string>
+    <string name="report_saved">Saved to your gallery</string>
+    <string name="report_save_failed">Could not save the image. Try again.</string>
 
     <!-- Smart playlists (auto-generated mixes) -->
     <string name="smart_playlists">Made for you</string>

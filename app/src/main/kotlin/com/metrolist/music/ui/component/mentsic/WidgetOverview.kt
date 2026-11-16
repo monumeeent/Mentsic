@@ -37,7 +37,7 @@ import com.metrolist.music.ui.theme.Spacing
 /** The widgets that ship with the app and can be pinned from Settings → Widgets. */
 enum class WidgetKind {
     PLAYER,
-    CIRCLE,
+    /** Compact recognizer surface: glyph plus one line of state. */
     LIST,
 }
 
@@ -60,7 +60,7 @@ fun WidgetPreview(
     Box(
         modifier =
             modifier
-                .aspectRatio(if (kind == WidgetKind.CIRCLE) 1f else 1.35f)
+                .aspectRatio(1.35f)
                 .clip(MaterialTheme.shapes.large)
                 .background(backdrop)
                 .padding(Spacing.medium),
@@ -98,44 +98,6 @@ fun WidgetPreview(
                         PreviewDot(R.drawable.skip_next)
                         PreviewDot(R.drawable.favorite)
                     }
-                }
-
-            WidgetKind.CIRCLE ->
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .background(scheme.secondaryContainer)
-                            .padding(Spacing.medium),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    // Inner ring reads as the record label area of the turntable widget.
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .background(scheme.surfaceContainerHighest.copy(alpha = 0.55f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Surface(shape = CircleShape, color = scheme.primary, modifier = Modifier.size(44.dp)) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(R.drawable.play),
-                                    contentDescription = null,
-                                    tint = scheme.onPrimary,
-                                    modifier = Modifier.padding(Spacing.small),
-                                )
-                            }
-                        }
-                    }
-                }
                 }
 
             WidgetKind.LIST ->

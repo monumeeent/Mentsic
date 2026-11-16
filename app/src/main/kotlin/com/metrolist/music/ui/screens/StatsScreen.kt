@@ -211,6 +211,23 @@ fun StatsScreen(
 
     // Rendering the PNG touches the bitmap encoder, so keep it off the main thread.
     val reportContext = LocalContext.current
+    val onSaveReport: () -> Unit = {
+        val report = weeklyReport
+        if (report != null) {
+            coroutineScope.launch {
+                val name =
+                    withContext(Dispatchers.IO) {
+                        ListeningReportShare.saveToGallery(reportContext, report)
+                    }
+                Toast.makeText(
+                    reportContext,
+                    if (name != null) R.string.report_saved else R.string.report_save_failed,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
+    }
+
     val onShareReport: () -> Unit = {
         val report = weeklyReport
         if (report != null) {
@@ -377,6 +394,7 @@ fun StatsScreen(
                         ListeningReportCard(
                             report = report.copy(periodLabel = stringResource(R.string.report_this_week)),
                             onShare = onShareReport,
+                            onSave = onSaveReport,
                             modifier = cardModifier,
                         )
                     }

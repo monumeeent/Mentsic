@@ -60,27 +60,70 @@ fun DeveloperSettings(navController: NavController) {
             ),
         )
 
+        // Quick hub: every developer-grade screen reachable in one tap, so the hidden area is
+        // a real index instead of two links and a "coming soon" placeholder.
         Material3SettingsGroup(
             title = stringResource(R.string.developer_options),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.translate),
-                    title = { Text(stringResource(R.string.developer_ai_lyrics)) },
-                    onClick = { navController.navigate("settings/ai") },
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.play),
+                        title = { Text(stringResource(R.string.player_and_audio)) },
+                        onClick = { navController.navigate("settings/player") },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.language),
+                        title = { Text(stringResource(R.string.content)) },
+                        onClick = { navController.navigate("settings/content") },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.translate),
+                        title = { Text(stringResource(R.string.developer_ai_lyrics)) },
+                        onClick = { navController.navigate("settings/ai") },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.integration),
+                        title = { Text(stringResource(R.string.integrations)) },
+                        onClick = { navController.navigate("settings/integrations") },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.grid_view),
+                        title = { Text(stringResource(R.string.gallery_title)) },
+                        onClick = { navController.navigate("settings/widgets") },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.grid_view),
+                        title = { Text(stringResource(R.string.tactical_hub_dark)) },
+                        onClick = { navController.navigate("settings/appearance/tactical") },
+                    ),
                 ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.update),
-                    title = { Text(stringResource(R.string.developer_changelog)) },
-                    onClick = { showChangelog.value = true },
+        )
+
+        Spacer(Modifier.height(Spacing.medium))
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.developer_diagnostics),
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.stats),
+                        title = { Text(stringResource(R.string.stats)) },
+                        description = { Text(stringResource(R.string.developer_stats_desc)) },
+                        onClick = { navController.navigate("stats") },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.update),
+                        title = { Text(stringResource(R.string.developer_changelog)) },
+                        onClick = { showChangelog.value = true },
+                    ),
                 ),
-            ),
         )
 
         Spacer(Modifier.height(Spacing.medium))
 
         Text(
-            text = stringResource(R.string.developer_more_coming_soon),
-            style = MaterialTheme.typography.bodyMedium,
+            text = stringResource(R.string.developer_unlock_hint),
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
         )

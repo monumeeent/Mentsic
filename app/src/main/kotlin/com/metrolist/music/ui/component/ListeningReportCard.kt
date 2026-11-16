@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,6 +46,7 @@ import com.metrolist.music.ui.theme.Spacing
 fun ListeningReportCard(
     report: ListeningReport,
     onShare: () -> Unit,
+    onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -171,25 +173,31 @@ fun ListeningReportCard(
             }
 
             Spacer(Modifier.height(Spacing.small))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text =
-                        stringResource(R.string.report_active_days) + ": " +
-                            "${report.activeDays}/${report.periodDays}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = scheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = onShare) {
+            Text(
+                text =
+                    stringResource(R.string.report_active_days) + ": " +
+                        "${report.activeDays}/${report.periodDays}",
+                style = MaterialTheme.typography.labelMedium,
+                color = scheme.onSurfaceVariant,
+            )
+            // Actions on their own row: two labelled buttons plus the label overflowed on
+            // narrow screens, so each gets an icon-only button with a tooltip description.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                IconButton(onClick = onSave) {
+                    Icon(
+                        painter = painterResource(R.drawable.download),
+                        contentDescription = stringResource(R.string.report_save),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                IconButton(onClick = onShare) {
                     Icon(
                         painter = painterResource(R.drawable.share),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.report_share),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(start = Spacing.small),
+                        contentDescription = stringResource(R.string.report_share),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
