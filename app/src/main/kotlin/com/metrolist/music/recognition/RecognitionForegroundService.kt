@@ -144,8 +144,12 @@ class RecognitionForegroundService : Service() {
                 isTerminal = false,
                 contentIntent = openAppIntent,
                 largeIcon = null,
+                // Inline "Listen again" action: one tap from the shade restarts recognition
+                // without opening the app, which is how Shazam's persistent control behaves.
                 actionIntent = stopIntent,
                 actionTitle = stopIntent?.let { getString(android.R.string.cancel) },
+                secondaryActionTitle = getString(R.string.widget_recognizer_tap_to_search),
+                secondaryActionIntent = buildWidgetLaunchIntent(),
             )
 
         try {
@@ -285,6 +289,16 @@ class RecognitionForegroundService : Service() {
         MusicRecognitionService.reset()
         saveWidgetState(STATE_LISTENING)
 
+        // Shazam-style: keep a capsule above other apps so the user can carry on browsing.
+        // Silent no-op when the permission is missing.
+        if (RecognitionOverlay.canDraw(this)) {
+            RecognitionOverlay.show(
+                context = this,
+                title = getString(R.string.widget_recognizer_listening),
+                subtitle = getString(R.string.widget_recognizer_name),
+            )
+        }
+
 
         pulseJob?.cancel()
         pulseJob =
@@ -384,6 +398,7 @@ class RecognitionForegroundService : Service() {
     private fun stopWidgetRecognition() {
         recognitionJob?.cancel()
         pulseJob?.cancel()
+        RecognitionOverlay.hide()
         saveWidgetState(STATE_IDLE)
         widgetPreferences().edit().putInt(PREF_PULSE_FRAME, 0).apply()
 
@@ -461,6 +476,25 @@ class RecognitionForegroundService : Service() {
         )
     }
 
+    /**
+     * Brings the user back into recognition from the notification's secondary action.
+     *
+     * `ACTION_START_WIDGET_RECOGNITION` is what makes this a *fresh* listen rather than a resume:
+     * the service treats it as "begin a new widget-style capture".
+     */
+    private fun buildWidgetLaunchIntent(): PendingIntent? {
+        val intent =
+            Intent(this, RecognitionForegroundService::class.java).apply {
+                action = ACTION_START_WIDGET_RECOGNITION
+            }
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(this, SECONDARY_ACTION_REQUEST_CODE, intent, flags)
+        } else {
+            PendingIntent.getService(this, SECONDARY_ACTION_REQUEST_CODE, intent, flags)
+        }
+    }
+
     private fun buildNotification(
         title: String,
         contentText: String,
@@ -469,6 +503,8 @@ class RecognitionForegroundService : Service() {
         largeIcon: Bitmap?,
         actionIntent: PendingIntent?,
         actionTitle: String?,
+        secondaryActionTitle: String? = null,
+        secondaryActionIntent: PendingIntent? = null,
     ) = NotificationCompat
         .Builder(this, CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_widget_mic)
@@ -482,6 +518,9 @@ class RecognitionForegroundService : Service() {
         .setLargeIcon(largeIcon)
         .apply {
             if (actionIntent != null && actionTitle != null) addAction(0, actionTitle, actionIntent)
+            if (secondaryActionIntent != null && secondaryActionTitle != null) {
+                addAction(0, secondaryActionTitle, secondaryActionIntent)
+            }
         }.build()
 
     private fun createResultPendingIntent(result: RecognitionResult) =
@@ -508,6 +547,49 @@ class RecognitionForegroundService : Service() {
 
     private fun saveWidgetState(state: Int) {
         widgetPreferences().edit().putInt(PREF_STATE, state).apply()
+        // Keep the floating capsule in step with the widget; the overlay is a no-op when hidden.
+        when (state) {
+            STATE_LISTENING ->
+                RecognitionOverlay.setState(
+                    getString(R.string.widget_recognizer_listening),
+                    getString(R.string.widget_recognizer_name),
+                )
+
+            STATE_PROCESSING ->
+                RecognitionOverlay.setState(
+                    getString(R.string.widget_recognizer_processing),
+                    getString(R.string.widget_recognizer_name),
+                )
+
+            STATE_SUCCESS -> {
+                val prefs = widgetPreferences()
+                RecognitionOverlay.setState(
+                    prefs.getString(PREF_SONG_TITLE, null)
+                        ?: getString(R.string.widget_recognizer_unknown_song),
+                    prefs.getString(PREF_ARTIST_NAME, null)
+                        ?: getString(R.string.widget_recognizer_unknown_artist),
+                    isSuccess = true,
+                )
+                // Auto-dismiss a result after a moment; the notification keeps it available.
+                android.os.Handler(mainLooper).postDelayed({ RecognitionOverlay.hide() }, 4_000L)
+            }
+
+            STATE_NO_MATCH, STATE_ERROR -> {
+                RecognitionOverlay.setState(
+                    getString(
+                        if (state == STATE_NO_MATCH) {
+                            R.string.widget_recognizer_no_match
+                        } else {
+                            R.string.widget_recognizer_error
+                        },
+                    ),
+                    getString(R.string.widget_recognizer_tap_to_search),
+                )
+                android.os.Handler(mainLooper).postDelayed({ RecognitionOverlay.hide() }, 4_000L)
+            }
+
+            else -> RecognitionOverlay.hide()
+        }
         notifyWidgetStateChanged()
     }
 
@@ -567,6 +649,7 @@ class RecognitionForegroundService : Service() {
         private const val CHANNEL_ID = "recognition_channel"
         private const val NOTIFICATION_ID = 9100
         private const val RESULT_PENDING_INTENT_REQUEST_CODE = 9101
+        private const val SECONDARY_ACTION_REQUEST_CODE = 9102
         private const val TAG = "RecognitionFgService"
     }
 }

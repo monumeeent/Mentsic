@@ -11,7 +11,17 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadService
+import com.metrolist.music.playback.DownloadUtil
+import com.metrolist.music.playback.ExoDownloadService
 import com.metrolist.music.playback.MusicService
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class MusicWidgetReceiver : AppWidgetProvider() {
 
@@ -59,6 +69,17 @@ class MusicWidgetReceiver : AppWidgetProvider() {
         super.onReceive(context, intent)
 
         when (intent.action) {
+            // Quick download: the widget cannot know download state cheaply, so it just forwards
+            // the id here and this receiver decides add-vs-remove from the live download manager.
+            ACTION_TOGGLE_DOWNLOAD -> {
+                val songId = intent.getStringExtra(EXTRA_SONG_ID).orEmpty()
+                if (songId.isNotBlank()) {
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        toggleDownload(context.applicationContext, songId)
+                    }
+                }
+            }
+
             ACTION_PLAY_PAUSE, ACTION_LIKE, ACTION_NEXT, ACTION_PREVIOUS -> {
                 // User interactions from widget buttons can start the service
                 // Android allows starting FGS from widget PendingIntent clicks
@@ -79,8 +100,43 @@ class MusicWidgetReceiver : AppWidgetProvider() {
         }
     }
 
+    /**
+     * Adds or removes an offline copy, then repaints the widget.
+     *
+     * Resolved through a Hilt entry point because a manifest receiver has no injection site.
+     */
+    private suspend fun toggleDownload(
+        context: Context,
+        songId: String,
+    ) {
+        val downloadUtil = EntryPointAccessors
+            .fromApplication(context, DownloadEntryPoint::class.java)
+            .downloadUtil()
+
+        val existing = downloadUtil.getDownload(songId).first()
+        when (existing?.state) {
+            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING ->
+                DownloadService.sendRemoveDownload(
+                    context,
+                    ExoDownloadService::class.java,
+                    songId,
+                    false,
+                )
+
+            else -> downloadUtil.download(songId)
+        }
+    }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface DownloadEntryPoint {
+        fun downloadUtil(): DownloadUtil
+    }
+
     companion object {
         const val ACTION_PLAY_PAUSE = "com.metrolist.music.widget.PLAY_PAUSE"
+        const val ACTION_TOGGLE_DOWNLOAD = "com.metrolist.music.widget.TOGGLE_DOWNLOAD"
+        const val EXTRA_SONG_ID = "com.metrolist.music.widget.EXTRA_SONG_ID"
         const val ACTION_LIKE = "com.metrolist.music.widget.LIKE"
         const val ACTION_NEXT = "com.metrolist.music.widget.NEXT"
         const val ACTION_PREVIOUS = "com.metrolist.music.widget.PREVIOUS"

@@ -55,7 +55,11 @@ class MetrolistWidgetManager @Inject constructor(
         isPlaying: Boolean,
         isLiked: Boolean,
         duration: Long = 0,
-        currentPosition: Long = 0
+        currentPosition: Long = 0,
+        // Needed by the quick-download button: the intent carries the id so the receiver knows
+        // which song to add or remove.
+        songId: String? = null,
+        isDownloaded: Boolean = false,
     ) {
         val appWidgetManager = AppWidgetManager.getInstance(context)
 
@@ -84,7 +88,9 @@ class MetrolistWidgetManager @Inject constructor(
                     isPlaying,
                     isLiked,
                     duration,
-                    currentPosition
+                    currentPosition,
+                    songId,
+                    isDownloaded,
                 )
                 appWidgetManager.updateAppWidget(widgetId, views)
             }
@@ -125,7 +131,9 @@ class MetrolistWidgetManager @Inject constructor(
         isPlaying: Boolean,
         isLiked: Boolean,
         duration: Long,
-        currentPosition: Long
+        currentPosition: Long,
+        songId: String?,
+        isDownloaded: Boolean,
     ): RemoteViews {
         val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
         val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
@@ -145,7 +153,17 @@ class MetrolistWidgetManager @Inject constructor(
             }
             else -> {
                 // Full layout
-                createRemoteViews(title, artist, albumArt, isPlaying, isLiked, duration, currentPosition)
+                createRemoteViews(
+                    title,
+                    artist,
+                    albumArt,
+                    isPlaying,
+                    isLiked,
+                    duration,
+                    currentPosition,
+                    songId,
+                    isDownloaded,
+                )
             }
         }
     }
@@ -157,7 +175,9 @@ class MetrolistWidgetManager @Inject constructor(
         isPlaying: Boolean,
         isLiked: Boolean,
         duration: Long = 0,
-        currentPosition: Long = 0
+        currentPosition: Long = 0,
+        songId: String? = null,
+        isDownloaded: Boolean = false,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_music_player)
 
@@ -181,6 +201,12 @@ class MetrolistWidgetManager @Inject constructor(
         val likeIcon = if (isLiked) R.drawable.ic_widget_heart_nav else R.drawable.ic_widget_heart_outline_nav
         views.setImageViewResource(R.id.widget_like_button, likeIcon)
 
+        // Download state: a filled tick when offline, the arrow otherwise.
+        views.setImageViewResource(
+            R.id.widget_download_button,
+            if (isDownloaded) R.drawable.ic_widget_download_done else R.drawable.ic_widget_download,
+        )
+
         // Set Progress Level
         if (duration > 0) {
             val level = ((currentPosition.toDouble() / duration.toDouble()) * 10000).toInt()
@@ -190,9 +216,12 @@ class MetrolistWidgetManager @Inject constructor(
         }
 
         // Set click intents
+        // Artwork opens the app; controls stay on the widget.
         views.setOnClickPendingIntent(R.id.widget_album_art, getOpenAppIntent())
         views.setOnClickPendingIntent(R.id.widget_play_pause_container, getPlayPauseIntent())
         views.setOnClickPendingIntent(R.id.widget_like_button, getLikeIntent())
+        views.setOnClickPendingIntent(R.id.widget_next_button, getNextIntent())
+        views.setOnClickPendingIntent(R.id.widget_download_button, getDownloadIntent(songId))
 
         return views
     }
@@ -354,6 +383,37 @@ class MetrolistWidgetManager @Inject constructor(
         return PendingIntent.getBroadcast(
             context,
             1,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun getNextIntent(): PendingIntent {
+        val intent = Intent(context, MusicWidgetReceiver::class.java).apply {
+            action = MusicWidgetReceiver.ACTION_NEXT
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            6,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    /**
+     * Broadcasts a download toggle for [songId].
+     *
+     * The receiver decides add-vs-remove from the download state at tap time, so the PendingIntent
+     * does not need a distinct request code per state — only per song, via the hash code.
+     */
+    private fun getDownloadIntent(songId: String?): PendingIntent {
+        val intent = Intent(context, MusicWidgetReceiver::class.java).apply {
+            action = MusicWidgetReceiver.ACTION_TOGGLE_DOWNLOAD
+            putExtra(MusicWidgetReceiver.EXTRA_SONG_ID, songId.orEmpty())
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            (songId?.hashCode() ?: 7) and 0xFFFF,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

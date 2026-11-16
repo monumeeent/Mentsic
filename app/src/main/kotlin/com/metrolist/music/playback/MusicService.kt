@@ -4630,6 +4630,15 @@ class MusicService :
                     val artistName = songData?.artists?.joinToArtistString(getArtistSeparator(this@MusicService)) { it.name } ?: getString(R.string.tap_to_open)
                     val resolvedIsLiked = isLikedRequested == true
 
+                    // Resolve download state so the widget's quick-download button reflects it.
+                    val songId = song?.id
+                    val isDownloaded =
+                        songId != null &&
+                            runCatching {
+                                downloadUtil.getDownload(songId).first()?.state ==
+                                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
+                            }.getOrDefault(false)
+
                     widgetManager.updateWidgets(
                         title = songTitle,
                         artist = artistName,
@@ -4638,6 +4647,8 @@ class MusicService :
                         isLiked = resolvedIsLiked,
                         duration = if (player.duration != C.TIME_UNSET) player.duration else 0,
                         currentPosition = player.currentPosition,
+                        songId = songId,
+                        isDownloaded = isDownloaded,
                     )
                 }
             } catch (e: Exception) {

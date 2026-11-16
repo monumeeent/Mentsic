@@ -602,6 +602,10 @@
     <string name="trending_chart">YouTube Chart</string>
 
     <!-- Developer options hub -->
+    <string name="recognizer_overlay_title">Floating recogniser</string>
+    <string name="recognizer_overlay_enable">Display over other apps</string>
+    <string name="recognizer_overlay_on">Granted. Recognition shows a capsule above other apps.</string>
+    <string name="recognizer_overlay_off">Not granted. Tap to open the system setting.</string>
     <string name="developer_diagnostics">Diagnostics</string>
     <string name="developer_stats_desc">Listening stats, recap and time transfer</string>
     <string name="developer_unlock_hint">Type the unlock code in the search bar to toggle this area.</string>

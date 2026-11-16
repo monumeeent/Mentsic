@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Shazam-style floating recogniser. Optional: the overlay feature is opt-in and the app
+         degrades to the in-app sheet when this is refused. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- Microphone feature for music recognition (not required) -->
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -296,6 +299,9 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.metrolist.music.widget.PLAY_PAUSE" />
                 <action android:name="com.metrolist.music.widget.LIKE" />
+                <action android:name="com.metrolist.music.widget.NEXT" />
+                <action android:name="com.metrolist.music.widget.PREVIOUS" />
+                <action android:name="com.metrolist.music.widget.TOGGLE_DOWNLOAD" />
                 <action android:name="com.metrolist.music.widget.UPDATE_WIDGET" />
             </intent-filter>
 

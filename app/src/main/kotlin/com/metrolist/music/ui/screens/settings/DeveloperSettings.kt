@@ -21,14 +21,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.metrolist.music.LocalChangelogState
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.recognition.RecognitionOverlay
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
@@ -97,6 +103,37 @@ fun DeveloperSettings(navController: NavController) {
                         onClick = { navController.navigate("settings/appearance/tactical") },
                     ),
                 ),
+        )
+
+        Spacer(Modifier.height(Spacing.medium))
+
+        // The recogniser overlay needs a system-only permission; there is no in-app grant.
+        val context = LocalContext.current
+        var canDraw by remember { mutableStateOf(RecognitionOverlay.canDraw(context)) }
+        LaunchedEffect(Unit) { canDraw = RecognitionOverlay.canDraw(context) }
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.recognizer_overlay_title),
+            items = listOf(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.ic_widget_mic),
+                    title = { Text(stringResource(R.string.recognizer_overlay_enable)) },
+                    description = {
+                        Text(
+                            stringResource(
+                                if (canDraw) {
+                                    R.string.recognizer_overlay_on
+                                } else {
+                                    R.string.recognizer_overlay_off
+                                },
+                            ),
+                        )
+                    },
+                    // Always opens the system toggle: it is the only place this can be changed,
+                    // and re-opening it lets the user revoke as well as grant.
+                    onClick = { RecognitionOverlay.requestPermission(context) },
+                ),
+            ),
         )
 
         Spacer(Modifier.height(Spacing.medium))
