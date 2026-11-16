@@ -71,10 +71,12 @@ import com.metrolist.music.ui.component.AvatarPreset
 import com.metrolist.music.ui.component.AvatarShape
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.InfoLabel
+import com.metrolist.music.ui.component.ListeningHeatmapCard
 import com.metrolist.music.ui.component.ProfileAvatar
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.TextFieldDialog
+import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.AccountSettingsViewModel
 import com.metrolist.music.viewmodels.HomeViewModel
@@ -344,6 +346,14 @@ fun AccountSettings(
                 }
             )
         }
+
+        // Listening activity. Lives here because "my listening data" is an account-shaped
+        // question; the heatmap had no reachable home before (its Home header rendered without
+        // a grid).
+        val heatmapPlays by homeViewModel.heatmapPlays.collectAsStateWithLifecycle()
+        ListeningHeatmapCard(playsByDay = heatmapPlays)
+
+        Spacer(Modifier.height(Spacing.medium))
 
         // Profile picture: choose one of the built-in avatars and pick its mask. Presets only —
         // no gallery upload, so there is no photo permission and no orphaned file to clean up.

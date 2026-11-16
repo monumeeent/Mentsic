@@ -602,6 +602,30 @@
     <string name="trending_chart">YouTube Chart</string>
 
     <!-- Developer options hub -->
+    <!-- Home layout presets -->
+    <string name="home_preset">Home layout preset</string>
+    <string name="preset_feed">Feed</string>
+    <string name="preset_feed_desc">Everything: Trending, Speed Dial, Shuffles and discovery rows.</string>
+    <string name="preset_compact">Compact</string>
+    <string name="preset_compact_desc">Just Speed Dial and Shuffles for a one-screen Home.</string>
+    <string name="preset_hub">Command Hub</string>
+    <string name="preset_hub_desc">Zone-based layout with filter tabs and the heatmap.</string>
+    <string name="preset_library">Library first</string>
+    <string name="preset_library_desc">Your charts, Speed Dial and Top listened, with discovery removed.</string>
+
+    <!-- Listening heatmap (Account screen) -->
+    <string name="heatmap_title">Listening activity</string>
+    <string name="heatmap_less">Less</string>
+    <string name="heatmap_more">More</string>
+    <plurals name="plays_count">
+        <item quantity="one">%1$d play</item>
+        <item quantity="other">%1$d plays</item>
+    </plurals>
+    <plurals name="active_days_count">
+        <item quantity="one">%1$d active day</item>
+        <item quantity="other">%1$d active days</item>
+    </plurals>
+
     <string name="recognizer_overlay_title">Floating recogniser</string>
     <string name="recognizer_overlay_enable">Display over other apps</string>
     <string name="recognizer_overlay_on">Granted. Recognition shows a capsule above other apps.</string>

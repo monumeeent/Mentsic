@@ -57,7 +57,10 @@ import com.metrolist.music.constants.ChipSortTypeKey
 import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.DeveloperModeKey
+import com.metrolist.music.constants.HomeLayoutPresetKey
 import com.metrolist.music.constants.HubModeEnabledKey
+import com.metrolist.music.ui.component.EnumDialog
+import com.metrolist.music.ui.screens.home.HomeLayoutPreset
 import com.metrolist.music.constants.DensityScale
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.AlbumArtThemeKey
@@ -134,6 +137,25 @@ fun AppearanceSettings(
     val (developerMode) = rememberPreference(DeveloperModeKey, defaultValue = false)
     // Only used to phrase the entry's description; the toggle itself lives on the hub screen.
     val (hubModeEnabled) = rememberPreference(HubModeEnabledKey, defaultValue = false)
+
+    // Home feed preset: which sections the Home tab renders.
+    val (homePresetKey, onHomePresetChange) = rememberPreference(HomeLayoutPresetKey, HomeLayoutPreset.Default.key)
+    val homePreset = remember(homePresetKey) { HomeLayoutPreset.fromKey(homePresetKey) }
+    var showHomePresetDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showHomePresetDialog) {
+        EnumDialog(
+            onDismiss = { showHomePresetDialog = false },
+            onSelect = {
+                onHomePresetChange(it.key)
+                showHomePresetDialog = false
+            },
+            title = stringResource(R.string.home_preset),
+            current = homePreset,
+            values = HomeLayoutPreset.entries,
+            valueText = { stringResource(it.labelRes) },
+        )
+    }
     val (dynamicTheme, onDynamicThemeChange) =
         rememberPreference(
             DynamicThemeKey,
@@ -1059,6 +1081,14 @@ fun AppearanceSettings(
                     // Home layout is only offered while developer mode is on: the Command Hub
                     // is still an unfinished surface, and the route itself is gated too.
                     if (developerMode) {
+                        add(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.nav_bar),
+                                title = { Text(stringResource(R.string.home_preset)) },
+                                description = { Text(stringResource(homePreset.descriptionRes)) },
+                                onClick = { showHomePresetDialog = true },
+                            ),
+                        )
                         add(
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.grid_view),

@@ -130,6 +130,20 @@ class HomeViewModel @Inject constructor(
     val trending = MutableStateFlow<List<SongItem>>(emptyList())
 
     /**
+     * Play counts keyed by `yyyy-MM-dd` for the Account screen's listening heatmap.
+     *
+     * Live rather than one-shot: the event table grows while music plays, and the heatmap sits on
+     * a screen the user can leave open.
+     */
+    val heatmapPlays: StateFlow<Map<String, Int>> =
+        database
+            .dailyPlayCounts(
+                // 18 weeks to match ListeningHeatmap's default column count.
+                cutoffMillis = System.currentTimeMillis() - (18L * 7L * 24L * 60L * 60L * 1000L),
+            ).map { rows -> rows.associate { it.day to it.playCount } }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
+
+    /**
      * Minutes listened since local midnight, for the Personal Space counter.
      *
      * Backed by a live query rather than a one-shot load: the event table is only written when a

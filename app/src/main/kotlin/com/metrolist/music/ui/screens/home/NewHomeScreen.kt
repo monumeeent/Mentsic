@@ -95,6 +95,8 @@ import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.StreakState
 import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberStreakState
+import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.constants.HomeLayoutPresetKey
 import kotlinx.coroutines.delay
 import com.metrolist.music.viewmodels.HomeViewModel
 import com.metrolist.music.viewmodels.SmartPlaylistViewModel
@@ -152,6 +154,10 @@ fun NewHomeScreen(
     val remixes by viewModel.remixes.collectAsStateWithLifecycle()
     val todayMinutes by viewModel.todayMinutes.collectAsStateWithLifecycle()
     val trending by viewModel.trending.collectAsStateWithLifecycle()
+
+    // Home layout preset. Filters which sections render; the feed itself stays one implementation.
+    val (homePresetKey) = rememberPreference(HomeLayoutPresetKey, HomeLayoutPreset.Default.key)
+    val homePreset = remember(homePresetKey) { HomeLayoutPreset.fromKey(homePresetKey) }
 
     // Auto-generated mixes (Release Radar / Weekly Mix). The generator caches for a week, so this
     // first load is not repeated when the user switches tabs.
@@ -358,7 +364,7 @@ fun NewHomeScreen(
 
                     // "YouTube Chart": region-localised trending. 2 rows x 4 columns, placed
                     // above Speed Dial because it is the one section that changes day to day.
-                    if (trending.isNotEmpty()) {
+                    if (homePreset.showsTrending && trending.isNotEmpty()) {
                         item(key = "new_home_trending") {
                             HomeSectionHeaderV2(title = stringResource(R.string.trending_chart))
                             TrendingChartGrid(
@@ -374,7 +380,7 @@ fun NewHomeScreen(
                         }
                     }
 
-                    if (uiState.speedDialItems.isNotEmpty()) {
+                    if (homePreset.showsSpeedDial && uiState.speedDialItems.isNotEmpty()) {
                         item(key = "new_home_speed_dial") {
                             HomeSectionHeaderV2(title = stringResource(R.string.speed_dial))
                             HomeSpeedDialGrid(
@@ -399,22 +405,24 @@ fun NewHomeScreen(
                     // 3x3 thumbnail-only shuffle grid, re-rolled on every refresh. The header and
                     // an empty 9-cell grid stay on screen while the library/history query is still
                     // running, so the section never silently disappears from the feed.
-                    item(key = "new_home_shuffles") {
-                        HomeSectionHeaderV2(title = stringResource(R.string.shuffles))
-                        ShuffleGrid(
-                            songs = shuffles,
-                            activeId = mediaMetadata?.id,
-                            isPlaying = isPlaying,
-                            onSongClick = { item ->
-                                playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route ->
-                                    navController.navigate(route)
-                                }
-                            },
-                        )
+                    if (homePreset.showsShuffles) {
+                        item(key = "new_home_shuffles") {
+                            HomeSectionHeaderV2(title = stringResource(R.string.shuffles))
+                            ShuffleGrid(
+                                songs = shuffles,
+                                activeId = mediaMetadata?.id,
+                                isPlaying = isPlaying,
+                                onSongClick = { item ->
+                                    playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route ->
+                                        navController.navigate(route)
+                                    }
+                                },
+                            )
+                        }
                     }
 
                     // Top listened: always 4 cells, padded with placeholders when short.
-                    if (topListened.isNotEmpty()) {
+                    if (homePreset.showsTopListened && topListened.isNotEmpty()) {
                         item(key = "new_home_top_listened") {
                             HomeSectionHeaderV2(title = stringResource(R.string.top_listened))
                             TopListenedRow(
@@ -428,8 +436,10 @@ fun NewHomeScreen(
                 }
 
                 // Curated bands only render in the unfiltered feed; a selected chip replaces them
-                // with the filtered InnerTube sections at the bottom of this block.
+                // with the filtered InnerTube sections at the bottom of this block. The discovery
+                // bands are also dropped by the Compact preset, which is deliberately minimal.
                 if (!isFocused) {
+                    if (homePreset.showsDiscovery) {
                     quickPicks?.takeIf { it.isNotEmpty() }?.let { songs ->
                         item(key = "new_home_quick_picks") {
                             HomeSectionHeaderV2(title = stringResource(R.string.quick_picks))
@@ -508,6 +518,7 @@ fun NewHomeScreen(
                                 },
                             )
                         }
+                    }
                     }
                 }
 

@@ -45,6 +45,9 @@ val AvatarPresetKey = stringPreferencesKey("avatarPreset")
 // Mask applied to the profile picture: circle, squircle, rounded square, hexagon or blob.
 val AvatarShapeKey = stringPreferencesKey("avatarShape")
 
+// Home layout preset: FEED (everything), COMPACT (Speed Dial + Shuffles only), HUB or LIBRARY.
+val HomeLayoutPresetKey = stringPreferencesKey("homeLayoutPreset")
+
 val EnableOrbitThemeKey = booleanPreferencesKey("enableOrbitTheme")
 val DarkModeKey = stringPreferencesKey("darkMode")
 val PureBlackKey = booleanPreferencesKey("pureBlack")
