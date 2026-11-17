@@ -7,7 +7,9 @@ object DiscordDefaults {
     const val BUTTON1_URL_TEMPLATE = "https://music.youtube.com/watch?v={song.id}"
 
     const val BUTTON2_LABEL = "Visit Mentsic"
-    const val BUTTON2_URL = "https://github.com/MetrolistGroup/Metrolist"
+    // TODO: point at the real project page once it exists. Left as the app's own listen-together
+    // host rather than the upstream Metrolist repository, which is not this app's project.
+    const val BUTTON2_URL = "https://metrolist.cc"
 
     const val STATE_TEMPLATE = "{artist.name}"
     const val DETAILS_TEMPLATE = "{song.name}"

@@ -293,6 +293,8 @@
     <string name="developer_changelog">Changelog</string>
     <string name="developer_more_coming_soon">More coming soon\u2026\u2026</string>
     <string name="github_releases_url">https://github.com/MetrolistGroup/Metrolist/releases</string>
+    <!-- TODO: replace with the Mentsic project URL once it exists. Kept pointing at the upstream
+         release feed so the About screen's "view releases" link is not dead. -->
     <string name="list_bullet">•</string>
     <string name="view_on_github">View on GitHub</string>
     <string name="current_version">Current version</string>
@@ -977,7 +979,7 @@
     <string name="column_label">Column %d</string>
 
     <string name="discord_connect_description">Sign in with Discord to share what you\'re listening to</string>
-    <string name="discord_information_warning">Mentsic uses Discord\'s public OAuth2 and Gateway APIs to share what you\'re listening to. Authorization happens through a local browser session that closes itself after capturing the code — nothing is sent to third-party servers. Your token is stored on this device in encrypted preferences and is never shared. Metrolist connects directly to wss://gateway.discord.gg to publish your activity, and only requests the minimum scope required (sdk.social_layer_presence).</string>
+    <string name="discord_information_warning">Mentsic uses Discord\'s public OAuth2 and Gateway APIs to share what you\'re listening to. Authorization happens through a local browser session that closes itself after capturing the code — nothing is sent to third-party servers. Your token is stored on this device in encrypted preferences and is never shared. Mentsic connects directly to wss://gateway.discord.gg to publish your activity, and only requests the minimum scope required (sdk.social_layer_presence).</string>
     <string name="discord_status_connected">Connected</string>
     <string name="discord_status_authorizing">Authorizing…</string>
     <string name="discord_status_authorized">Authorized</string>
