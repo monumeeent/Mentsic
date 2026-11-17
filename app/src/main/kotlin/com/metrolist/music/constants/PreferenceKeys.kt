@@ -280,6 +280,20 @@ val ListenTogetherSyncVolumeKey = booleanPreferencesKey("listenTogetherSyncVolum
 val ListenTogetherBlockedUsersKey = stringPreferencesKey("listenTogetherBlockedUsers")
 val ListenTogetherInTopBarKey = booleanPreferencesKey("listenTogetherInTopBar")
 
+// Per-section visibility switches for the Home feed. They are *additive*: a section renders only
+// when its switch is on AND the active preset includes it, so the presets keep working as coarse
+// shortcuts while these give fine control.
+val HomeShowTrendingKey = booleanPreferencesKey("homeShowTrending")
+val HomeShowSpeedDialKey = booleanPreferencesKey("homeShowSpeedDial")
+val HomeShowShufflesKey = booleanPreferencesKey("homeShowShuffles")
+val HomeShowPersonalSpaceKey = booleanPreferencesKey("homeShowPersonalSpace")
+val HomeShowTopListenedKey = booleanPreferencesKey("homeShowTopListened")
+val HomeShowDiscoveryKey = booleanPreferencesKey("homeShowDiscovery")
+
+// Whether the Listen Together tab is revealed at all. Off by default; toggled by the secret
+// code "#LTmonu" typed in the search bar.
+val ListenTogetherEnabledKey = booleanPreferencesKey("listenTogetherEnabled")
+
 // Session persistence for reconnection
 val ListenTogetherSessionTokenKey = stringPreferencesKey("listenTogetherSessionToken")
 val ListenTogetherRoomCodeKey = stringPreferencesKey("listenTogetherRoomCode")

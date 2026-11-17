@@ -98,6 +98,12 @@ import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberStreakState
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.constants.HomeLayoutPresetKey
+import com.metrolist.music.constants.HomeShowDiscoveryKey
+import com.metrolist.music.constants.HomeShowPersonalSpaceKey
+import com.metrolist.music.constants.HomeShowShufflesKey
+import com.metrolist.music.constants.HomeShowSpeedDialKey
+import com.metrolist.music.constants.HomeShowTopListenedKey
+import com.metrolist.music.constants.HomeShowTrendingKey
 import com.metrolist.music.constants.ShuffleColumnsKey
 import com.metrolist.music.constants.ShuffleRowsKey
 import com.metrolist.music.constants.SpeedDialColumnsKey
@@ -158,6 +164,14 @@ fun NewHomeScreen(
     // Home layout preset. Filters which sections render; the feed itself stays one implementation.
     val (homePresetKey) = rememberPreference(HomeLayoutPresetKey, HomeLayoutPreset.Default.key)
     val homePreset = remember(homePresetKey) { HomeLayoutPreset.fromKey(homePresetKey) }
+
+    // Fine-grained section switches, layered on top of the preset (both must allow a section).
+    val (showTrending) = rememberPreference(HomeShowTrendingKey, true)
+    val (showSpeedDialFlag) = rememberPreference(HomeShowSpeedDialKey, true)
+    val (showShufflesFlag) = rememberPreference(HomeShowShufflesKey, true)
+    val (showPersonalSpaceFlag) = rememberPreference(HomeShowPersonalSpaceKey, true)
+    val (showTopListenedFlag) = rememberPreference(HomeShowTopListenedKey, true)
+    val (showDiscoveryFlag) = rememberPreference(HomeShowDiscoveryKey, true)
 
     // Developer-mode grid geometry. Clamped so a bad value cannot break the layout.
     val (sdColumns) = rememberPreference(SpeedDialColumnsKey, SPEED_DIAL_COLUMNS)
@@ -374,7 +388,7 @@ fun NewHomeScreen(
 
                     // "YouTube Chart": region-localised trending. 2 rows x 4 columns, placed
                     // above Speed Dial because it is the one section that changes day to day.
-                    if (homePreset.showsTrending && trending.isNotEmpty()) {
+                    if (homePreset.showsTrending && showTrending && trending.isNotEmpty()) {
                         item(key = "new_home_trending") {
                             HomeSectionHeaderV2(title = stringResource(R.string.trending_chart))
                             TrendingChartGrid(
@@ -390,7 +404,7 @@ fun NewHomeScreen(
                         }
                     }
 
-                    if (homePreset.showsSpeedDial && uiState.speedDialItems.isNotEmpty()) {
+                    if (homePreset.showsSpeedDial && showSpeedDialFlag && uiState.speedDialItems.isNotEmpty()) {
                         item(key = "new_home_speed_dial") {
                             HomeSectionHeaderV2(title = stringResource(R.string.speed_dial))
                             HomeSpeedDialGrid(
@@ -417,7 +431,7 @@ fun NewHomeScreen(
                     // 3x3 thumbnail-only shuffle grid, re-rolled on every refresh. The header and
                     // an empty 9-cell grid stay on screen while the library/history query is still
                     // running, so the section never silently disappears from the feed.
-                    if (homePreset.showsShuffles) {
+                    if (homePreset.showsShuffles && showShufflesFlag) {
                         item(key = "new_home_shuffles") {
                             HomeSectionHeaderV2(title = stringResource(R.string.shuffles))
                             ShuffleGrid(
@@ -436,7 +450,7 @@ fun NewHomeScreen(
                     }
 
                     // Top listened: always 4 cells, padded with placeholders when short.
-                    if (homePreset.showsTopListened && topListened.isNotEmpty()) {
+                    if (homePreset.showsTopListened && showTopListenedFlag && topListened.isNotEmpty()) {
                         item(key = "new_home_top_listened") {
                             HomeSectionHeaderV2(title = stringResource(R.string.top_listened))
                             TopListenedRow(
@@ -453,7 +467,7 @@ fun NewHomeScreen(
                 // with the filtered InnerTube sections at the bottom of this block. The discovery
                 // bands are also dropped by the Compact preset, which is deliberately minimal.
                 if (!isFocused) {
-                    if (homePreset.showsDiscovery) {
+                    if (homePreset.showsDiscovery && showDiscoveryFlag) {
                     quickPicks?.takeIf { it.isNotEmpty() }?.let { songs ->
                         item(key = "new_home_quick_picks") {
                             HomeSectionHeaderV2(title = stringResource(R.string.quick_picks))
@@ -1203,15 +1217,9 @@ private fun HomeSpeedDialGrid(
     onItemClick: (YTItem) -> Unit,
 ) {
     val wanted = columns * rows
-    val distinct = items.distinctBy { it.id }
-    // Cycle the pool when the library is smaller than the configured grid, so every cell has
-    // artwork. A repeated cover is preferable to an empty tile the user cannot act on.
-    val cells =
-        when {
-            distinct.isEmpty() -> emptyList()
-            distinct.size >= wanted -> distinct.take(wanted)
-            else -> List(wanted) { index -> distinct[index % distinct.size] }
-        }
+    // No cycling: duplicates across the two grids were the reported bug. The pool is already
+    // tier-filled by the view model, so unfilled cells here mean the library really is that small.
+    val cells = items.distinctBy { it.id }.take(wanted)
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -1264,13 +1272,9 @@ private fun ShuffleGrid(
     onSongClick: (YTItem) -> Unit,
 ) {
     val wanted = columns * rows
-    // Same padding rule as Speed Dial: cycle rather than leave holes.
-    val cells =
-        when {
-            songs.isEmpty() -> emptyList()
-            songs.size >= wanted -> songs.take(wanted)
-            else -> List(wanted) { index -> songs[index % songs.size] }
-        }
+    // No cycling: a repeated cover would look like a broken grid. The view model already fills
+    // from queue -> remixes -> recent -> library, so `songs` is as long as it can be.
+    val cells = songs.take(wanted)
     Column(
         modifier =
             Modifier

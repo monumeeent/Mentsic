@@ -167,6 +167,14 @@ class HomeViewModel @Inject constructor(
     private var sessionStartedAt = 0L
 
     /**
+     * Memoised random order of the whole library.
+     *
+     * Rebuilt only when [reshuffleLibraryOrder] runs (pull-to-refresh), not on every queue change,
+     * so the Shuffle grid stays recognisable while tracks advance.
+     */
+    private var stableLibraryOrder: List<YTItem> = emptyList()
+
+    /**
      * Re-reads today's total from the database.
      *
      * Called on load/refresh *and* whenever playback starts or stops. The event row for a track
@@ -899,7 +907,10 @@ class HomeViewModel @Inject constructor(
                 load()
             }
             // Reshuffle so the grid changes on every pull-to-refresh.
-            runCatching { loadShuffles() }
+            runCatching {
+                reshuffleLibraryOrder()
+                loadShuffles()
+            }
             isRefreshing.value = false
         }
         // Run sync when user manually refreshes
@@ -996,50 +1007,65 @@ class HomeViewModel @Inject constructor(
      * section vanished from Home. Falling back to the song table keeps the grid populated.
      */
     private suspend fun loadShuffles(queueItems: List<YTItem> = emptyList()) {
-        // Upcoming queue tracks lead the grid, so the section always reflects what is playing.
+        // Queue entries lead the grid, so the section always reflects what is playing.
         val queueFirst = queueItems.distinctBy { it.id }
 
         val historyPool =
             buildList {
                 addAll(database.quickPicks().first())
                 addAll(database.forgottenFavorites().first())
-            }.distinctBy { it.id }
+            }
 
-        val libraryPool =
-            historyPool.ifEmpty {
-                database.allSongs().first()
-            }.distinctBy { it.id }
+        val libraryPool = database.allSongs().first()
 
-        val libraryItems: List<YTItem> =
-            libraryPool.map { song ->
+        val recentItems: List<YTItem> =
+            historyPool.map {
                 SongItem(
-                    id = song.id,
-                    title = song.title,
-                    artists = song.artists.map { Artist(name = it.name, id = it.id) },
-                    thumbnail = song.thumbnailUrl.orEmpty(),
+                    id = it.id,
+                    title = it.title,
+                    artists = it.artists.map { a -> Artist(name = a.name, id = a.id) },
+                    thumbnail = it.thumbnailUrl.orEmpty(),
                 )
             }
 
-        // Queue entries are kept in order; the library half is shuffled so the grid rotates.
-        // The pool is padded by cycling so a dev-mode 6x8 grid never shows an empty cell: a
-        // repeated cover is a better outcome than a grey hole the user cannot tap.
-        val distinct =
-            (queueFirst + libraryItems.shuffled()).distinctBy { it.id }
-
-        val pool =
-            when {
-                distinct.isEmpty() -> emptyList()
-                distinct.size >= SHUFFLE_GRID_SIZE -> distinct.take(SHUFFLE_GRID_SIZE)
-                else ->
-                    List(SHUFFLE_GRID_SIZE) { index ->
-                        distinct[index % distinct.size]
-                    }
+        val libraryItems: List<YTItem> =
+            libraryPool.map {
+                SongItem(
+                    id = it.id,
+                    title = it.title,
+                    artists = it.artists.map { a -> Artist(name = a.name, id = a.id) },
+                    thumbnail = it.thumbnailUrl.orEmpty(),
+                )
             }
+
+        // Stable per-session random order: the library half is shuffled ONCE and reused, so the
+        // grid no longer re-deals itself on every track change.
+        if (stableLibraryOrder.isEmpty()) {
+            stableLibraryOrder = libraryItems.shuffled()
+        }
+
+        // Tiered fill, deduplicated across every tier: queue, then remixes, then recent plays, then
+        // the whole library. A cell is left empty only when all four are exhausted.
+        val pool =
+            (queueFirst + remixes.value + recentItems + stableLibraryOrder)
+                .filterIsInstance<YTItem>()
+                .distinctBy { it.id }
+                .take(SHUFFLE_GRID_SIZE)
 
         shuffles.value = pool
     }
 
-    /** Re-rolls the grid for a new queue, keeping the queue's upcoming tracks at the front. */
+    /**
+     * Clears the memoised library order so the next refresh deals a genuinely new set.
+     *
+     * Called by pull-to-refresh only: track changes must not re-roll the grid (it used to, which
+     * is why the section looked like it "suddenly changed to a different playlist").
+     */
+    fun reshuffleLibraryOrder() {
+        stableLibraryOrder = emptyList()
+    }
+
+    /** Re-rolls the grid for a new queue without changing the stable library order. */
     fun updateShuffles(queueItems: List<YTItem>) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { loadShuffles(queueItems) }

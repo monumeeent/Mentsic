@@ -218,6 +218,7 @@ import com.metrolist.music.constants.StreakHistoryKey
 import com.metrolist.music.constants.StreakLongestKey
 import com.metrolist.music.constants.StreakTotalKey
 import com.metrolist.music.utils.CoilBitmapLoader
+import com.metrolist.music.utils.StreakBackup
 import com.metrolist.music.utils.StreakState
 import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.streakAccountTag
@@ -634,6 +635,12 @@ class MusicService :
         // Pin the "Song Identifier" shortcut for as long as the playback service lives. Best
         // effort: a user who revokes notification permission simply never sees it.
         runCatching { postIdentifierNotification() }
+
+        // Re-import a streak snapshot left by a previous install before anything can read it.
+        scope.launch(Dispatchers.IO) {
+            runCatching { StreakBackup.restoreIfEmpty(this@MusicService) }
+                .onFailure { Timber.w(it, "Streak restore failed") }
+        }
 
         // Call startForeground() as early as possible to satisfy the
         // 5-second timeout imposed by Context.startForegroundService().
@@ -2665,6 +2672,11 @@ class MusicService :
                 it[totalKey] = updated.total
                 it[historyKey] = StreakTracker.encodeHistory(updated.history)
             }
+
+            // Mirror to external storage so the streak survives a reinstall even when the user
+            // has Android Auto Backup disabled.
+            runCatching { StreakBackup.save(this@MusicService) }
+                .onFailure { Timber.w(it, "Streak backup failed") }
         }
     }
 

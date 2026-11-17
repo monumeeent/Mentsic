@@ -158,6 +158,7 @@ import com.metrolist.music.constants.AvatarShapeKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
+import com.metrolist.music.constants.ListenTogetherEnabledKey
 import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.constants.LyricsProviderOrderKey
@@ -787,6 +788,8 @@ class MainActivity : FragmentActivity() {
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
                 val (listenTogetherInTopBarPref) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
+                // Hidden by default; revealed by typing "#LTmonu" in the search bar.
+                val (listenTogetherEnabled) = rememberPreference(ListenTogetherEnabledKey, defaultValue = false)
                 // Listen Together is a normal feature: everyone gets the tab. Only *hosting* is
                 // developer-gated (Create Room is hidden without dev mode), so joining a shared
                 // room stays available to all users.
@@ -794,7 +797,8 @@ class MainActivity : FragmentActivity() {
                 // Bottom bar only: the top-bar icon competed with Stats/account and pushed the
                 // title off-centre on narrow screens, so the tab exists and the top-bar copy does
                 // not. The preference now merely enables/disables the tab.
-                val showListenTogetherTab = listenTogetherInTopBarPref
+                val showListenTogetherTab =
+                    listenTogetherInTopBarPref && listenTogetherEnabled
                 val navigationItems =
                     remember(showListenTogetherTab) {
                         if (showListenTogetherTab) {

@@ -34,6 +34,12 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.HubModeEnabledKey
+import com.metrolist.music.constants.HomeShowDiscoveryKey
+import com.metrolist.music.constants.HomeShowPersonalSpaceKey
+import com.metrolist.music.constants.HomeShowShufflesKey
+import com.metrolist.music.constants.HomeShowSpeedDialKey
+import com.metrolist.music.constants.HomeShowTopListenedKey
+import com.metrolist.music.constants.HomeShowTrendingKey
 import com.metrolist.music.constants.ShuffleColumnsKey
 import com.metrolist.music.constants.ShuffleRowsKey
 import com.metrolist.music.constants.SpeedDialColumnsKey
@@ -188,6 +194,23 @@ fun TacticalHubSettings(navController: NavController) {
 
         Spacer(modifier = Modifier.height(27.dp))
 
+        // Additive section switches. A section renders only when its switch is on AND the active
+        // preset includes it, so the presets stay meaningful coarse shortcuts.
+        Material3SettingsGroup(
+            title = stringResource(R.string.home_sections),
+            items =
+                listOf(
+                    sectionSwitch(stringResource(R.string.trending_chart), HomeShowTrendingKey),
+                    sectionSwitch(stringResource(R.string.speed_dial), HomeShowSpeedDialKey),
+                    sectionSwitch(stringResource(R.string.shuffles), HomeShowShufflesKey),
+                    sectionSwitch(stringResource(R.string.personal_space), HomeShowPersonalSpaceKey),
+                    sectionSwitch(stringResource(R.string.top_listened), HomeShowTopListenedKey),
+                    sectionSwitch(stringResource(R.string.home_discovery_rows), HomeShowDiscoveryKey),
+                ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
         // Plain-language description of the four zones, so "where / how to use" is answered
         // on the screen that turns the mode on.
         Material3SettingsGroup(
@@ -266,6 +289,30 @@ private fun gridSizeItem(
                 steps = (maxRows - minRows - 1).coerceAtLeast(0),
             )
         }
+    },
+    onClick = {},
+)
+
+/** Switch row bound to a single boolean section preference. */
+@Composable
+private fun sectionSwitch(
+    title: String,
+    key: androidx.datastore.preferences.core.Preferences.Key<Boolean>,
+) = Material3SettingsItem(
+    title = { Text(title) },
+    trailingContent = {
+        val (checked, onChange) = rememberPreference(key, defaultValue = true)
+        Switch(
+            checked = checked,
+            onCheckedChange = onChange,
+            thumbContent = {
+                Icon(
+                    painter = painterResource(if (checked) R.drawable.check else R.drawable.close),
+                    contentDescription = null,
+                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                )
+            },
+        )
     },
     onClick = {},
 )

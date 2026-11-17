@@ -71,6 +71,7 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.DeveloperModeKey
+import com.metrolist.music.constants.ListenTogetherEnabledKey
 import com.metrolist.music.constants.PauseSearchHistoryKey
 import com.metrolist.music.constants.SearchSource
 import com.metrolist.music.constants.SearchSourceKey
@@ -79,6 +80,7 @@ import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.HideOnScrollFAB
 import com.metrolist.music.utils.SearchRoutes
 import com.metrolist.music.utils.isDeveloperUnlockCode
+import com.metrolist.music.utils.isListenTogetherUnlockCode
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
@@ -145,14 +147,30 @@ fun SearchScreen(
     }
     val pauseSearchHistory by rememberPreference(PauseSearchHistoryKey, defaultValue = false)
     var developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
+    val (listenTogetherEnabled, onListenTogetherEnabledChange) =
+        rememberPreference(ListenTogetherEnabledKey, defaultValue = false)
 
     fun handleSearch(searchQuery: String) {
         if (searchQuery.isEmpty()) {
             return
         }
 
-        // Secret developer-mode toggle. Handled before anything else so the code never reaches
-        // InnerTube and is never written to the search history.
+        // Secret developer-mode toggle and Listen Together reveal. Handled before anything else
+        // so the codes never reach InnerTube and are never written to search history.
+        if (isListenTogetherUnlockCode(searchQuery)) {
+            val enabled = !listenTogetherEnabled
+            onListenTogetherEnabledChange(enabled)
+            query = TextFieldValue("")
+            focusManager.clearFocus()
+            keyboardController?.hide()
+            Toast.makeText(
+                context,
+                if (enabled) "Listen Together enabled" else "Listen Together hidden",
+                Toast.LENGTH_SHORT,
+            ).show()
+            return
+        }
+
         if (isDeveloperUnlockCode(searchQuery)) {
             // Compute the target state first: the write is dispatched asynchronously, so reading
             // `developerMode` again below would still return the pre-toggle value.

@@ -13,5 +13,16 @@ package com.metrolist.music.utils
  */
 const val DEVELOPER_UNLOCK_CODE = "@#monu"
 
+/**
+ * Toggles the Listen Together tab independently of developer mode.
+ *
+ * Listen Together is hidden by default so it does not clutter the bottom bar for people who never
+ * use it; this code is the only way to reveal it.
+ */
+const val LISTEN_TOGETHER_UNLOCK_CODE = "#LTmonu"
+
 /** True when [text] is the developer unlock code (surrounding whitespace ignored). */
 fun isDeveloperUnlockCode(text: String): Boolean = text.trim() == DEVELOPER_UNLOCK_CODE
+
+/** True when [text] is the Listen Together visibility code. */
+fun isListenTogetherUnlockCode(text: String): Boolean = text.trim() == LISTEN_TOGETHER_UNLOCK_CODE

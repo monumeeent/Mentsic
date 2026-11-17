@@ -92,6 +92,7 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.AutoRadioQueueKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.HideVideoSongsKey
+import com.metrolist.music.constants.ListenTogetherEnabledKey
 import com.metrolist.music.constants.MiniPlayerBottomSpacing
 import com.metrolist.music.constants.MiniPlayerHeight
 import com.metrolist.music.constants.NavigationBarHeight
@@ -115,6 +116,7 @@ import com.metrolist.music.ui.menu.YouTubePlaylistMenu
 import com.metrolist.music.ui.menu.YouTubeSongMenu
 import com.metrolist.music.utils.SearchRoutes
 import com.metrolist.music.utils.isDeveloperUnlockCode
+import com.metrolist.music.utils.isListenTogetherUnlockCode
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.OnlineSearchViewModel
 import kotlinx.coroutines.Dispatchers
@@ -186,10 +188,28 @@ fun OnlineSearchResult(
     // the secret code could switch dev mode on but never off. rememberUpdatedState gives the
     // long-lived lambda a live reference instead.
     val currentDeveloperMode by rememberUpdatedState(developerMode)
+    val (listenTogetherEnabled, onListenTogetherEnabledChange) =
+        rememberPreference(ListenTogetherEnabledKey, defaultValue = false)
+    val currentListenTogether by rememberUpdatedState(listenTogetherEnabled)
 
     val onSearch: (String) -> Unit =
         remember {
             search@{ searchQuery ->
+                // Listen Together reveal code, same interception rules as the developer code.
+                if (isListenTogetherUnlockCode(searchQuery)) {
+                    val enabled = !currentListenTogether
+                    onListenTogetherEnabledChange(enabled)
+                    query = TextFieldValue("")
+                    isSearchFocused = false
+                    focusManager.clearFocus()
+                    Toast.makeText(
+                        context,
+                        if (enabled) "Listen Together enabled" else "Listen Together hidden",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    return@search
+                }
+
                 // Secret developer-mode toggle. Intercepted here as well as in SearchScreen,
                 // because this screen is the one that receives the IME's search action.
                 if (isDeveloperUnlockCode(searchQuery)) {

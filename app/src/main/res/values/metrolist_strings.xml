@@ -615,6 +615,8 @@
     <string name="shuffle_grid">Shuffle grid</string>
     <string name="grid_columns_value">Columns: %1$d</string>
     <string name="grid_rows_value">Rows: %1$d</string>
+    <string name="home_sections">Home sections</string>
+    <string name="home_discovery_rows">Discovery rows</string>
 
     <!-- Pinned song-identifier notification -->
     <string name="identifier_notification_channel">Song identifier</string>
