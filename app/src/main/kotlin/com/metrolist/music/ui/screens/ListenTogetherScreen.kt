@@ -289,6 +289,7 @@ fun ListenTogetherScreen(
                         roomCode = room.roomCode,
                         isHost = isHost,
                         context = context,
+                        developerMode = developerMode,
                     )
                 }
 
@@ -656,6 +657,9 @@ private fun RoomStatusCard(
     roomCode: String,
     isHost: Boolean,
     context: Context,
+    // Passed in rather than read here: this is a leaf composable, and the parent already reads
+    // the preference. Gates the host-only invite controls.
+    developerMode: Boolean = false,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
