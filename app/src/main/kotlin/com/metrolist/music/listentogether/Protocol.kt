@@ -32,6 +32,15 @@ object MessageTypes {
     const val PONG = "pong"
     const val HOST_CHANGED = "host_changed"
     const val KICKED = "kicked"
+
+    /**
+     * Host-initiated room teardown.
+     *
+     * Sent instead of [LEAVE_ROOM] when the host leaves, so the server destroys the room rather
+     * than promoting a guest. Requires matching support on the Listen Together server; until then
+     * the server falls back to its normal host-transfer behaviour.
+     */
+    const val CLOSE_ROOM = "close_room"
     const val SYNC_STATE = "sync_state"
     const val RECONNECTED = "reconnected"
     const val USER_RECONNECTED = "user_reconnected"

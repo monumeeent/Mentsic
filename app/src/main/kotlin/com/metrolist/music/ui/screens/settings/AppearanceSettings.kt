@@ -68,7 +68,6 @@ import com.metrolist.music.constants.DensityScale
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.AlbumArtThemeKey
 import com.metrolist.music.constants.DynamicThemeKey
-import com.metrolist.music.constants.EnableDynamicIconKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
@@ -172,16 +171,6 @@ fun AppearanceSettings(
             AlbumArtThemeKey,
             defaultValue = false,
         )
-    val (enableDynamicIcon, onEnableDynamicIconPrefChange) =
-        rememberPreference(
-            EnableDynamicIconKey,
-            defaultValue = false,
-        )
-    val iconContext = LocalContext.current
-    val onEnableDynamicIconChange: (Boolean) -> Unit = { newValue ->
-        onEnableDynamicIconPrefChange(newValue)
-        IconUtils.setIcon(iconContext, newValue)
-    }
     val (enableHighRefreshRate, onEnableHighRefreshRateChange) =
         rememberPreference(
             EnableHighRefreshRateKey,
@@ -1089,30 +1078,8 @@ fun AppearanceSettings(
                             onClick = { onAlbumArtThemeChange(!albumArtTheme) },
                         ),
                     )
-                    add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.palette),
-                            title = { Text(stringResource(R.string.enable_dynamic_icon)) },
-                            description = { Text(stringResource(R.string.enable_dynamic_icon_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = enableDynamicIcon,
-                                    onCheckedChange = onEnableDynamicIconChange,
-                                    thumbContent = {
-                                        Icon(
-                                            painter =
-                                                painterResource(
-                                                    id = if (enableDynamicIcon) R.drawable.check else R.drawable.close,
-                                                ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                                        )
-                                    },
-                                )
-                            },
-                            onClick = { onEnableDynamicIconChange(!enableDynamicIcon) },
-                        ),
-                    )
+                    // Dynamic launcher icon is retired (IconUtils is a no-op), so its toggle is
+                    // gone entirely rather than left as a switch that silently does nothing.
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.palette),

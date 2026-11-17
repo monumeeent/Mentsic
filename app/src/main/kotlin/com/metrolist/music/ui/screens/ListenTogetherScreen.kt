@@ -700,7 +700,9 @@ private fun RoomStatusCard(
                 textAlign = TextAlign.Center,
             )
 
-            if (isHost) {
+            // Host-only affordances. Rooms can only be created in developer mode, so a non-dev
+            // user is never a host and never sees the invite/copy-link controls.
+            if (isHost && developerMode) {
                 Spacer(modifier = Modifier.height(16.dp))
                 val inviteLink =
                     remember(roomCode) {

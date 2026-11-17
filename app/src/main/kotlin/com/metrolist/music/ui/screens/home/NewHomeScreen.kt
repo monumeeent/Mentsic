@@ -108,18 +108,12 @@ import com.metrolist.music.viewmodels.SmartPlaylistViewModel
 import java.time.LocalDate
 import java.util.Calendar
 
-/**
- * Shuffle sampler geometry: 3 x 3 = 9 cells.
- *
- * Nine tiles at full row width made the section tall again, so the grid is width-capped below
- * (see [SHUFFLE_MAX_WIDTH]): tiles shrink instead of the block growing.
- */
+/** Shuffle sampler geometry: 3 x 3 = 9 cells by default; the grid is full width. */
 private const val SHUFFLE_COLUMNS = 3
 private const val SHUFFLE_ROWS = 3
 private const val SHUFFLE_CELLS = SHUFFLE_COLUMNS * SHUFFLE_ROWS
 
-/** Ceiling on the shuffle grid's overall width, so 3x3 stays shorter than the old 2-row block. */
-private val SHUFFLE_MAX_WIDTH = 260.dp
+
 
 /** YouTube Chart geometry: 4 columns x 2 rows = 8 tiles. */
 private const val TRENDING_COLUMNS = 4
@@ -1208,7 +1202,16 @@ private fun HomeSpeedDialGrid(
     isPlaying: Boolean,
     onItemClick: (YTItem) -> Unit,
 ) {
-    val cells = items.distinctBy { it.id }.take(columns * rows)
+    val wanted = columns * rows
+    val distinct = items.distinctBy { it.id }
+    // Cycle the pool when the library is smaller than the configured grid, so every cell has
+    // artwork. A repeated cover is preferable to an empty tile the user cannot act on.
+    val cells =
+        when {
+            distinct.isEmpty() -> emptyList()
+            distinct.size >= wanted -> distinct.take(wanted)
+            else -> List(wanted) { index -> distinct[index % distinct.size] }
+        }
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -1260,17 +1263,24 @@ private fun ShuffleGrid(
     isPlaying: Boolean,
     onSongClick: (YTItem) -> Unit,
 ) {
-    val cells = songs.take(columns * rows)
+    val wanted = columns * rows
+    // Same padding rule as Speed Dial: cycle rather than leave holes.
+    val cells =
+        when {
+            songs.isEmpty() -> emptyList()
+            songs.size >= wanted -> songs.take(wanted)
+            else -> List(wanted) { index -> songs[index % songs.size] }
+        }
     Column(
         modifier =
             Modifier
-                // 3x3 would be taller than the old 2-row block at full width, so the whole grid
-                // is width-capped and tiles shrink instead of the section growing.
-                .widthIn(max = SHUFFLE_MAX_WIDTH)
+                // Full width: the old 260dp cap made the grid render as a narrow strip pinned to
+                // the left edge, which is what made it look "stuck at 50%" and unorganised.
+                .fillMaxWidth()
                 .padding(horizontal = Spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        // Always three full rows. Building rows from `chunked(3)` produced no rows at all for an
+        // Always `rows` full rows. Building rows from `chunked(n)` produced no rows at all for an
         // empty list, which collapsed the section to a bare header while the pool loaded.
         repeat(rows) { rowIndex ->
             val rowSongs = cells.drop(rowIndex * columns).take(columns)

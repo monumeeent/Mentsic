@@ -1,24 +1,19 @@
 package com.metrolist.music.utils
 
-import android.content.ComponentName
 import android.content.Context
-import android.content.pm.PackageManager
 
+/**
+ * Launcher-icon switching.
+ *
+ * Deliberately a no-op. The dynamic (monochrome/themed) icon alias caused the launcher to show an
+ * icon that did not match the app's own branding and could not be previewed before applying, so
+ * the feature is retired: Mentsic always uses its static launcher icon.
+ *
+ * Kept as a type so existing call sites compile; the corresponding toggle is no longer shown.
+ */
 object IconUtils {
+    @Suppress("UNUSED_PARAMETER")
     fun setIcon(context: Context, enabled: Boolean) {
-        val pm = context.packageManager
-        val dynamic = ComponentName(context, "com.metrolist.music.MainActivityAlias")
-        val static = ComponentName(context, "com.metrolist.music.MainActivityStatic")
-
-        pm.setComponentEnabledSetting(
-            dynamic,
-            if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
-        )
-        pm.setComponentEnabledSetting(
-            static,
-            if (enabled) PackageManager.COMPONENT_ENABLED_STATE_DISABLED else PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
-        )
+        // Intentionally empty — see the class doc.
     }
 }

@@ -84,7 +84,9 @@ private const val REMIX_RANDOM_SAMPLE = 10
 
 /** Number of cells in the Home "Shuffles" grid (3x3). */
 // 3x2 grid: was 9 cells, which pushed the feed down for a section meant to be a quick sampler.
-private const val SHUFFLE_GRID_SIZE = 6
+// Upper bound of the dev-mode shuffle grid (6 columns x 8 rows). The Home screen slices whatever
+// it needs from this list, so it must cover the largest configurable grid with no gaps.
+private const val SHUFFLE_GRID_SIZE = 48
 
 internal fun buildSpeedDialItems(
     pinned: List<YTItem>,
@@ -94,7 +96,9 @@ internal fun buildSpeedDialItems(
 ): List<YTItem> =
     (pinned + keepListening + quickPicks + home)
         .distinctBy { it.id }
-        .take(27)
+        // Ceiling matches the largest configurable Speed Dial grid (6 columns x 10 rows) so a
+        // dev-mode layout never runs out of items and leaves a grey hole.
+        .take(60)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -1017,10 +1021,20 @@ class HomeViewModel @Inject constructor(
             }
 
         // Queue entries are kept in order; the library half is shuffled so the grid rotates.
+        // The pool is padded by cycling so a dev-mode 6x8 grid never shows an empty cell: a
+        // repeated cover is a better outcome than a grey hole the user cannot tap.
+        val distinct =
+            (queueFirst + libraryItems.shuffled()).distinctBy { it.id }
+
         val pool =
-            (queueFirst + libraryItems.shuffled())
-                .distinctBy { it.id }
-                .take(SHUFFLE_GRID_SIZE)
+            when {
+                distinct.isEmpty() -> emptyList()
+                distinct.size >= SHUFFLE_GRID_SIZE -> distinct.take(SHUFFLE_GRID_SIZE)
+                else ->
+                    List(SHUFFLE_GRID_SIZE) { index ->
+                        distinct[index % distinct.size]
+                    }
+            }
 
         shuffles.value = pool
     }

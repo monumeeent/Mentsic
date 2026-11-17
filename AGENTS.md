@@ -5,17 +5,22 @@
 * Never run background polling, sleep timers, or wait loops (e.g., `sleep`, `timeout`).
 * All output must be written in English.
 
-## 2. Preferred CI/CD Workflow
-* When local compilation is requested, **DO NOT** execute it. Output the exact command for the user to copy-paste manually, then push to GitHub instead:
-  > *"I will not run Gradle locally on this low-spec machine. If you wish to run it manually: `./gradlew assembleDebug`. Otherwise, please push to GitHub to trigger the CI build."*
+## 2. Git Command Restrictions 
+- Trigger this only if user : 
+    a. Fixes error 
+    b. No User Input Needed / No Question is asked 
+    c. After Phase is Completed .
+    d. the user asks to run `git acp` (Add,Commit,Push)
+* **Only Allowed** To Run This 3 Git Commands : Add, Commit, Push. 
+- Git Add : add the changed Files
+- Git Commit : Proper Short Message
+- Git Push : Just Push it 
+* Run The Git Command To Push to Workflow and Let The App Built. 
 
-* add , commit , push > **Verification Path:** Code edits $\rightarrow$ User commits/pushes $\rightarrow$ GitHub Actions workflow builds.
-
-## 5. Design System & UI Rules
+## 3. Design System & UI Rules
 * Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
 
-
-## 6. Constraints 
+## 4. Constraints 
 - No local Gradle/Android build commands; verification via static analysis + CI on push
 - Git Bash compatible terminal commands only
 - Always tell me the **Next Step:** `How to Test the new features`.

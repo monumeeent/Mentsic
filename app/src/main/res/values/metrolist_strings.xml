@@ -686,7 +686,7 @@
 
     <!-- Tactical Command Hub (Settings → Appearance → Home layout).
          NOTE: `tactical_hub` itself is defined in strings.xml; do not redeclare it here. -->
-    <string name="tactical_hub_dark">Alternative home layout</string>
+    <string name="tactical_hub_dark">Tactical Hub</string>
     <string name="tactical_hub_dark_desc">Swap the feed for the zone-based Command Hub</string>
     <string name="tactical_hub_enable">Use Command Hub layout</string>
     <string name="tactical_hub_enabled_desc">Home shows Speed Dial, Active Session, filter tabs and your listening heatmap.</string>

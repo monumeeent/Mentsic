@@ -787,14 +787,14 @@ class MainActivity : FragmentActivity() {
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
                 val (listenTogetherInTopBarPref) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
-                // "Listen Together" below the main tabs (and its top-bar button) is a developer
-                // entry point. Guests can still reach an existing room via an invite link, which
-                // routes to the same screen; only the discovery affordance is hidden.
-                val (developerModeForNav) = rememberPreference(DeveloperModeKey, defaultValue = false)
+                // Listen Together is a normal feature: everyone gets the tab. Only *hosting* is
+                // developer-gated (Create Room is hidden without dev mode), so joining a shared
+                // room stays available to all users.
+                //
                 // Bottom bar only: the top-bar icon competed with Stats/account and pushed the
                 // title off-centre on narrow screens, so the tab exists and the top-bar copy does
                 // not. The preference now merely enables/disables the tab.
-                val showListenTogetherTab = listenTogetherInTopBarPref && developerModeForNav
+                val showListenTogetherTab = listenTogetherInTopBarPref
                 val navigationItems =
                     remember(showListenTogetherTab) {
                         if (showListenTogetherTab) {

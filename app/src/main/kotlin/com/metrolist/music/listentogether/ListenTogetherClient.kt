@@ -1674,7 +1674,15 @@ class ListenTogetherClient
          * Leave the current room
          */
         fun leaveRoom() {
-            sendMessageNoPayload(MessageTypes.LEAVE_ROOM)
+            // A hosting client must tear the room down rather than hand it to a guest: with the
+            // host gone nobody can approve joins or control playback, so the session is over.
+            val messageType =
+                if (_role.value == RoomRole.HOST) {
+                    MessageTypes.CLOSE_ROOM
+                } else {
+                    MessageTypes.LEAVE_ROOM
+                }
+            sendMessageNoPayload(messageType)
 
             // Clear session info on intentional leave
             sessionToken = null
