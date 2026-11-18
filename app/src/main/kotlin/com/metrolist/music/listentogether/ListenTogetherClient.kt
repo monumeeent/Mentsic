@@ -120,7 +120,14 @@ sealed class PendingAction {
  * Event types for the Listen Together client
  */
 sealed class ListenTogetherEvent {
-    // Connection events
+    /** Why the client left a room on its own. */
+    enum class SessionEndReason {
+        /** The session hit its configured maximum length. */
+        TIME_LIMIT,
+
+        /** Nobody but this user was in the room for the grace period. */
+        ALONE,
+    }
     data class Connected(
         val userId: String,
     ) : ListenTogetherEvent()
@@ -134,6 +141,11 @@ sealed class ListenTogetherEvent {
     data class Reconnecting(
         val attempt: Int,
         val maxAttempts: Int,
+    ) : ListenTogetherEvent()
+
+    /** Emitted right before the client leaves because a hard limit was hit. */
+    data class SessionEnded(
+        val reason: SessionEndReason,
     ) : ListenTogetherEvent()
 
     // Room events
@@ -577,6 +589,12 @@ class ListenTogetherClient
         private var pingJob: Job? = null
         private var reconnectAttempts = 0
         private var backgroundDisconnectJob: Job? = null
+
+        /** Enforces the room's maximum session length and the "alone too long" rule. */
+        private var sessionWatchdogJob: Job? = null
+
+        /** How long a room may hold a single person before it closes itself. */
+        private const val ALONE_GRACE_SECONDS = 5 * 60
 
         // Session info for reconnection
         private var sessionToken: String? = null
@@ -1130,6 +1148,7 @@ class ListenTogetherClient
                         // Save session to persistent storage
                         savePersistedSession()
                         evaluateBackgroundDisconnectPolicy("room_created")
+                        startSessionWatchdog()
 
                         acquireWakeLock() // Keep connection alive while in room
                         log(LogLevel.INFO, "Room created", "Code: ${payload.roomCode}")
@@ -1194,6 +1213,7 @@ class ListenTogetherClient
                         // Save session to persistent storage
                         savePersistedSession()
                         evaluateBackgroundDisconnectPolicy("join_approved")
+                        startSessionWatchdog()
 
                         acquireWakeLock() // Keep connection alive while in room
                         log(LogLevel.INFO, "Joined room", "Code: ${payload.roomCode}")
@@ -1534,6 +1554,7 @@ class ListenTogetherClient
                         sessionStartTime = System.currentTimeMillis()
                         savePersistedSession()
                         evaluateBackgroundDisconnectPolicy("reconnected")
+                        startSessionWatchdog()
 
                         // Reset reconnection attempts on successful reconnection
                         reconnectAttempts = 0
@@ -1674,6 +1695,7 @@ class ListenTogetherClient
          * Leave the current room
          */
         fun leaveRoom() {
+            stopSessionWatchdog()
             // A hosting client must tear the room down rather than hand it to a guest: with the
             // host gone nobody can approve joins or control playback, so the session is over.
             val messageType =
@@ -1984,4 +2006,57 @@ class ListenTogetherClient
             } else {
                 0L
             }
+
+        /**
+         * Starts (or restarts) the two hard room limits.
+         *
+         * * **Session length** — every client leaves after [sessionMaxMinutes]. Defaults to two
+         *   hours; developer mode can change it. Enforced client-side, so a modified client could
+         *   stay connected; the server would need a matching rule to be airtight.
+         * * **Alone in room** — if the room holds exactly one person for [ALONE_GRACE_SECONDS],
+         *   that person leaves and the room is abandoned rather than left idling forever.
+         *
+         * Both terminate through [leaveRoom] so local state, wake locks and persistence are all
+         * torn down by the existing path instead of a half-cleanup.
+         */
+        private fun startSessionWatchdog() {
+            sessionWatchdogJob?.cancel()
+            sessionWatchdogJob =
+                scope.launch {
+                    var aloneSince = 0L
+                    while (isActive) {
+                        delay(15_000L)
+
+                        // Hard session cap.
+                        val maxMinutes = context.dataStore.get(SessionMaxMinutesKey, 120)
+                        if (maxMinutes > 0 && getSessionAge() >= maxMinutes * 60_000L) {
+                            log(LogLevel.INFO, "Session limit reached", "leaving after $maxMinutes min")
+                            emitEvent(ListenTogetherEvent.SessionEnded(SessionEndReason.TIME_LIMIT))
+                            leaveRoom()
+                            break
+                        }
+
+                        // Alone-in-room rule.
+                        val users = _roomState.value?.users.orEmpty()
+                        if (users.size == 1) {
+                            if (aloneSince == 0L) aloneSince = System.currentTimeMillis()
+                            val aloneFor = System.currentTimeMillis() - aloneSince
+                            if (aloneFor >= ALONE_GRACE_SECONDS * 1000L) {
+                                log(LogLevel.INFO, "Room abandoned", "alone for $ALONE_GRACE_SECONDS s")
+                                emitEvent(ListenTogetherEvent.SessionEnded(SessionEndReason.ALONE))
+                                leaveRoom()
+                                break
+                            }
+                        } else {
+                            // Someone is here: reset so a reconnecting guest gets the full grace.
+                            aloneSince = 0L
+                        }
+                    }
+                }
+        }
+
+        private fun stopSessionWatchdog() {
+            sessionWatchdogJob?.cancel()
+            sessionWatchdogJob = null
+        }
     }

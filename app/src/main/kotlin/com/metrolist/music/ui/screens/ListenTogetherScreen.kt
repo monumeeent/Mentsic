@@ -157,6 +157,20 @@ fun ListenTogetherScreen(
     LaunchedEffect(listenTogetherManager) {
         listenTogetherManager.events.collect { event ->
             when (event) {
+                is ListenTogetherEvent.SessionEnded -> {
+                    val message =
+                        when (event.reason) {
+                            ListenTogetherEvent.SessionEndReason.TIME_LIMIT ->
+                                getString(R.string.listen_together_session_limit)
+
+                            ListenTogetherEvent.SessionEndReason.ALONE ->
+                                getString(R.string.listen_together_alone_closed)
+                        }
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    isCreatingRoom = false
+                    isJoiningRoom = false
+                }
+
                 is ListenTogetherEvent.JoinRejected -> {
                     val reason = event.reason
                     joinErrorMessage =

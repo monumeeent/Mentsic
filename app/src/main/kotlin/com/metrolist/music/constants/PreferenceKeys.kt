@@ -294,6 +294,10 @@ val HomeShowDiscoveryKey = booleanPreferencesKey("homeShowDiscovery")
 // code "#LTmonu" typed in the search bar.
 val ListenTogetherEnabledKey = booleanPreferencesKey("listenTogetherEnabled")
 
+// Hard cap on how long a room session may last, in minutes. 0 disables the limit.
+// Default 120 (two hours); developer mode can change it.
+val SessionMaxMinutesKey = intPreferencesKey("sessionMaxMinutes")
+
 // Session persistence for reconnection
 val ListenTogetherSessionTokenKey = stringPreferencesKey("listenTogetherSessionToken")
 val ListenTogetherRoomCodeKey = stringPreferencesKey("listenTogetherRoomCode")

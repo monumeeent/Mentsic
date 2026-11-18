@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.HubModeEnabledKey
 import com.metrolist.music.constants.HomeShowDiscoveryKey
@@ -188,6 +190,40 @@ fun TacticalHubSettings(navController: NavController) {
                         maxColumns = 6,
                         minRows = 1,
                         maxRows = 8,
+                    ),
+                ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        // Developer-only: how long a Listen Together session may run before everyone is dropped.
+        val (sessionMax, onSessionMax) = rememberPreference(SessionMaxMinutesKey, 120)
+        Material3SettingsGroup(
+            title = stringResource(R.string.listen_together),
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.time_auto),
+                        title = { Text(stringResource(R.string.session_max_minutes)) },
+                        description = {
+                            Column {
+                                Text(
+                                    if (sessionMax == 0) {
+                                        "No limit"
+                                    } else {
+                                        "$sessionMax minutes"
+                                    },
+                                )
+                                Slider(
+                                    value = sessionMax.toFloat(),
+                                    onValueChange = { onSessionMax(it.roundToInt()) },
+                                    valueRange = 0f..360f,
+                                    // 15-minute stops: 0, 15, 30 ... 360.
+                                    steps = 23,
+                                )
+                            }
+                        },
+                        onClick = {},
                     ),
                 ),
         )

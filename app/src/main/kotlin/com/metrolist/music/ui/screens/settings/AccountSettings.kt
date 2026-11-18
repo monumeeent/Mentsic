@@ -349,9 +349,36 @@ fun AccountSettings(
 
         // Listening activity. Lives here because "my listening data" is an account-shaped
         // question; the heatmap had no reachable home before (its Home header rendered without
-        // a grid).
+        // a grid). Collapsed by default: it is tall and pushes the profile controls off-screen.
         val heatmapPlays by homeViewModel.heatmapPlays.collectAsStateWithLifecycle()
-        ListeningHeatmapCard(playsByDay = heatmapPlays)
+        var heatmapExpanded by rememberSaveable { mutableStateOf(false) }
+
+        Material3SettingsItem(
+            icon = painterResource(R.drawable.stats),
+            title = { Text(stringResource(R.string.heatmap_title)) },
+            description = {
+                Text(
+                    if (heatmapExpanded) {
+                        stringResource(R.string.heatmap_collapse_hint)
+                    } else {
+                        stringResource(R.string.heatmap_expand_hint)
+                    },
+                )
+            },
+            trailingContent = {
+                Icon(
+                    painter = painterResource(
+                        if (heatmapExpanded) R.drawable.expand_less else R.drawable.expand_more,
+                    ),
+                    contentDescription = null,
+                )
+            },
+            onClick = { heatmapExpanded = !heatmapExpanded },
+        )
+
+        if (heatmapExpanded) {
+            ListeningHeatmapCard(playsByDay = heatmapPlays)
+        }
 
         Spacer(Modifier.height(Spacing.medium))
 
@@ -483,51 +510,53 @@ fun AccountSettings(
                         }
                     )
                 } else null,
-                Material3SettingsItem(
-                    title = { Text(stringResource(R.string.more_content)) },
-                    icon = painterResource(R.drawable.cached),
-                    trailingContent = {
-                        Switch(
-                            enabled = isLoggedIn,
-                            checked = useLoginForBrowse,
-                            onCheckedChange = {
-                                YouTube.useLoginForBrowse = it
-                                onUseLoginForBrowseChange(it)
-                            },
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (useLoginForBrowse) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    enabled = isLoggedIn
-                ),
-                Material3SettingsItem(
-                    title = { Text(stringResource(R.string.yt_sync)) },
-                    icon = painterResource(R.drawable.cached),
-                    trailingContent = {
-                        Switch(
-                            enabled = isLoggedIn,
-                            checked = ytmSync,
-                            onCheckedChange = onYtmSyncChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (ytmSync) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    enabled = isLoggedIn
-                )
+                // Account-only rows: hidden entirely when signed out rather than shown disabled,
+                // because a greyed switch with no explanation reads as a bug.
+                if (isLoggedIn) {
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.more_content)) },
+                        icon = painterResource(R.drawable.cached),
+                        trailingContent = {
+                            Switch(
+                                checked = useLoginForBrowse,
+                                onCheckedChange = {
+                                    YouTube.useLoginForBrowse = it
+                                    onUseLoginForBrowseChange(it)
+                                },
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (useLoginForBrowse) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                    )
+                } else null,
+                if (isLoggedIn) {
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.yt_sync)) },
+                        icon = painterResource(R.drawable.cached),
+                        trailingContent = {
+                            Switch(
+                                checked = ytmSync,
+                                onCheckedChange = onYtmSyncChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (ytmSync) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                    )
+                } else null
             ),
             useLowContrast = true
         )

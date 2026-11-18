@@ -618,6 +618,11 @@
     <string name="home_sections">Home sections</string>
     <string name="home_discovery_rows">Discovery rows</string>
 
+    <string name="listen_together_session_limit">Room closed: the 2-hour session limit was reached.</string>
+    <string name="listen_together_alone_closed">Room closed: nobody else was listening.</string>
+    <string name="session_max_minutes">Room session limit</string>
+    <string name="session_max_minutes_desc">Automatically disconnect everyone after this many minutes. 0 disables the limit.</string>
+
     <!-- Pinned song-identifier notification -->
     <string name="identifier_notification_channel">Song identifier</string>
     <string name="identifier_notification_channel_desc">Pinned shortcut that opens music recognition while the player runs.</string>
@@ -639,6 +644,8 @@
     <string name="heatmap_title">Listening activity</string>
     <string name="heatmap_less">Less</string>
     <string name="heatmap_more">More</string>
+    <string name="heatmap_expand_hint">Tap to show your listening activity</string>
+    <string name="heatmap_collapse_hint">Tap to hide your listening activity</string>
     <plurals name="plays_count">
         <item quantity="one">%1$d play</item>
         <item quantity="other">%1$d plays</item>

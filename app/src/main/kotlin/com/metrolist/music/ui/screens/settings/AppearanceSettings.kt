@@ -1001,7 +1001,9 @@ fun AppearanceSettings(
                             onClick = { onEnableHighRefreshRateChange(!enableHighRefreshRate) },
                         ),
                     )
-                    add(
+                    // Advanced layout tuning is developer-only; these toggles can leave the UI in a
+                    // state that is hard to recover from (landscape scaling, custom nav bars).
+                    if (developerMode) add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.fullscreen),
                             title = { Text(stringResource(R.string.enable_landscape_scaling)) },
@@ -1027,7 +1029,7 @@ fun AppearanceSettings(
                     )
                     // Only show dynamic theme option when using the default/dynamic color
                     // When a custom color is selected, dynamic theme is automatically disabled
-                    if (!isUsingCustomColor) {
+                    if (!isUsingCustomColor && developerMode) {
                         add(
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.palette),
@@ -1052,9 +1054,9 @@ fun AppearanceSettings(
                             ),
                         )
                     }
-                    // Album-art theming is independent of the palette choice, so it stays visible
-                    // even when a custom color is selected (it overrides that color while playing).
-                    add(
+                    // Album-art theming is developer-only: it retints the whole app per track,
+                    // which is surprising for a regular user.
+                    if (developerMode) add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.palette),
                             title = { Text(stringResource(R.string.album_art_theme)) },
@@ -1133,7 +1135,7 @@ fun AppearanceSettings(
             title = stringResource(id = R.string.mini_player),
             items =
                 buildList {
-                    add(
+                    if (developerMode) add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.nav_bar),
                             title = { Text(stringResource(R.string.new_mini_player_design)) },
@@ -1202,7 +1204,7 @@ fun AppearanceSettings(
 
         var showSensitivityDialog by rememberSaveable { mutableStateOf(false) }
 
-        Material3SettingsGroup(
+        if (developerMode) Material3SettingsGroup(
             title = stringResource(R.string.player),
             items =
                 listOf(
@@ -1671,7 +1673,9 @@ fun AppearanceSettings(
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        Material3SettingsGroup(
+        // Miscellaneous layout switches. Developer-only for the same reason as the scaling row:
+        // each one changes navigation or gesture behaviour globally.
+        if (developerMode) Material3SettingsGroup(
             title = stringResource(R.string.misc),
             items =
                 listOf(
