@@ -232,6 +232,15 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Dagger/Hilt ships with kotlin-metadata-jvm 2.3.21, which only supports Kotlin
+// metadata up to 2.3.0. Kotlin 2.4.x produces metadata 2.4.0, so force a newer
+// kotlin-metadata-jvm that understands the newer metadata format.
+configurations.configureEach {
+    resolutionStrategy {
+        force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.21")
+    }
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
         freeCompilerArgs.addAll(
