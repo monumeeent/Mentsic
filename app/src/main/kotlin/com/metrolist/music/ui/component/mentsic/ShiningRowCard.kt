@@ -24,6 +24,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -200,6 +201,7 @@ private fun ArtworkSlot(
  * glass rather than a stripe. When [enabled] is false the brush is fully transparent and the
  * infinite transition still exists but is invisible.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun ShineOverlay(enabled: Boolean) {
     val transition = rememberInfiniteTransition(label = "shining-row")
@@ -215,43 +217,67 @@ private fun ShineOverlay(enabled: Boolean) {
 
     if (!enabled) return
 
-    val highlight = Color.White
-    val transparent = Color.Transparent
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // `maxWidth` (a Dp) is available here because we are inside the constraints scope. The
+        // band is positioned in Dp and then normalised to 0..1f offsets for the gradient, which
+        // keeps every stop strictly increasing — `horizontalGradient` rejects duplicates and
+        // descending offsets, and clamping a normalized value can produce both.
+        val width = maxWidth.value
+        if (width <= 0f) return@BoxWithConstraints
 
-    // The band is positioned by the animated progress plus the card's own width, so it glides
-    // edge to edge without clamping stops. `Brush.linearGradient` rejects duplicate or
-    // descending stops, so the offsets are always strictly increasing — which clamping to
-    // 0..1f could not guarantee near the ends of the sweep.
-    val width = size.width
-    val centerX = progress * width
-    val bandHalfWidth = width * 0.30f
-    val coreHalfWidth = width * 0.10f
+        val center = progress * width
+        val haloHalf = width * 0.30f
+        val coreHalf = width * 0.10f
 
-    val haloBrush = Brush.horizontalGradient(
-        colorStops = arrayOf(
-            0f to transparent,
-            ((centerX - bandHalfWidth).coerceAtLeast(0f) / width) to transparent,
-            (centerX / width).coerceIn(0.001f, 0.999f) to highlight.copy(alpha = ShinePeakAlpha * 0.35f),
-            ((centerX + bandHalfWidth).coerceAtMost(width) / width) to transparent,
-            1f to transparent,
-        ),
-    )
-    val coreBrush = Brush.horizontalGradient(
-        colorStops = arrayOf(
-            0f to transparent,
-            ((centerX - coreHalfWidth).coerceAtLeast(0f) / width) to transparent,
-            (centerX / width).coerceIn(0.001f, 0.999f) to highlight.copy(alpha = ShinePeakAlpha),
-            ((centerX + coreHalfWidth).coerceAtMost(width) / width) to transparent,
-            1f to transparent,
-        ),
-    )
+        val stops = buildShineStops(
+            left = center - haloHalf,
+            coreLeft = center - coreHalf,
+            centerX = center,
+            coreRight = center + coreHalf,
+            right = center + haloHalf,
+            width = width,
+        )
 
-    androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(haloBrush)
-                .background(coreBrush),
+                .background(Brush.horizontalGradient(colorStops = stops)),
         )
     }
+}
+
+/**
+ * Builds a strictly increasing stop list for the sweeping highlight.
+ *
+ * `Brush.horizontalGradient` throws when two stops share an offset, and when the band has left
+ * the card several of the computed offsets collapse onto 0f or 1f. Sorting alone is not enough,
+ * so after normalising each offset is nudged to the next representable step whenever it fails to
+ * advance on its predecessor.
+ */
+private fun buildShineStops(
+    left: Float,
+    coreLeft: Float,
+    centerX: Float,
+    coreRight: Float,
+    right: Float,
+    width: Float,
+): Array<Pair<Float, Color>> {
+    // Five stops need five distinct slots; reserve 5% headroom below 1f so the "nudge" below can
+    // never run out of room when the band has slid off the card.
+    val normalized = listOf(
+        (left / width).coerceIn(0f, 0.95f) to Color.Transparent,
+        (coreLeft / width).coerceIn(0f, 0.95f) to Color.Transparent,
+        (centerX / width).coerceIn(0f, 0.95f) to Color.White.copy(alpha = ShinePeakAlpha),
+        (coreRight / width).coerceIn(0f, 0.95f) to Color.Transparent,
+        (right / width).coerceIn(0f, 0.95f) to Color.Transparent,
+    ).sortedBy { it.first }
+
+    var previous = 0f
+    return normalized.map { (offset, color) ->
+        // Strictly increasing: equal or out-of-order offsets are pushed just past their
+        // predecessor, which stays inside 0..1f thanks to the 0.95f ceiling above.
+        val next = if (offset > previous) offset else previous + 0.004f
+        previous = next
+        next to color
+    }.toTypedArray()
 }
