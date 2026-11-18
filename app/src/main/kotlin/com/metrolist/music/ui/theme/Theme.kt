@@ -10,6 +10,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
@@ -61,14 +62,28 @@ fun MetrolistTheme(
     themeColor: Color = DefaultThemeColor,
     enableOrbitTheme: Boolean = false,
     paletteStyle: PaletteStyle = PaletteStyle.TonalSpot,
+    shiningTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val baseColorScheme = rememberDynamicColorScheme(
-        seedColor = themeColor,
-        isDark = darkTheme,
-        specVersion = ColorSpec.SpecVersion.SPEC_2025,
-        style = paletteStyle,
-    )
+    // Always resolved, even when the Shining theme is on: `rememberDynamicColorScheme` is a
+    // composable that must be called unconditionally, so it is computed and then discarded
+    // rather than being hidden behind an `if`.
+    val dynamicColorScheme =
+        rememberDynamicColorScheme(
+            seedColor = themeColor,
+            isDark = darkTheme,
+            specVersion = ColorSpec.SpecVersion.SPEC_2025,
+            style = paletteStyle,
+        )
+
+    // The Shining theme is a full standalone palette: it ignores the seed colour and the harmony,
+    // otherwise the gold would be re-derived into an unrelated purple/green family.
+    val baseColorScheme =
+        if (shiningTheme) {
+            if (darkTheme) ShiningDarkColorScheme else ShiningLightColorScheme
+        } else {
+            dynamicColorScheme
+        }
 
     val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {
         if (darkTheme && pureBlack) {
@@ -80,11 +95,13 @@ fun MetrolistTheme(
 
     // Orbit only swaps the typography. Colors always come from the user's selected palette
     // (themeColor / dynamic color / pure black), so enabling Orbit no longer overrides them.
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = if (enableOrbitTheme) orbitTypography else MaterialTheme.typography,
-        content = content,
-    )
+    CompositionLocalProvider(LocalShiningThemeActive provides shiningTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = if (enableOrbitTheme) orbitTypography else MaterialTheme.typography,
+            content = content,
+        )
+    }
 }
 
 val orbitTypography = Typography(

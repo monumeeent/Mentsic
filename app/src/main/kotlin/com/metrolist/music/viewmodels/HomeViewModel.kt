@@ -906,6 +906,14 @@ class HomeViewModel @Inject constructor(
             } else {
                 load()
             }
+            // Refresh every local + network band that is not part of `load()`. The trending chart
+            // used to be fetched only from `loadHomeData()`, which short-circuits on the first
+            // call — so after a refresh (or an app restart with a live ViewModel) the YouTube
+            // Chart row stayed empty forever instead of re-requesting the chart.
+            runCatching { loadTopListened() }
+                .onFailure { Timber.w(it, "Failed to refresh top listened") }
+            runCatching { trendingRepository.load(force = true).let { trending.value = it } }
+                .onFailure { Timber.w(it, "Failed to refresh trending") }
             // Reshuffle so the grid changes on every pull-to-refresh.
             runCatching {
                 reshuffleLibraryOrder()

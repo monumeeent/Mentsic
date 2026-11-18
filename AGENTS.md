@@ -16,6 +16,7 @@
 
 ## 3. Design System & UI Rules
 * Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.
+* Ask The User if anything need to confirmed then continue work .
 
 ## 4. Constraints 
 - No local Gradle/Android build commands; verification via static analysis + CI on push

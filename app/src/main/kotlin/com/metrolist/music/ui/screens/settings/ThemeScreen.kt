@@ -83,10 +83,14 @@ import com.metrolist.music.constants.EnableOrbitThemeKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.PureBlackMiniPlayerKey
 import com.metrolist.music.constants.SelectedThemeColorKey
+import com.metrolist.music.constants.ShiningThemeKey
 import com.metrolist.music.constants.ThemePaletteStyleKey
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.MetrolistTheme
 import com.metrolist.music.ui.theme.OrbitColors
+import com.metrolist.music.ui.theme.ShiningDarkColorScheme
+import com.metrolist.music.ui.theme.ShiningLightColorScheme
+import com.metrolist.music.ui.theme.ShiningSeed
 import com.metrolist.music.ui.theme.ThemePaletteStyle
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -518,6 +522,91 @@ fun ThemeControls(
                     )
                 }
             }
+
+            // Shining theme — a full standalone palette (champagne gold on obsidian). It replaces
+            // the seed + harmony while on, so it sits apart from the palette swatches instead of
+            // being one more seed in the grid.
+            val (shiningTheme, onShiningThemeChange) =
+                rememberPreference(ShiningThemeKey, defaultValue = false)
+            ShiningThemeOption(
+                enabled = shiningTheme,
+                onEnabledChange = onShiningThemeChange,
+            )
+        }
+    }
+}
+
+/**
+ * Full-width preview card + switch for the Shining theme.
+ *
+ * The preview is rendered with the real palette so the gold/obsidian pairing is visible before
+ * the user commits to it (mirrors [ThemeMockup] but without the fake phone chrome).
+ */
+@Composable
+private fun ShiningThemeOption(
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+) {
+    val isSystemDark = isSystemInDarkTheme()
+    val preview = if (isSystemDark) ShiningDarkColorScheme else ShiningLightColorScheme
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.shining_theme),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = stringResource(R.string.shining_theme_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = enabled,
+                onCheckedChange = onEnabledChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = ShiningSeed,
+                    checkedTrackColor = ShiningSeed.copy(alpha = 0.5f),
+                )
+            )
+        }
+
+        // Palette strip: obsidian surface, gold primary, warm secondary/tertiary accents.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(preview.surfaceContainer)
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            listOf(preview.primary, preview.primaryContainer, preview.secondary, preview.tertiary)
+                .forEach { swatch ->
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(swatch)
+                    )
+                }
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = if (enabled) {
+                    stringResource(R.string.shining_theme_active)
+                } else {
+                    stringResource(R.string.shining_theme_preview)
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = preview.onSurfaceVariant,
+            )
         }
     }
 }

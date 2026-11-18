@@ -71,13 +71,17 @@ class TrendingChartRepository @Inject constructor(
             // device.
             val sections = page.sections
             val typed =
-                sections.firstOrNull { it.chartType == ChartsPage.ChartType.TRENDING }
-                    ?: sections.firstOrNull { it.chartType == ChartsPage.ChartType.TOP }
+                sections.filter { it.chartType == ChartsPage.ChartType.TRENDING }
+                    .ifEmpty { sections.filter { it.chartType == ChartsPage.ChartType.TOP } }
 
-            val candidates = (typed?.let { listOf(it) } ?: sections).flatMap { it.items }
+            // Chart carousels mix songs, playlists and episodes. Requiring the typed section
+            // alone produced a half-empty (or empty) row whenever that one section happened to
+            // be mostly non-song entries, so the typed items lead and the other sections top the
+            // row up instead of being ignored.
+            val ordered = typed.flatMap { it.items } + sections.flatMap { it.items }
 
             val songs =
-                candidates
+                ordered
                     .filterIsInstance<SongItem>()
                     .distinctBy { it.id }
                     .take(ROW_SIZE)
@@ -88,6 +92,8 @@ class TrendingChartRepository @Inject constructor(
                     settings[TrendingRefreshKey] = System.currentTimeMillis()
                 }
             }
+            // Returning `songs` (possibly empty) rather than the stale cache keeps the caller
+            // honest: an empty result means "the chart really has no playable songs right now".
             songs
         }
 

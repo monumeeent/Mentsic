@@ -26,7 +26,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -67,7 +66,7 @@ import kotlin.math.roundToInt
 fun TacticalHubSettings(navController: NavController) {
     val (hubEnabled, onHubEnabledChange) = rememberPreference(HubModeEnabledKey, defaultValue = false)
     val (heatmapCollapsed, onHeatmapCollapsedChange) =
-        rememberPreference(HubHeatmapCollapsedKey, defaultValue = false)
+        rememberPreference(HubHeatmapCollapsedKey, defaultValue = true)
 
     Column(
         modifier =
@@ -246,21 +245,6 @@ fun TacticalHubSettings(navController: NavController) {
         )
 
         Spacer(modifier = Modifier.height(27.dp))
-
-        // Plain-language description of the four zones, so "where / how to use" is answered
-        // on the screen that turns the mode on.
-        Material3SettingsGroup(
-            title = stringResource(R.string.tactical_hub_zones),
-            items =
-                listOf(
-                    zoneItem(painterResource(R.drawable.grid_view), stringResource(R.string.hub_zone_speed_dial)),
-                    zoneItem(painterResource(R.drawable.play), stringResource(R.string.hub_zone_active_session)),
-                    zoneItem(painterResource(R.drawable.language), stringResource(R.string.hub_zone_filters)),
-                    zoneItem(painterResource(R.drawable.stats), stringResource(R.string.hub_zone_heatmap)),
-                ),
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
     }
 
     TopAppBar(
@@ -352,14 +336,5 @@ private fun sectionSwitch(
     },
     onClick = {},
 )
-
-/** Non-interactive row describing one zone of the hub layout. */
-@Composable
-private fun zoneItem(icon: Painter, text: String) =
-    Material3SettingsItem(
-        icon = icon,
-        title = { Text(text) },
-        onClick = {},
-    )
 
 

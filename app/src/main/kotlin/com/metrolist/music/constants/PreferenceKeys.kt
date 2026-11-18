@@ -38,6 +38,14 @@ val TrendingRefreshKey = longPreferencesKey("trendingRefresh")
 // Stored as the PaletteStyle enum name; TONAL_SPOT preserves the previous look.
 val ThemePaletteStyleKey = stringPreferencesKey("themePaletteStyle")
 
+// The standalone Shining (champagne-gold) theme. It overrides the seed colour and harmony while
+// enabled, so it is a separate switch rather than another palette seed.
+val ShiningThemeKey = booleanPreferencesKey("shiningTheme")
+
+// Launcher icon variant. "dynamic" keeps the Material You adaptive icon, "static" pins the real
+// Mentsic logo on every launcher. Stored as a plain string so an unknown value is tolerated.
+val LauncherIconVariantKey = stringPreferencesKey("launcherIconVariant")
+
 // Chosen built-in avatar preset (see AvatarPreset). Empty means "use the YouTube account
 // picture". Presets rather than uploads: no storage permissions, no orphaned files.
 val AvatarPresetKey = stringPreferencesKey("avatarPreset")

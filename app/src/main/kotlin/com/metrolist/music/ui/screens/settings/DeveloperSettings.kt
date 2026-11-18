@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -34,12 +35,19 @@ import androidx.navigation.NavController
 import com.metrolist.music.LocalChangelogState
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.constants.LauncherIconVariantKey
 import com.metrolist.music.recognition.RecognitionOverlay
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.LAUNCHER_ICON_DYNAMIC
+import com.metrolist.music.utils.LAUNCHER_ICON_STATIC
+import com.metrolist.music.utils.applyLauncherIconVariant
+import com.metrolist.music.utils.rememberPreference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Hidden developer area, unlocked by typing the secret code in the search bar.
@@ -134,6 +142,52 @@ fun DeveloperSettings(navController: NavController) {
                     onClick = { RecognitionOverlay.requestPermission(context) },
                 ),
             ),
+        )
+
+        Spacer(Modifier.height(Spacing.medium))
+
+        // Launcher icon: the real logo ships enabled by default. The themed adaptive icon stays
+        // reachable here so it can be checked side by side, and applying it persists across
+        // restarts (the manifest only carries the default).
+        val (launcherIconVariant, onLauncherIconVariantChange) =
+            rememberPreference(LauncherIconVariantKey, LAUNCHER_ICON_STATIC)
+        var pendingLauncherVariant by remember { mutableStateOf<String?>(null) }
+
+        LaunchedEffect(pendingLauncherVariant) {
+            val target = pendingLauncherVariant ?: return@LaunchedEffect
+            // Component changes restart the process on some launchers, so persistence comes first.
+            onLauncherIconVariantChange(target)
+            withContext(Dispatchers.IO) { applyLauncherIconVariant(context, target) }
+            pendingLauncherVariant = null
+        }
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.launcher_icon_section),
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.grid_view),
+                        title = { Text(stringResource(R.string.launcher_icon_use_real)) },
+                        description = { Text(stringResource(R.string.launcher_icon_use_real_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = launcherIconVariant == LAUNCHER_ICON_STATIC,
+                                onCheckedChange = { useReal ->
+                                    pendingLauncherVariant =
+                                        if (useReal) LAUNCHER_ICON_STATIC else LAUNCHER_ICON_DYNAMIC
+                                },
+                            )
+                        },
+                        onClick = {
+                            pendingLauncherVariant =
+                                if (launcherIconVariant == LAUNCHER_ICON_STATIC) {
+                                    LAUNCHER_ICON_DYNAMIC
+                                } else {
+                                    LAUNCHER_ICON_STATIC
+                                }
+                        },
+                    ),
+                ),
         )
 
         Spacer(Modifier.height(Spacing.medium))

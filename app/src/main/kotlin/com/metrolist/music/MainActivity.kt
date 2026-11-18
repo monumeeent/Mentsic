@@ -158,6 +158,7 @@ import com.metrolist.music.constants.AvatarShapeKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
+import com.metrolist.music.constants.LauncherIconVariantKey
 import com.metrolist.music.constants.ListenTogetherEnabledKey
 import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
@@ -173,6 +174,7 @@ import com.metrolist.music.constants.PreferredLyricsProviderKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.SYSTEM_DEFAULT
 import com.metrolist.music.constants.SelectedThemeColorKey
+import com.metrolist.music.constants.ShiningThemeKey
 import com.metrolist.music.constants.SimpMusicMigrationDoneKey
 import com.metrolist.music.constants.SlimNavBarHeight
 import com.metrolist.music.constants.SlimNavBarKey
@@ -217,6 +219,8 @@ import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
 import com.metrolist.music.ui.utils.resetHeightOffset
 import com.metrolist.music.utils.ReleaseInfo
+import com.metrolist.music.utils.LAUNCHER_ICON_STATIC
+import com.metrolist.music.utils.applyLauncherIconVariant
 import com.metrolist.music.utils.SearchRoutes
 import com.metrolist.music.utils.SyncUtils
 import com.metrolist.music.utils.ArtistNameAliases
@@ -458,6 +462,12 @@ class MainActivity : FragmentActivity() {
             val preferences = dataStore.data.first()
             val currentVersion = BuildConfig.BASE_VERSION_NAME
 
+            // Re-apply the persisted launcher icon variant. The manifest carries only the default
+            // (real logo), so without this a user who switched to the themed icon would silently
+            // get the default back after the next cold start.
+            val launcherIconVariant = preferences[LauncherIconVariantKey] ?: LAUNCHER_ICON_STATIC
+            runCatching { applyLauncherIconVariant(this@MainActivity, launcherIconVariant) }
+
             // SimpMusic Removal Migration
             if (preferences[SimpMusicMigrationDoneKey] != true) {
                 safeDataStoreEdit { settings ->
@@ -667,6 +677,10 @@ class MainActivity : FragmentActivity() {
         val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
         val selectedThemeColor = Color(selectedThemeColorInt)
 
+        // Shining theme overrides the seed/harmony entirely; a developer toggles it from the
+        // Theme screen. No-op when off.
+        val (shiningTheme) = rememberPreference(ShiningThemeKey, defaultValue = false)
+
         val showChangelog = rememberSaveable { mutableStateOf(false) }
 
         var themeColor by rememberSaveable(stateSaver = ColorSaver) {
@@ -732,6 +746,7 @@ class MainActivity : FragmentActivity() {
             themeColor = themeColor,
             enableOrbitTheme = enableOrbitTheme,
             paletteStyle = paletteStyle,
+            shiningTheme = shiningTheme,
         ) {
             val currentDensity = LocalDensity.current
             val windowInfo = LocalWindowInfo.current

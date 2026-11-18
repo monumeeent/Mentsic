@@ -669,7 +669,8 @@ fun HomeScreen(
     val (hubSelectedFilterId, onHubFilterSelected) = rememberPreference(HubSelectedFilterKey, HubFilter.ALL.id)
     val (hubHeatmapCollapsed, onHubHeatmapCollapsedChange) = rememberPreference(
         HubHeatmapCollapsedKey,
-        defaultValue = false,
+        // Collapsed by default: the heatmap is tall and pushed the rest of the hub off-screen.
+        defaultValue = true,
     )
     val hubSelectedFilter = HubFilter.fromId(hubSelectedFilterId)
 

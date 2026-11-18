@@ -45,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -86,7 +87,9 @@ import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.ListeningHeatmap
 import com.metrolist.music.ui.component.NavigationTitle
+import com.metrolist.music.ui.component.TacticalCollapsibleHeatmapHeader
 import com.metrolist.music.ui.component.title
+import com.metrolist.music.ui.component.mentsic.ShiningRowCard
 import com.metrolist.music.ui.component.shimmer.GridItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
 
@@ -98,6 +101,9 @@ import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberStreakState
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.constants.HomeLayoutPresetKey
+import com.metrolist.music.constants.DeveloperModeKey
+import com.metrolist.music.constants.HubHeatmapCollapsedKey
+import com.metrolist.music.constants.HubModeEnabledKey
 import com.metrolist.music.constants.HomeShowDiscoveryKey
 import com.metrolist.music.constants.HomeShowPersonalSpaceKey
 import com.metrolist.music.constants.HomeShowShufflesKey
@@ -109,6 +115,8 @@ import com.metrolist.music.constants.ShuffleRowsKey
 import com.metrolist.music.constants.SpeedDialColumnsKey
 import com.metrolist.music.constants.SpeedDialRowsKey
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import com.metrolist.music.viewmodels.DailyDiscoverItem
 import com.metrolist.music.viewmodels.HomeViewModel
 import com.metrolist.music.viewmodels.SmartPlaylistViewModel
 import java.time.LocalDate
@@ -172,6 +180,15 @@ fun NewHomeScreen(
     val (showPersonalSpaceFlag) = rememberPreference(HomeShowPersonalSpaceKey, true)
     val (showTopListenedFlag) = rememberPreference(HomeShowTopListenedKey, true)
     val (showDiscoveryFlag) = rememberPreference(HomeShowDiscoveryKey, true)
+
+    // Developer mode gates the Command Hub layout and the shining developer rows.
+    val (developerMode) = rememberPreference(DeveloperModeKey, defaultValue = false)
+
+    // Command Hub layout (same zone structure as the standalone hub screen) with the heatmap
+    // starting collapsed. Both switches live in Settings → Tactical Hub.
+    val (hubModeEnabled) = rememberPreference(HubModeEnabledKey, defaultValue = false)
+    val (hubHeatmapCollapsedFlag, onHubHeatmapCollapsedFlagChange) =
+        rememberPreference(HubHeatmapCollapsedKey, defaultValue = true)
 
     // Developer-mode grid geometry. Clamped so a bad value cannot break the layout.
     val (sdColumns) = rememberPreference(SpeedDialColumnsKey, SPEED_DIAL_COLUMNS)
@@ -340,20 +357,28 @@ fun NewHomeScreen(
                     )
                 }
 
-                if (!isFocused) {
-                    // Personal Space slides: streak, continue listening, top artists.
-                    item(key = "new_home_personal_space") {
-                        PersonalSpacePager(
-                            streakState = streakState,
-                            today = today,
+                // Command Hub layout: the same zones as the standalone hub screen (speed dial,
+                // active session, community picks, collapsible heatmap) rendered inside the
+                // normal feed, so it keeps pull-to-refresh and the live ViewModel data.
+                if (hubModeEnabled) {
+                    item(key = "hub_zone_speed_dial") {
+                        HomeSectionHeaderV2(title = stringResource(R.string.zone1_speed_dial_pager))
+                        HubZoneSpeedDial(
+                            items = uiState.speedDialItems,
+                            onItemClick = { item ->
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route ->
+                                    navController.navigate(route)
+                                }
+                            },
+                        )
+                    }
+
+                    item(key = "hub_zone_active_session") {
+                        HomeSectionHeaderV2(title = stringResource(R.string.zone2_active_session))
+                        HubZoneActiveSession(
                             target = activeSong,
                             isPlaying = isPlaying && activeSong?.id == mediaMetadata?.id,
-                            topArtists = topListened.map { it.orderedArtists.firstOrNull()?.name.orEmpty() }
-                                .filter { it.isNotBlank() }
-                                .distinct()
-                                .take(3),
-                            todayMinutes = todayMinutes,
-                            playsByDay = heatmapPlays,
                             onResume = {
                                 activeSong?.let { target ->
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -370,25 +395,119 @@ fun NewHomeScreen(
                                     }
                                 } ?: navController.navigate("account")
                             },
-                            onOpenPersonalSpace = { navController.navigate("account") },
-                            smartPlaylists = smartPlaylists,
-                            onOpenSmartPlaylist = { navController.navigate("smart_playlist/${it.id}") },
-                            onPlaySmartPlaylist = { playlist ->
-                                playlist.songs.firstOrNull()?.let { first ->
-                                    playerConnection.playQueue(
-                                        YouTubeQueue(
-                                            endpoint = WatchEndpoint(videoId = first.id),
-                                            preloadItem = first.toMediaMetadata(),
-                                        ),
-                                    )
+                        )
+                    }
+
+                    item(key = "hub_zone_community") {
+                        HomeSectionHeaderV2(title = stringResource(R.string.zone3_community_picks))
+                        HubZoneCommunity(
+                            items = uiState.accountPlaylists.orEmpty() +
+                                uiState.dailyDiscover.orEmpty().map<DailyDiscoverItem, YTItem> { it.recommendation },
+                            onItemClick = { item ->
+                                playYouTubeItem(item, playerConnection, mediaMetadata?.id) { route ->
+                                    navController.navigate(route)
                                 }
                             },
                         )
                     }
 
+                    item(key = "hub_zone_heatmap_header") {
+                        TacticalCollapsibleHeatmapHeader(
+                            isCollapsed = hubHeatmapCollapsedFlag,
+                            onToggleCollapse = {
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                onHubHeatmapCollapsedFlagChange(!hubHeatmapCollapsedFlag)
+                            },
+                        )
+                    }
+
+                    if (!hubHeatmapCollapsedFlag) {
+                        item(key = "hub_zone_heatmap") {
+                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium)) {
+                                ListeningHeatmap(playsByDay = heatmapPlays, weeksToShow = 12)
+                            }
+                        }
+                    }
+
+                    if (developerMode) {
+                        item(key = "hub_zone_dev_shining") {
+                            DevShiningRows(
+                                picks = quickPicks.orEmpty().take(4),
+                                activeId = mediaMetadata?.id,
+                                onSongClick = { playSong(it, playerConnection, mediaMetadata?.id) },
+                            )
+                        }
+                    }
+                }
+
+                if (!isFocused && !hubModeEnabled) {
+                    // Personal Space slides: streak, continue listening, top artists.
+                    // Gated by the Home section switch (Settings → Home sections).
+                    if (homePreset.showsPersonalSpace && showPersonalSpaceFlag) {
+                        item(key = "new_home_personal_space") {
+                            PersonalSpacePager(
+                                streakState = streakState,
+                                today = today,
+                                target = activeSong,
+                                isPlaying = isPlaying && activeSong?.id == mediaMetadata?.id,
+                                topArtists = topListened.map { it.orderedArtists.firstOrNull()?.name.orEmpty() }
+                                    .filter { it.isNotBlank() }
+                                    .distinct()
+                                    .take(3),
+                                todayMinutes = todayMinutes,
+                                playsByDay = heatmapPlays,
+                                onResume = {
+                                    activeSong?.let { target ->
+                                        haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                        if (target.id == mediaMetadata?.id) {
+                                            playerConnection.togglePlayPause()
+                                        } else {
+                                            when (target) {
+                                                is ResumeTarget.SongTarget ->
+                                                    playerConnection.playQueue(ListQueue(target.song.title, listOf(target.song.toMediaItem())))
+
+                                                is ResumeTarget.AlbumTarget ->
+                                                    navController.navigate("album/${target.album.id}")
+                                            }
+                                        }
+                                    } ?: navController.navigate("account")
+                                },
+                                onOpenPersonalSpace = { navController.navigate("account") },
+                                onOpenListeningActivity = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                },
+                                smartPlaylists = smartPlaylists,
+                                onOpenSmartPlaylist = { navController.navigate("smart_playlist/${it.id}") },
+                                onPlaySmartPlaylist = { playlist ->
+                                    playlist.songs.firstOrNull()?.let { first ->
+                                        playerConnection.playQueue(
+                                            YouTubeQueue(
+                                                endpoint = WatchEndpoint(videoId = first.id),
+                                                preloadItem = first.toMediaMetadata(),
+                                            ),
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
+
+                    // Developer-only surface: full-width shining rows. This section exists only
+                    // while Developer Mode is on, which is why its cards can animate forever
+                    // without costing regular users any frames.
+                    if (developerMode) {
+                        item(key = "new_home_dev_shining") {
+                            DevShiningRows(
+                                picks = quickPicks.orEmpty().take(4),
+                                activeId = mediaMetadata?.id,
+                                onSongClick = { playSong(it, playerConnection, mediaMetadata?.id) },
+                            )
+                        }
+                    }
+
                     // "YouTube Chart": region-localised trending. 2 rows x 4 columns, placed
                     // above Speed Dial because it is the one section that changes day to day.
-                    if (homePreset.showsTrending && showTrending && trending.isNotEmpty()) {
+                    if (!hubModeEnabled && homePreset.showsTrending && showTrending && trending.isNotEmpty()) {
                         item(key = "new_home_trending") {
                             HomeSectionHeaderV2(title = stringResource(R.string.trending_chart))
                             TrendingChartGrid(
@@ -404,7 +523,7 @@ fun NewHomeScreen(
                         }
                     }
 
-                    if (homePreset.showsSpeedDial && showSpeedDialFlag && uiState.speedDialItems.isNotEmpty()) {
+                    if (!hubModeEnabled && homePreset.showsSpeedDial && showSpeedDialFlag && uiState.speedDialItems.isNotEmpty()) {
                         item(key = "new_home_speed_dial") {
                             HomeSectionHeaderV2(title = stringResource(R.string.speed_dial))
                             HomeSpeedDialGrid(
@@ -431,7 +550,7 @@ fun NewHomeScreen(
                     // 3x3 thumbnail-only shuffle grid, re-rolled on every refresh. The header and
                     // an empty 9-cell grid stay on screen while the library/history query is still
                     // running, so the section never silently disappears from the feed.
-                    if (homePreset.showsShuffles && showShufflesFlag) {
+                    if (!hubModeEnabled && homePreset.showsShuffles && showShufflesFlag) {
                         item(key = "new_home_shuffles") {
                             HomeSectionHeaderV2(title = stringResource(R.string.shuffles))
                             ShuffleGrid(
@@ -450,7 +569,7 @@ fun NewHomeScreen(
                     }
 
                     // Top listened: always 4 cells, padded with placeholders when short.
-                    if (homePreset.showsTopListened && showTopListenedFlag && topListened.isNotEmpty()) {
+                    if (!hubModeEnabled && homePreset.showsTopListened && showTopListenedFlag && topListened.isNotEmpty()) {
                         item(key = "new_home_top_listened") {
                             HomeSectionHeaderV2(title = stringResource(R.string.top_listened))
                             TopListenedRow(
@@ -466,7 +585,7 @@ fun NewHomeScreen(
                 // Curated bands only render in the unfiltered feed; a selected chip replaces them
                 // with the filtered InnerTube sections at the bottom of this block. The discovery
                 // bands are also dropped by the Compact preset, which is deliberately minimal.
-                if (!isFocused) {
+                if (!isFocused && !hubModeEnabled) {
                     if (homePreset.showsDiscovery && showDiscoveryFlag) {
                     quickPicks?.takeIf { it.isNotEmpty() }?.let { songs ->
                         item(key = "new_home_quick_picks") {
@@ -562,6 +681,7 @@ fun NewHomeScreen(
                     ?.distinctBy { it.title }
                     .orEmpty()
                 renderedSections.forEachIndexed { index, section ->
+                    if (hubModeEnabled) return@forEachIndexed
                     item(key = "new_home_section_$index") {
                         HomeSectionHeaderV2(title = section.title)
                         HomeYouTubeRow(
@@ -711,8 +831,9 @@ private sealed interface ResumeTarget {
 }
 
 /**
- * Personal Space slides: a 3-page pager (streak, continue listening, top artists).
- * Each page reuses the same card chrome so the strip reads as one unit.
+ * Personal Space slides: a pager over streak, continue listening, top artists, the optional
+ * Made-for-you page and the listening-activity heatmap. Each page reuses the same card chrome so
+ * the strip reads as one unit.
  */
 @Composable
 private fun PersonalSpacePager(
@@ -726,6 +847,7 @@ private fun PersonalSpacePager(
     smartPlaylists: List<SmartPlaylist>,
     onResume: () -> Unit,
     onOpenPersonalSpace: () -> Unit,
+    onOpenListeningActivity: () -> Unit,
     onOpenSmartPlaylist: (SmartPlaylist) -> Unit,
     onPlaySmartPlaylist: (SmartPlaylist) -> Unit,
 ) {
@@ -733,7 +855,18 @@ private fun PersonalSpacePager(
     // then the heatmap last so the pager always ends on it.
     val hasMadeForYou = smartPlaylists.isNotEmpty()
     val pageCount = if (hasMadeForYou) 5 else 4
+    // The listening-activity card is always the last page; derived rather than hard-coded so the
+    // shortcut keeps working once Made for you appears.
+    val listeningPage = pageCount - 1
     val pagerState = rememberPagerState(pageCount = { pageCount })
+    val scope = rememberCoroutineScope()
+    // While the listening-activity page is on screen the header action must open that card, not
+    // bounce back to the account screen (which lands on the streak card).
+    val onListeningPage = pagerState.currentPage == listeningPage
+    val headerAction =
+        if (onListeningPage) onOpenListeningActivity else onOpenPersonalSpace
+    val headerActionLabel =
+        if (onListeningPage) R.string.listening_activity else R.string.streak_view_details
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -767,9 +900,14 @@ private fun PersonalSpacePager(
                     )
                 }
             }
-            TextButton(onClick = onOpenPersonalSpace) {
+            TextButton(
+                onClick = {
+                    if (!onListeningPage) scope.launch { pagerState.animateScrollToPage(listeningPage) }
+                    headerAction()
+                },
+            ) {
                 Text(
-                    text = stringResource(R.string.streak_view_details),
+                    text = stringResource(headerActionLabel),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -956,36 +1094,60 @@ private fun PersonalSpacePager(
                     }
                     }
                 } else {
-                    PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.heatmap_title),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Spacer(Modifier.height(Spacing.small))
-                            ListeningHeatmap(playsByDay = playsByDay, weeksToShow = 10)
-                        }
-                    }
+                    ListeningActivitySlide(
+                        playsByDay = playsByDay,
+                        todayMinutes = todayMinutes,
+                        onOpen = onOpenListeningActivity,
+                    )
                 }
 
-                else -> PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.heatmap_title),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Spacer(Modifier.height(Spacing.small))
-                        ListeningHeatmap(
-                            playsByDay = playsByDay,
-                            weeksToShow = 10,
-                        )
-                    }
-                }
+                else -> ListeningActivitySlide(
+                    playsByDay = playsByDay,
+                    todayMinutes = todayMinutes,
+                    onOpen = onOpenListeningActivity,
+                )
             }
         }
 
+    }
+}
+
+/**
+ * Listening-activity card: the heatmap plus today's real listening time.
+ *
+ * Clicking it opens the listening-activity destination (not the streak details), which is the
+ * whole point of the card — before this it shared the streak's click target and always landed on
+ * the wrong card.
+ */
+@Composable
+private fun ListeningActivitySlide(
+    playsByDay: Map<String, Int>,
+    todayMinutes: Long,
+    onOpen: () -> Unit,
+) {
+    PersonalSpaceSlide(respond = onOpen) {
+        Column {
+            Text(
+                text = stringResource(R.string.listening_activity),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = stringResource(R.string.today_minutes, todayMinutes),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = stringResource(R.string.heatmap_title),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(Spacing.small))
+            ListeningHeatmap(
+                playsByDay = playsByDay,
+                weeksToShow = 10,
+            )
+        }
     }
 }
 
@@ -1011,6 +1173,175 @@ private fun HomeSectionHeaderV2(title: String) {
     // Reuses the shared home header so typography and the optional Play-all capsule stay in one
     // place; `NavigationTitle` already applies the horizontal system-bar insets.
     NavigationTitle(title = title)
+}
+
+/**
+ * Command Hub zone 1: dense artwork grid (same tile shape as the dev Speed Dial grid, but with a
+ * fixed 3-column layout so the hub stays visually distinct from the regular feed).
+ */
+@Composable
+private fun HubZoneSpeedDial(items: List<YTItem>, onItemClick: (YTItem) -> Unit) {
+    HomeSpeedDialGrid(
+        columns = 3,
+        rows = 3,
+        items = items,
+        activeId = null,
+        isPlaying = false,
+        onItemClick = onItemClick,
+    )
+}
+
+/**
+ * Command Hub zone 2: the single "active session" card — the track you would continue with.
+ *
+ * Kept to one card (rather than a carousel) because the hub is a glanceable summary: one tap
+ * resumes, and everything else is one level down.
+ */
+@Composable
+private fun HubZoneActiveSession(
+    target: ResumeTarget?,
+    isPlaying: Boolean,
+    onResume: () -> Unit,
+) {
+    Surface(
+        onClick = onResume,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.medium)
+            .height(96.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            ) {
+                if (target?.artwork != null) {
+                    AsyncImage(
+                        model = target.artwork,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+            Spacer(Modifier.width(Spacing.medium))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.keep_listening),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = target?.title ?: stringResource(R.string.zone2_active_session),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = target?.subtitle.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(Spacing.small))
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(44.dp),
+            ) {
+                Icon(
+                    painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                    contentDescription = stringResource(R.string.play_pause),
+                    modifier = Modifier.padding(Spacing.small),
+                )
+            }
+        }
+    }
+}
+
+/** Command Hub zone 3: community picks and account playlists as full-width rows. */
+@Composable
+private fun HubZoneCommunity(items: List<YTItem>, onItemClick: (YTItem) -> Unit) {
+    val rows = items.distinctBy { it.id }.take(5)
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    ) {
+        if (rows.isEmpty()) {
+            ShiningRowCard(
+                title = stringResource(R.string.zone3_community_picks),
+                subtitle = stringResource(R.string.dev_shining_rows_loading_desc),
+                leadingIconRes = R.drawable.playlist_play,
+            )
+        } else {
+            rows.forEach { item ->
+                ShiningRowCard(
+                    title = item.title,
+                    subtitle = when (item) {
+                        is PlaylistItem -> stringResource(R.string.curated_by_neon_rider)
+                        is AlbumItem -> stringResource(R.string.filter_albums)
+                        is ArtistItem -> stringResource(R.string.filter_artists)
+                        else -> stringResource(R.string.zone3_community_picks)
+                    },
+                    artworkUrl = item.thumbnail,
+                    leadingIconRes = R.drawable.playlist_play,
+                    trailingIconRes = R.drawable.play,
+                    onClick = { onItemClick(item) },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Developer-only "Shining" list: one full-width animated card per item.
+ *
+ * Mounted only when Developer Mode is on (see the caller), so the continuous light sweep never
+ * runs for regular users. The section is intentionally not part of any preset and is not
+ * affected by the per-section switches — it is a dev surface, not a feed section.
+ */
+@Composable
+private fun DevShiningRows(
+    picks: List<Song>,
+    activeId: String?,
+    onSongClick: (Song) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    ) {
+        HomeSectionHeaderV2(title = stringResource(R.string.dev_shining_rows))
+        if (picks.isEmpty()) {
+            ShiningRowCard(
+                title = stringResource(R.string.dev_shining_rows_loading),
+                subtitle = stringResource(R.string.dev_shining_rows_loading_desc),
+                leadingIconRes = R.drawable.music_note,
+            )
+        } else {
+            picks.forEach { song ->
+                ShiningRowCard(
+                    title = song.title,
+                    subtitle = song.orderedArtists.joinToString { it.name },
+                    artworkUrl = song.thumbnailUrl,
+                    leadingIconRes = R.drawable.music_note,
+                    trailingIconRes = if (song.id == activeId) R.drawable.pause else R.drawable.play,
+                    isActive = song.id == activeId,
+                    onClick = { onSongClick(song) },
+                )
+            }
+        }
+    }
 }
 
 @Composable
