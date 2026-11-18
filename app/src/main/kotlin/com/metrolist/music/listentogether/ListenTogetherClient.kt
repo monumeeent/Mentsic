@@ -2034,7 +2034,7 @@ class ListenTogetherClient
                         val maxMinutes = context.dataStore.get(SessionMaxMinutesKey, 120)
                         if (maxMinutes > 0 && getSessionAge() >= maxMinutes * 60_000L) {
                             log(LogLevel.INFO, "Session limit reached", "leaving after $maxMinutes min")
-                            emitEvent(ListenTogetherEvent.SessionEnded(SessionEndReason.TIME_LIMIT))
+                            emitEvent(ListenTogetherEvent.SessionEnded(ListenTogetherEvent.SessionEndReason.TIME_LIMIT))
                             leaveRoom()
                             break
                         }
@@ -2049,7 +2049,7 @@ class ListenTogetherClient
                             val aloneFor = System.currentTimeMillis() - aloneSince
                             if (aloneFor >= ALONE_GRACE_SECONDS * 1000L) {
                                 log(LogLevel.INFO, "Room abandoned", "alone for $ALONE_GRACE_SECONDS s")
-                                emitEvent(ListenTogetherEvent.SessionEnded(SessionEndReason.ALONE))
+                                emitEvent(ListenTogetherEvent.SessionEnded(ListenTogetherEvent.SessionEndReason.ALONE))
                                 leaveRoom()
                                 break
                             }
