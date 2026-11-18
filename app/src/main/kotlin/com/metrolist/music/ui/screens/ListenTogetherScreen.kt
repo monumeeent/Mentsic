@@ -158,14 +158,18 @@ fun ListenTogetherScreen(
         listenTogetherManager.events.collect { event ->
             when (event) {
                 is ListenTogetherEvent.SessionEnded -> {
+                    // `getString` resolves to Activity/Context methods, not available here; use the
+                    // captured context.
                     val message =
-                        when (event.reason) {
-                            ListenTogetherEvent.SessionEndReason.TIME_LIMIT ->
-                                getString(R.string.listen_together_session_limit)
+                        context.getString(
+                            when (event.reason) {
+                                ListenTogetherEvent.SessionEndReason.TIME_LIMIT ->
+                                    R.string.listen_together_session_limit
 
-                            ListenTogetherEvent.SessionEndReason.ALONE ->
-                                getString(R.string.listen_together_alone_closed)
-                        }
+                                ListenTogetherEvent.SessionEndReason.ALONE ->
+                                    R.string.listen_together_alone_closed
+                            },
+                        )
                     Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     isCreatingRoom = false
                     isJoiningRoom = false

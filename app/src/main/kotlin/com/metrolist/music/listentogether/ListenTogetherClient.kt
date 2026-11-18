@@ -33,6 +33,7 @@ import com.metrolist.music.constants.ListenTogetherServerUrlKey
 import com.metrolist.music.constants.ListenTogetherSessionTimestampKey
 import com.metrolist.music.constants.ListenTogetherSessionTokenKey
 import com.metrolist.music.constants.ListenTogetherUserIdKey
+import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.utils.NetworkConnectivityObserver
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.get
@@ -43,6 +44,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -594,7 +596,8 @@ class ListenTogetherClient
         private var sessionWatchdogJob: Job? = null
 
         /** How long a room may hold a single person before it closes itself. */
-        private const val ALONE_GRACE_SECONDS = 5 * 60
+        // Not `const`: this lives in a class body, where const is not allowed.
+        private val ALONE_GRACE_SECONDS = 5 * 60
 
         // Session info for reconnection
         private var sessionToken: String? = null
@@ -2036,7 +2039,10 @@ class ListenTogetherClient
                             break
                         }
 
-                        // Alone-in-room rule.
+                        // Alone-in-room rule. Only fires when the room holds EXACTLY one person:
+                        // with two or more, the session cap above is the only limit, and a guest
+                        // who is briefly disconnected (users.size == 1 while they reconnect) still
+                        // gets the full grace period from the reset below.
                         val users = _roomState.value?.users.orEmpty()
                         if (users.size == 1) {
                             if (aloneSince == 0L) aloneSince = System.currentTimeMillis()

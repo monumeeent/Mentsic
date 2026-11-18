@@ -100,6 +100,7 @@ fun SettingsScreen(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.grid_view),
                             title = { Text(stringResource(R.string.gallery_title)) },
+                            isHighlighted = true,
                             description = { Text(stringResource(R.string.gallery_how_to)) },
                             onClick = { navController.navigate("settings/widgets") },
                         )
@@ -241,6 +242,7 @@ fun SettingsScreen(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.bug_report),
                             title = { Text(stringResource(R.string.developer_options)) },
+                            isHighlighted = true,
                             onClick = { navController.navigate("settings/developer") }
                         )
                     )

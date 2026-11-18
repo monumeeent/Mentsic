@@ -7,11 +7,8 @@
 
 ## 2. Git Command Restrictions 
 - Trigger this only if user : 
-    a. Fixes error 
-    b. No User Input Needed / No Question is asked 
-    c. After Phase is Completed .
-    d. the user asks to run `git acp` (Add,Commit,Push)
-* **Only Allowed** To Run This 3 Git Commands : Add, Commit, Push. 
+    the user asks to run `git acp` (Add,Commit,Push)
+**Only Allowed** To Run This 3 Git Commands : Add, Commit, Push. 
 - Git Add : add the changed Files
 - Git Commit : Proper Short Message
 - Git Push : Just Push it 

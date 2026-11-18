@@ -1007,6 +1007,7 @@ fun AppearanceSettings(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.fullscreen),
                             title = { Text(stringResource(R.string.enable_landscape_scaling)) },
+                            isHighlighted = true,
                             description = { Text(stringResource(R.string.enable_landscape_scaling_desc)) },
                             trailingContent = {
                                 Switch(
@@ -1060,6 +1061,7 @@ fun AppearanceSettings(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.palette),
                             title = { Text(stringResource(R.string.album_art_theme)) },
+                            isHighlighted = true,
                             description = { Text(stringResource(R.string.album_art_theme_desc)) },
                             trailingContent = {
                                 Switch(

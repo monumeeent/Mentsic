@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 
@@ -120,9 +121,23 @@ private fun Material3SettingsItemRow(
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        MaterialTheme.colorScheme.primary.copy(
-                            alpha = if (item.isHighlighted) 0.15f else 0.1f
-                        )
+                        // Highlighted (developer-only) rows get a brighter accent wash so they
+                        // stand out from the regular options at a glance.
+                        if (item.isHighlighted) {
+                            Brush.linearGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.tertiaryContainer,
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                ),
+                            )
+                        } else {
+                            Brush.linearGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                ),
+                            )
+                        }
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -140,7 +155,7 @@ private fun Material3SettingsItemRow(
                             tint = if (!item.enabled)
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                             else if (item.isHighlighted)
-                                MaterialTheme.colorScheme.primary
+                                MaterialTheme.colorScheme.tertiary
                             else
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
                             modifier = Modifier.size(24.dp)
@@ -153,7 +168,7 @@ private fun Material3SettingsItemRow(
                         tint = if (!item.enabled)
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                         else if (item.isHighlighted)
-                            MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.tertiary
                         else
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
                         modifier = Modifier.size(24.dp)
