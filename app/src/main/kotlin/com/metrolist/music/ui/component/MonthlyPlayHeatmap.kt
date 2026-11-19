@@ -61,19 +61,26 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 /**
- * Five-step intensity scale used by [MonthlyPlayHeatmap].
+ * Five-step intensity scale used by [MonthlyPlayHeatmap], resolved **as a percentage of the peak**.
  *
- * The steps are qualitative ("did I listen, and how hard") rather than proportional, because a
- * linear ramp makes a 4-play day look identical to a 0-play day next to a 60-play marathon.
+ * Absolute thresholds (5 / 15 / 35 plays) only made sense for heavy listeners: someone who plays a
+ * handful of tracks a day would see every single cell stuck at level 1. Measuring each day against
+ * the busiest day in the visible window means the grid always spans the full ramp for that user.
+ *
+ * Buckets: >0–20% → 1, >20–45% → 2, >45–75% → 3, >75% → 4. Any play at all still lights the cell,
+ * so "present but quiet" never looks the same as "did not listen".
  */
-private fun levelFor(plays: Int): Int =
-    when {
-        plays <= 0 -> 0
-        plays <= 5 -> 1
-        plays <= 15 -> 2
-        plays <= 35 -> 3
+private fun levelFor(plays: Int, peakPlays: Int): Int {
+    if (plays <= 0) return 0
+    if (peakPlays <= 0) return 1
+    val fraction = plays.toFloat() / peakPlays
+    return when {
+        fraction <= 0.20f -> 1
+        fraction <= 0.45f -> 2
+        fraction <= 0.75f -> 3
         else -> 4
     }
+}
 
 /**
  * Monthly play heatmap: a calendar-grid visualisation of daily listening.
@@ -83,7 +90,8 @@ private fun levelFor(plays: Int): Int =
  *
  * @param dailyStats per-day aggregates keyed by `yyyy-MM-dd`, from `HomeViewModel.dailyStats`.
  * @param allTime lifetime totals for the ribbon.
- * @param onOpenDay invoked with the tapped date so the caller can resolve the "track of the day".
+ * @param onOpenDay invoked with the tapped date, so the host can open that day's history (the
+ *   same `eventsOnDate` query the old heatmap used) instead of doing per-cell lookups here.
  */
 @Composable
 fun MonthlyPlayHeatmap(
@@ -127,9 +135,15 @@ fun MonthlyPlayHeatmap(
             transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
             label = "heatmap-month",
         ) { animatedMonth ->
+            val monthRows = remember(animatedMonth, byDay) {
+                statsForMonth(animatedMonth, byDay)
+            }
+            // Peak day of the visible month: the denominator for the percentage ramp.
+            val peakPlays = remember(monthRows) { monthRows.maxOfOrNull { it.playCount } ?: 0 }
             MonthGrid(
                 month = animatedMonth,
                 byDay = byDay,
+                peakPlays = peakPlays,
                 selectedDay = selectedDay,
                 onSelectDay = { date ->
                     selectedDay = if (selectedDay == date.toString()) null else date.toString()
@@ -243,6 +257,7 @@ private fun WeekdayHeaderRow() {
 private fun MonthGrid(
     month: YearMonth,
     byDay: Map<String, DailyListeningStats>,
+    peakPlays: Int,
     selectedDay: String?,
     onSelectDay: (LocalDate) -> Unit,
 ) {
@@ -278,6 +293,7 @@ private fun MonthGrid(
                         HeatmapCell(
                             date = date,
                             stats = byDay[iso],
+                            peakPlays = peakPlays,
                             isSelected = selectedDay == iso,
                             isToday = date == today,
                             isFuture = date.isAfter(today),
@@ -297,6 +313,7 @@ private fun MonthGrid(
 private fun HeatmapCell(
     date: LocalDate,
     stats: DailyListeningStats?,
+    peakPlays: Int,
     isSelected: Boolean,
     isToday: Boolean,
     isFuture: Boolean,
@@ -305,7 +322,7 @@ private fun HeatmapCell(
 ) {
     val scheme = MaterialTheme.colorScheme
     val plays = stats?.playCount ?: 0
-    val level = levelFor(plays)
+    val level = levelFor(plays, peakPlays)
 
     // Ramp built from theme roles, so it follows the palette (and turns gold in Shining).
     val fill =

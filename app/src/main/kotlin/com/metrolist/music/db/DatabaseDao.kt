@@ -32,6 +32,8 @@ import com.metrolist.music.db.entities.AlbumEntity
 import com.metrolist.music.db.entities.AlbumWithSongs
 import com.metrolist.music.db.entities.Artist
 import com.metrolist.music.db.entities.ArtistEntity
+import com.metrolist.music.db.entities.AllTimeStats
+import com.metrolist.music.db.entities.DailyListeningStats
 import com.metrolist.music.db.entities.DailyPlayCount
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.EventWithSong
@@ -1554,24 +1556,19 @@ interface DatabaseDao {
     /**
      * Per-day listening aggregate for the monthly heatmap.
      *
-     * One row per day with the play count, total listening time and the most-replayed track, so the
-     * grid and its day capsule render from a single query instead of one query per tapped cell.
-     * `topSongId` is resolved with a correlated subquery ordered by that song's play count for the
-     * day — the same "track of the day" the plan asks for.
+     * One row per day with the play count and total listening time. Deliberately a plain
+     * GROUP BY: an earlier version also resolved "track of the day" with a correlated subquery,
+     * which Room's processor could not resolve and failed the whole KSP task. The top track is
+     * loaded on demand by [eventsOnDate] when a day is actually tapped.
      */
     @Query(
         """
         SELECT date(timestamp / 1000, 'unixepoch') AS day,
                COUNT(*) AS playCount,
-               COALESCE(SUM(playTime), 0) AS listenMillis,
-               (SELECT e2.songId FROM event e2
-                 WHERE date(e2.timestamp / 1000, 'unixepoch') = date(event.timestamp / 1000, 'unixepoch')
-                 GROUP BY e2.songId
-                 ORDER BY COUNT(*) DESC, MAX(e2.timestamp) DESC
-                 LIMIT 1) AS topSongId
+               COALESCE(SUM(playTime), 0) AS listenMillis
         FROM event
         WHERE timestamp >= :cutoffMillis
-        GROUP BY day
+        GROUP BY date(timestamp / 1000, 'unixepoch')
         ORDER BY day ASC
         """,
     )

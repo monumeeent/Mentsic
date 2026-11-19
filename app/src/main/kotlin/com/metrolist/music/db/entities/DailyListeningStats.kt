@@ -8,9 +8,8 @@ package com.metrolist.music.db.entities
 /**
  * One day of listening, aggregated by `DatabaseDao.dailyListeningStats`.
  *
- * Room maps this POJO directly. Everything the heatmap needs for a single cell — brightness,
- * the day capsule's totals and the track of the day — comes from one row, so tapping a cell does
- * not trigger another query for data that was already fetched.
+ * Room maps this POJO directly from the aggregate query. Brightness for a cell and the day
+ * capsule's totals both come from one row, so tapping a day needs no extra lookup.
  */
 data class DailyListeningStats(
     /** ISO day, `yyyy-MM-dd`. */
@@ -18,8 +17,6 @@ data class DailyListeningStats(
     val playCount: Int,
     /** Real listening time, in milliseconds (sum of `Event.playTime`). */
     val listenMillis: Long,
-    /** Song id with the most plays that day, or null when the day has no events. */
-    val topSongId: String?,
 )
 
 /** Lifetime totals, aggregated by `DatabaseDao.allTimeStats`. */
