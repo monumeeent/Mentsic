@@ -17,18 +17,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.metrolist.music.R
 import com.metrolist.music.ui.theme.Spacing
@@ -41,6 +47,10 @@ import java.util.Locale
  * Listening activity over the last [weeksToShow] weeks, GitHub-contribution style.
  *
  * @param playsByDay map of `yyyy-MM-dd` to play count, as returned by `DatabaseDao.dailyPlayCounts`.
+ * @param weeksToShow how many week columns to render. The caller picks the window: 12 for a
+ *   monthly view, fewer for a weekly one.
+ * @param emptyDayAlpha opacity of a day with no plays. Raised by callers that embed the grid in a
+ *   card, where the default "nearly invisible" empty tone reads as a rendering bug.
  *
  * Days with no entry render at the lowest intensity; intensity steps up through four tonal levels
  * derived from `colorScheme.primary`, so the heatmap follows the user's accent colour and pure
@@ -51,6 +61,7 @@ fun ListeningHeatmap(
     playsByDay: Map<String, Int>,
     modifier: Modifier = Modifier,
     weeksToShow: Int = 18,
+    emptyDayAlpha: Float = 1f,
 ) {
     val scheme = MaterialTheme.colorScheme
     val today = remember { LocalDate.now() }
@@ -64,11 +75,12 @@ fun ListeningHeatmap(
     val maxPlays = remember(playsByDay) { playsByDay.values.maxOrNull() ?: 0 }
 
     // Four intensity steps, plus the empty tone. Alphas rather than distinct colours keeps every
-    // step readable on both the light and pure-black surfaces.
+    // step readable on both the light and pure-black surfaces. `emptyDayAlpha` lets a caller draw
+    // idle days more firmly when the grid sits on an already-tinted card.
     val levels =
-        remember(scheme.primary) {
+        remember(scheme.primary, scheme.surfaceContainerHighest, emptyDayAlpha) {
             listOf(
-                scheme.surfaceContainerHighest,
+                scheme.surfaceContainerHighest.copy(alpha = emptyDayAlpha),
                 scheme.primary.copy(alpha = 0.28f),
                 scheme.primary.copy(alpha = 0.52f),
                 scheme.primary.copy(alpha = 0.76f),
@@ -174,16 +186,46 @@ fun ListeningHeatmap(
 
 private val CELL_SIZE = 11.dp
 
+/** Window sizes offered by [ListeningHeatmapCard]. */
+enum class HeatmapRange(
+    val weeks: Int,
+    val labelRes: Int,
+) {
+    /** Two weekly columns plus the current week: a "this week / last week" glance. */
+    WEEKLY(2, R.string.heatmap_range_weekly),
+    MONTHLY(4, R.string.heatmap_range_monthly),
+}
+
 /**
- * Card wrapper used by the Account screen: title, total, divider, then the grid.
+ * Listening-activity card: range selector, headline numbers, then the grid.
+ *
+ * Today's minutes deliberately live on the Personal Space streak card instead — this card answers
+ * "how consistent was I over the week/month", not "how long have I listened today".
  */
 @Composable
 fun ListeningHeatmapCard(
     playsByDay: Map<String, Int>,
     modifier: Modifier = Modifier,
+    initialRange: HeatmapRange = HeatmapRange.MONTHLY,
 ) {
-    val total = remember(playsByDay) { playsByDay.values.sum() }
-    val activeDays = remember(playsByDay) { playsByDay.count { it.value > 0 } }
+    var range by rememberSaveable { mutableStateOf(initialRange) }
+
+    val today = remember { LocalDate.now() }
+    val windowStart = remember(today, range) { today.minusWeeks((range.weeks - 1).toLong()).with(DayOfWeek.MONDAY) }
+
+    // Only days inside the selected window count towards the headline numbers, so switching
+    // Weekly → Monthly changes the totals instead of leaving last month silently included.
+    val windowPlays =
+        remember(playsByDay, windowStart, today) {
+            playsByDay.filterKeys { key ->
+                runCatching {
+                    val date = LocalDate.parse(key)
+                    !date.isBefore(windowStart) && !date.isAfter(today)
+                }.getOrDefault(false)
+            }
+        }
+    val total = remember(windowPlays) { windowPlays.values.sum() }
+    val activeDays = remember(windowPlays) { windowPlays.count { it.value > 0 } }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -191,30 +233,111 @@ fun ListeningHeatmapCard(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(modifier = Modifier.padding(Spacing.medium)) {
-            Text(
-                text = stringResource(R.string.heatmap_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = pluralPlays(total) + " · " + pluralActiveDays(activeDays),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.heatmap_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.heatmap_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(Spacing.small))
+
+            // Weekly / Monthly segmented switch.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+                HeatmapRange.entries.forEach { option ->
+                    val selected = option == range
+                    FilterChip(
+                        selected = selected,
+                        onClick = { range = option },
+                        label = {
+                            Text(
+                                text = stringResource(option.labelRes),
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(Spacing.medium))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+                HeatmapStat(
+                    value = total.toString(),
+                    label = stringResource(R.string.heatmap_stat_plays),
+                    modifier = Modifier.weight(1f),
+                )
+                HeatmapStat(
+                    value = activeDays.toString(),
+                    label = stringResource(R.string.heatmap_stat_active_days),
+                    modifier = Modifier.weight(1f),
+                )
+                HeatmapStat(
+                    value = remember(total, activeDays) {
+                        if (activeDays == 0) "—" else (total / activeDays).toString()
+                    },
+                    label = stringResource(R.string.heatmap_stat_avg),
+                    modifier = Modifier.weight(1f),
+                )
+            }
 
             Spacer(Modifier.height(Spacing.medium))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(Modifier.height(Spacing.medium))
 
-            ListeningHeatmap(playsByDay = playsByDay)
+            ListeningHeatmap(
+                playsByDay = playsByDay,
+                weeksToShow = range.weeks,
+                emptyDayAlpha = 0.9f,
+            )
         }
     }
 }
 
+/** One headline number inside [ListeningHeatmapCard]. */
 @Composable
-private fun pluralPlays(count: Int): String =
-    androidx.compose.ui.res.pluralStringResource(R.plurals.plays_count, count, count)
-
-@Composable
-private fun pluralActiveDays(count: Int): String =
-    androidx.compose.ui.res.pluralStringResource(R.plurals.active_days_count, count, count)
+private fun HeatmapStat(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(modifier = Modifier.padding(vertical = Spacing.small, horizontal = Spacing.small)) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+    }
+}

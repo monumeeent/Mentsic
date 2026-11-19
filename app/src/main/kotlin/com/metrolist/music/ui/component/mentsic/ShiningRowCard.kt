@@ -1,16 +1,17 @@
 /**
- * Mentsic Music — Shining horizontal row card.
+ * Mentsic Music — Shining row card.
  *
- * A full-width, one-line list row: leading artwork slot, title/subtitle stack and a trailing
- * action slot. The card is drawn with the theme's own surface tokens and carries an animated
- * light sweep across its whole width.
+ * A full-width horizontal row that *marks itself as developer-only*: the container carries the
+ * shared developer-only gradient wash (see `ui/theme/DeveloperOnly.kt`) plus a slow light sweep.
+ * Regular users never see these rows, so the extra tint is a signal — "this section exists only
+ * in Developer Mode" — rather than decoration on normal content.
  *
- * This component is used by surfaces that only exist while Developer Mode is on (the Command Hub
- * home layout), which is why it may animate continuously: it is never part of the normal feed.
- *
- * Rulebook compliance: no raw colours are used for the surface, text or icon roles. The only
- * literal colours are the white sweep highlight and its transparent counterpart, which are
- * luminance values, not palette roles (same approach as `GlassTokens`).
+ * Design notes:
+ *  - The gradient comes from theme roles only, so it follows the active palette (gold in the
+ *    Shining theme, violet in the default one) instead of hard-coding a colour.
+ *  - The sweep is a single `horizontalGradient` whose animated offset moves across the card. Its
+ *    stops are computed from fractions of the measured width and are always strictly increasing,
+ *    because `Brush.horizontalGradient` rejects duplicate/descending offsets.
  */
 
 package com.metrolist.music.ui.component.mentsic
@@ -24,7 +25,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,31 +48,37 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.metrolist.music.R
 import com.metrolist.music.ui.theme.Spacing
-import com.metrolist.music.ui.theme.isShiningThemeActive
+import com.metrolist.music.ui.theme.developerOnlyAccent
+import com.metrolist.music.ui.theme.developerOnlyBadgeBackground
+import com.metrolist.music.ui.theme.developerOnlyRowBrush
 
 /** Height of a shining row; matches the app's standard 72dp list rhythm. */
-private val RowHeight = 72.dp
+private val RowHeight = 76.dp
 
 /** Duration of one full sweep across the card. Slow enough to read as a highlight, not a strobe. */
-private const val ShineDurationMillis = 2600
+private const val ShineDurationMillis = 3200
 
 /** Peak opacity of the sweep. Kept low so text remains legible at every position. */
-private const val ShinePeakAlpha = 0.22f
+private const val ShinePeakAlpha = 0.18f
 
 /**
- * Full-width horizontal card with a light sweep.
+ * Full-width horizontal card that visually flags a developer-only feature.
  *
  * @param title primary line (song/playlist/section name).
  * @param subtitle secondary line (artist, count or a short description); hidden when blank.
  * @param isActive marks the item that is currently playing.
- * @param artworkUrl optional artwork; a music-note glyph is drawn when null.
+ * @param artworkUrl optional artwork; [leadingIconRes] is drawn when null.
  * @param leadingIconRes drawn inside the artwork slot when no artwork is available.
  * @param trailingIconRes icon at the end of the row (usually a play or more-vert glyph).
+ * @param showDevBadge draws the small "DEV" pill; on by default because this card is only ever
+ *   used for developer-only content.
  */
 @Composable
 fun ShiningRowCard(
@@ -83,13 +89,12 @@ fun ShiningRowCard(
     artworkUrl: String? = null,
     leadingIconRes: Int? = null,
     trailingIconRes: Int? = null,
+    showDevBadge: Boolean = true,
     onClick: () -> Unit = {},
 ) {
     val shape = MaterialTheme.shapes.large
-    // The sweep only animates inside the Shining theme (and the dev-only layouts that use this
-    // card). Everywhere else the transition is still created but the target is a static, fully
-    // transparent gradient.
-    val shineEnabled = isShiningThemeActive()
+    // The wash is drawn over the normal container colour, so text keeps its usual contrast.
+    val wash = developerOnlyRowBrush()
 
     Surface(
         modifier = modifier
@@ -105,7 +110,10 @@ fun ShiningRowCard(
         },
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            ShineOverlay(enabled = shineEnabled)
+            // 1. Developer-only gradient wash (static identity).
+            Box(modifier = Modifier.fillMaxSize().background(wash))
+            // 2. Animated sweep on top of the wash (motion identity).
+            ShineOverlay()
 
             Row(
                 modifier = Modifier
@@ -142,17 +150,38 @@ fun ShiningRowCard(
                         )
                     }
                 }
+                if (showDevBadge) {
+                    Spacer(Modifier.width(Spacing.small))
+                    DevBadge()
+                }
                 if (trailingIconRes != null) {
                     Spacer(Modifier.width(Spacing.small))
                     Icon(
                         painter = painterResource(trailingIconRes),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = developerOnlyAccent(),
                         modifier = Modifier.size(24.dp),
                     )
                 }
             }
         }
+    }
+}
+
+/** Small "DEV" pill that labels a developer-only row. */
+@Composable
+private fun DevBadge() {
+    Surface(
+        shape = CircleShape,
+        color = developerOnlyBadgeBackground(),
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+    ) {
+        Text(
+            text = stringResource(R.string.dev_badge),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = Spacing.small, vertical = 2.dp),
+        )
     }
 }
 
@@ -187,7 +216,7 @@ private fun ArtworkSlot(
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = developerOnlyAccent(),
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -195,15 +224,14 @@ private fun ArtworkSlot(
 }
 
 /**
- * Diagonal light sweep travelling left to right across the card.
+ * Light sweep travelling left to right across the card.
  *
- * Two passes are painted: a narrow bright core and a wider soft halo, so the highlight reads as
- * glass rather than a stripe. When [enabled] is false the brush is fully transparent and the
- * infinite transition still exists but is invisible.
+ * A single gradient is used with five stops that follow the animated position; the stops are
+ * clamped into 0..0.95f and then forced to be strictly increasing, which is what
+ * `Brush.horizontalGradient` requires.
  */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun ShineOverlay(enabled: Boolean) {
+private fun ShineOverlay() {
     val transition = rememberInfiniteTransition(label = "shining-row")
     val progress by transition.animateFloat(
         initialValue = -0.6f,
@@ -215,67 +243,38 @@ private fun ShineOverlay(enabled: Boolean) {
         label = "shining-row-progress",
     )
 
-    if (!enabled) return
+    if (progress < 0f || progress > 1f) return
+    val stops = buildShineStops(center = progress)
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        // `maxWidth` (a Dp) is available here because we are inside the constraints scope. The
-        // band is positioned in Dp and then normalised to 0..1f offsets for the gradient, which
-        // keeps every stop strictly increasing — `horizontalGradient` rejects duplicates and
-        // descending offsets, and clamping a normalized value can produce both.
-        val width = maxWidth.value
-        if (width <= 0f) return@BoxWithConstraints
-
-        val center = progress * width
-        val haloHalf = width * 0.30f
-        val coreHalf = width * 0.10f
-
-        val stops = buildShineStops(
-            left = center - haloHalf,
-            coreLeft = center - coreHalf,
-            centerX = center,
-            coreRight = center + coreHalf,
-            right = center + haloHalf,
-            width = width,
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Brush.horizontalGradient(colorStops = stops)),
-        )
-    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.horizontalGradient(colorStops = stops)),
+    )
 }
 
 /**
  * Builds a strictly increasing stop list for the sweeping highlight.
  *
- * `Brush.horizontalGradient` throws when two stops share an offset, and when the band has left
- * the card several of the computed offsets collapse onto 0f or 1f. Sorting alone is not enough,
- * so after normalising each offset is nudged to the next representable step whenever it fails to
- * advance on its predecessor.
+ * All offsets are fractions of the card width (0 = left edge, 1 = right edge). When the band has
+ * slid off the card the computed offsets collapse onto the same value, which `horizontalGradient`
+ * rejects, so each offset that fails to advance on its predecessor is nudged forward by a small
+ * epsilon. The 0.95f ceiling leaves room for those nudges.
  */
-private fun buildShineStops(
-    left: Float,
-    coreLeft: Float,
-    centerX: Float,
-    coreRight: Float,
-    right: Float,
-    width: Float,
-): Array<Pair<Float, Color>> {
-    // Five stops need five distinct slots; reserve 5% headroom below 1f so the "nudge" below can
-    // never run out of room when the band has slid off the card.
+private fun buildShineStops(center: Float): Array<Pair<Float, Color>> {
+    fun stop(offset: Float, color: Color): Pair<Float, Color> =
+        offset.coerceIn(0f, 0.95f) to color
+
     val normalized = listOf(
-        (left / width).coerceIn(0f, 0.95f) to Color.Transparent,
-        (coreLeft / width).coerceIn(0f, 0.95f) to Color.Transparent,
-        (centerX / width).coerceIn(0f, 0.95f) to Color.White.copy(alpha = ShinePeakAlpha),
-        (coreRight / width).coerceIn(0f, 0.95f) to Color.Transparent,
-        (right / width).coerceIn(0f, 0.95f) to Color.Transparent,
+        stop(center - 0.30f, Color.Transparent),
+        stop(center - 0.10f, Color.Transparent),
+        stop(center, Color.White.copy(alpha = ShinePeakAlpha)),
+        stop(center + 0.10f, Color.Transparent),
+        stop(center + 0.30f, Color.Transparent),
     ).sortedBy { it.first }
 
     var previous = 0f
     return normalized.map { (offset, color) ->
-        // Strictly increasing: equal or out-of-order offsets are pushed just past their
-        // predecessor, which stays inside 0..1f thanks to the 0.95f ceiling above.
         val next = if (offset > previous) offset else previous + 0.004f
         previous = next
         next to color

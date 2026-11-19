@@ -93,6 +93,7 @@ fun TacticalHubSettings(navController: NavController) {
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.grid_view),
                             title = { Text(stringResource(R.string.tactical_hub_enable)) },
+                            isDeveloperOnly = true,
                             description = {
                                 Text(
                                     stringResource(

@@ -1007,7 +1007,7 @@ fun AppearanceSettings(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.fullscreen),
                             title = { Text(stringResource(R.string.enable_landscape_scaling)) },
-                            isHighlighted = true,
+                            isDeveloperOnly = true,
                             description = { Text(stringResource(R.string.enable_landscape_scaling_desc)) },
                             trailingContent = {
                                 Switch(
@@ -1061,7 +1061,7 @@ fun AppearanceSettings(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.palette),
                             title = { Text(stringResource(R.string.album_art_theme)) },
-                            isHighlighted = true,
+                            isDeveloperOnly = true,
                             description = { Text(stringResource(R.string.album_art_theme_desc)) },
                             trailingContent = {
                                 Switch(
@@ -1099,6 +1099,7 @@ fun AppearanceSettings(
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.nav_bar),
                                 title = { Text(stringResource(R.string.home_preset)) },
+                                isDeveloperOnly = true,
                                 description = { Text(stringResource(homePreset.descriptionRes)) },
                                 onClick = { showHomePresetDialog = true },
                             ),
@@ -1107,6 +1108,7 @@ fun AppearanceSettings(
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.grid_view),
                                 title = { Text(stringResource(R.string.tactical_hub_dark)) },
+                                isDeveloperOnly = true,
                                 description = {
                                     Text(
                                         stringResource(
@@ -1141,6 +1143,7 @@ fun AppearanceSettings(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.nav_bar),
                             title = { Text(stringResource(R.string.new_mini_player_design)) },
+                            isDeveloperOnly = true,
                             trailingContent = {
                                 Switch(
                                     checked = useNewMiniPlayerDesign,

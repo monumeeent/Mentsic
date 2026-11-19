@@ -260,6 +260,8 @@
     <string name="streak_total">Total</string>
     <string name="streak_view_details">View Details</string>
     <string name="listening_activity">Listening activity</string>
+    <string name="heatmap_period_weekly">Weekly</string>
+    <string name="heatmap_period_monthly">Monthly</string>
     <string name="streak_how_it_works">How do streaks work?</string>
     <string name="streak_rule_1">Play at least one song each day to build your streak.</string>
     <string name="streak_rule_2">Each day you listen, your streak increases by one.</string>
@@ -702,6 +704,15 @@
     <string name="shining_theme_active">Active</string>
     <string name="shining_theme_preview">Preview</string>
 
+    <!-- Listening heatmap: range selector and headline stats -->
+    <string name="heatmap_range_weekly">Weekly</string>
+    <string name="heatmap_range_monthly">Monthly</string>
+    <string name="heatmap_subtitle">Plays per day, brighter means more</string>
+    <string name="heatmap_stat_plays">Plays</string>
+    <string name="heatmap_stat_active_days">Active days</string>
+    <string name="heatmap_stat_avg">Avg / day</string>
+    <string name="heatmap_short_title">Heatmap</string>
+
     <!-- Launcher icon picker (Developer settings) -->
     <string name="launcher_icon_section">Launcher icon</string>
     <string name="launcher_icon_use_real">Use Mentsic logo</string>
@@ -709,6 +720,7 @@
     <string name="launcher_icon_restart_hint">The launcher may refresh the icon after you return to the home screen.</string>
 
     <!-- Developer-only shining rows on the home feed -->
+    <string name="dev_badge">DEV</string>
     <string name="dev_shining_rows">Shining rows (dev)</string>
     <string name="dev_shining_rows_loading">Loading your picks…</string>
     <string name="dev_shining_rows_loading_desc">Shining cards appear here once Quick Picks are ready.</string>

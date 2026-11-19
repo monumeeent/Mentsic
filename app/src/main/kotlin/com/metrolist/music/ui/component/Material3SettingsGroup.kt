@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import com.metrolist.music.ui.theme.developerOnlyBrush
 
 /**
  * A Material 3 Expressive style settings group component
@@ -87,7 +88,18 @@ fun Material3SettingsGroup(
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Material3SettingsItemRow(item = item)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        // Developer-only rows are washed with the shared dev gradient so they are
+                        // recognisable at a glance (they cannot be reached without Developer Mode).
+                        if (item.isDeveloperOnly) {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(developerOnlyBrush()),
+                            )
+                        }
+                        Material3SettingsItemRow(item = item)
+                    }
                 }
             }
         }
@@ -123,7 +135,7 @@ private fun Material3SettingsItemRow(
                     .background(
                         // Highlighted (developer-only) rows get a brighter accent wash so they
                         // stand out from the regular options at a glance.
-                        if (item.isHighlighted) {
+                        if (item.isDeveloperOnly) {
                             Brush.linearGradient(
                                 listOf(
                                     MaterialTheme.colorScheme.tertiaryContainer,
@@ -154,7 +166,7 @@ private fun Material3SettingsItemRow(
                             contentDescription = null,
                             tint = if (!item.enabled)
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                            else if (item.isHighlighted)
+                            else if (item.isDeveloperOnly)
                                 MaterialTheme.colorScheme.tertiary
                             else
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
@@ -167,7 +179,7 @@ private fun Material3SettingsItemRow(
                         contentDescription = null,
                         tint = if (!item.enabled)
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        else if (item.isHighlighted)
+                        else if (item.isDeveloperOnly)
                             MaterialTheme.colorScheme.tertiary
                         else
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
@@ -229,7 +241,7 @@ data class Material3SettingsItem(
     val description: (@Composable () -> Unit)? = null,
     val trailingContent: (@Composable () -> Unit)? = null,
     val showBadge: Boolean = false,
-    val isHighlighted: Boolean = false,
+    val isDeveloperOnly: Boolean = false,
     val enabled: Boolean = true,
     val onClick: (() -> Unit)? = null
 )

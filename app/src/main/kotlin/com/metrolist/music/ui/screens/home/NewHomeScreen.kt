@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -44,11 +45,15 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -96,6 +101,8 @@ import com.metrolist.music.ui.component.shimmer.ShimmerHost
 import com.metrolist.music.ui.theme.GlassTokens
 import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.ui.theme.Spacing
+import com.metrolist.music.ui.theme.developerOnlyBadgeBackground
+import com.metrolist.music.ui.theme.developerOnlyBrush
 import com.metrolist.music.utils.StreakState
 import com.metrolist.music.utils.StreakTracker
 import com.metrolist.music.utils.rememberStreakState
@@ -918,11 +925,12 @@ private fun PersonalSpacePager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = Spacing.medium),
             pageSpacing = Spacing.small,
-            // 168dp -> 116dp: the old card reserved space for two lines of body text and a
-            // large streak number, most of which sat empty. Content is tightened to match.
+            // 116dp fits the streak / continue-listening / top-artist pages. The heatmap page needs
+            // more vertical room, so the pager as a whole is sized for its tallest page and the
+            // short pages centre their content inside the space.
             modifier = Modifier
                 .fillMaxWidth()
-                .height(116.dp),
+                .height(156.dp),
         ) { page ->
             when (page) {
                 0 -> PersonalSpaceSlide(respond = { onOpenPersonalSpace() }) {
@@ -1096,14 +1104,12 @@ private fun PersonalSpacePager(
                 } else {
                     ListeningActivitySlide(
                         playsByDay = playsByDay,
-                        todayMinutes = todayMinutes,
                         onOpen = onOpenListeningActivity,
                     )
                 }
 
                 else -> ListeningActivitySlide(
                     playsByDay = playsByDay,
-                    todayMinutes = todayMinutes,
                     onOpen = onOpenListeningActivity,
                 )
             }
@@ -1113,41 +1119,93 @@ private fun PersonalSpacePager(
 }
 
 /**
- * Listening-activity card: the heatmap plus today's real listening time.
+ * Listening-activity card: a compact heatmap with a weekly / monthly window switch.
  *
- * Clicking it opens the listening-activity destination (not the streak details), which is the
- * whole point of the card — before this it shared the streak's click target and always landed on
- * the wrong card.
+ * Deliberately shows only the activity windows — no "today's minutes" readout. That number lives
+ * on the streak page and, duplicated here, competed with the heatmap for the little vertical
+ * space the card has.
+ *
+ * Clicking the card body opens the listening-activity destination; the period chips handle their
+ * own clicks and do not bubble up.
  */
 @Composable
 private fun ListeningActivitySlide(
     playsByDay: Map<String, Int>,
-    todayMinutes: Long,
     onOpen: () -> Unit,
 ) {
+    // Two weekly columns = "this week + last week" (a glance), four monthly columns = the last
+    // month. Wider windows make each cell too small to read inside the Personal Space card.
+    var weekly by rememberSaveable { mutableStateOf(true) }
+    val weeksToShow = if (weekly) 2 else 4
+
     PersonalSpaceSlide(respond = onOpen) {
-        Column {
-            Text(
-                text = stringResource(R.string.listening_activity),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.today_minutes, todayMinutes),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = stringResource(R.string.heatmap_title),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.heatmap_short_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f),
+                )
+                // Two compact period chips. They stop the touch from reaching the card's
+                // click target so switching the window never navigates away.
+                PeriodChip(
+                    label = stringResource(R.string.heatmap_period_weekly),
+                    selected = weekly,
+                    onClick = { weekly = true },
+                )
+                Spacer(Modifier.width(Spacing.tiny))
+                PeriodChip(
+                    label = stringResource(R.string.heatmap_period_monthly),
+                    selected = !weekly,
+                    onClick = { weekly = false },
+                )
+            }
             Spacer(Modifier.height(Spacing.small))
-            ListeningHeatmap(
-                playsByDay = playsByDay,
-                weeksToShow = 10,
-            )
+            Box(
+                modifier = Modifier.pointerInput(Unit) {
+                    // Swallow drags so the heatmap can be inspected without paging the carousel.
+                    detectHorizontalDragGestures { _, _ -> }
+                },
+            ) {
+                ListeningHeatmap(
+                    playsByDay = playsByDay,
+                    weeksToShow = weeksToShow,
+                    // The card already has a glass tint; a firmer empty tone keeps idle days
+                    // visible instead of reading as a missing grid.
+                    emptyDayAlpha = 1f,
+                )
+            }
         }
+    }
+}
+
+/** Small pill used for the weekly / monthly window switch on the heatmap card. */
+@Composable
+private fun PeriodChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHighest
+        },
+        contentColor = if (selected) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = Spacing.small, vertical = 2.dp),
+        )
     }
 }
 
@@ -1305,6 +1363,46 @@ private fun HubZoneCommunity(items: List<YTItem>, onItemClick: (YTItem) -> Unit)
 }
 
 /**
+ * Section header for developer-only content.
+ *
+ * Same rhythm as [HomeSectionHeaderV2] but with the shared dev gradient behind a "DEV" pill, so
+ * the whole block reads as one dev-only surface rather than as a normal feed section.
+ */
+@Composable
+private fun DevSectionHeader(label: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(developerOnlyBrush())
+            .padding(horizontal = Spacing.medium, vertical = Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = developerOnlyBadgeBackground(),
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        ) {
+            Text(
+                text = stringResource(R.string.dev_badge),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = Spacing.small, vertical = 2.dp),
+            )
+        }
+        Spacer(Modifier.width(Spacing.small))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
  * Developer-only "Shining" list: one full-width animated card per item.
  *
  * Mounted only when Developer Mode is on (see the caller), so the continuous light sweep never
@@ -1321,7 +1419,7 @@ private fun DevShiningRows(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        HomeSectionHeaderV2(title = stringResource(R.string.dev_shining_rows))
+        DevSectionHeader(label = stringResource(R.string.dev_shining_rows))
         if (picks.isEmpty()) {
             ShiningRowCard(
                 title = stringResource(R.string.dev_shining_rows_loading),
