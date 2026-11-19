@@ -130,9 +130,9 @@ import com.metrolist.music.viewmodels.SmartPlaylistViewModel
 import java.time.LocalDate
 import java.util.Calendar
 
-/** Shuffle sampler geometry: 3 x 3 = 9 cells by default; the grid is full width. */
-private const val SHUFFLE_COLUMNS = 3
-private const val SHUFFLE_ROWS = 3
+/** Shuffle sampler geometry: 5 columns x 2 rows = 10 cells by default; the grid is full width. */
+private const val SHUFFLE_COLUMNS = 5
+private const val SHUFFLE_ROWS = 2
 private const val SHUFFLE_CELLS = SHUFFLE_COLUMNS * SHUFFLE_ROWS
 
 
@@ -142,9 +142,9 @@ private const val TRENDING_COLUMNS = 4
 private const val TRENDING_ROWS = 2
 private const val TRENDING_CELLS = TRENDING_COLUMNS * TRENDING_ROWS
 
-/** Speed Dial geometry: 4 columns x 6 rows = 24 artwork-only tiles. */
-private const val SPEED_DIAL_COLUMNS = 4
-private const val SPEED_DIAL_ROWS = 6
+/** Speed Dial geometry: 6 columns x 3 rows = 18 artwork-only tiles. */
+private const val SPEED_DIAL_COLUMNS = 6
+private const val SPEED_DIAL_ROWS = 3
 private const val SPEED_DIAL_CELLS = SPEED_DIAL_COLUMNS * SPEED_DIAL_ROWS
 
 /**
@@ -1342,30 +1342,21 @@ private fun HubZoneCommunity(items: List<YTItem>, onItemClick: (YTItem) -> Unit)
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        if (rows.isEmpty()) {
+        rows.forEach { item ->
             ShiningRowCard(
-                title = stringResource(R.string.zone3_community_picks),
-                subtitle = stringResource(R.string.dev_shining_rows_loading_desc),
+                title = item.title,
+                subtitle = when (item) {
+                    is PlaylistItem -> stringResource(R.string.curated_by_neon_rider)
+                    is AlbumItem -> stringResource(R.string.filter_albums)
+                    is ArtistItem -> stringResource(R.string.filter_artists)
+                    else -> stringResource(R.string.zone3_community_picks)
+                },
+                artworkUrl = item.thumbnail,
                 leadingIconRes = R.drawable.playlist_play,
+                trailingIconRes = R.drawable.play,
                 isDeveloperOnly = false,
+                onClick = { onItemClick(item) },
             )
-        } else {
-            rows.forEach { item ->
-                ShiningRowCard(
-                    title = item.title,
-                    subtitle = when (item) {
-                        is PlaylistItem -> stringResource(R.string.curated_by_neon_rider)
-                        is AlbumItem -> stringResource(R.string.filter_albums)
-                        is ArtistItem -> stringResource(R.string.filter_artists)
-                        else -> stringResource(R.string.zone3_community_picks)
-                    },
-                    artworkUrl = item.thumbnail,
-                    leadingIconRes = R.drawable.playlist_play,
-                    trailingIconRes = R.drawable.play,
-                    isDeveloperOnly = false,
-                    onClick = { onItemClick(item) },
-                )
-            }
         }
     }
 }
@@ -1428,24 +1419,18 @@ private fun DevShiningRows(
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
         DevSectionHeader(label = stringResource(R.string.dev_shining_rows))
-        if (picks.isEmpty()) {
+        // Nothing is rendered until real picks exist — a placeholder row only told the user what
+        // they already knew (that the list was loading) and left a fake "card" on screen.
+        picks.forEach { song ->
             ShiningRowCard(
-                title = stringResource(R.string.dev_shining_rows_loading),
-                subtitle = stringResource(R.string.dev_shining_rows_loading_desc),
+                title = song.title,
+                subtitle = song.orderedArtists.joinToString { it.name },
+                artworkUrl = song.thumbnailUrl,
                 leadingIconRes = R.drawable.music_note,
+                trailingIconRes = if (song.id == activeId) R.drawable.pause else R.drawable.play,
+                isActive = song.id == activeId,
+                onClick = { onSongClick(song) },
             )
-        } else {
-            picks.forEach { song ->
-                ShiningRowCard(
-                    title = song.title,
-                    subtitle = song.orderedArtists.joinToString { it.name },
-                    artworkUrl = song.thumbnailUrl,
-                    leadingIconRes = R.drawable.music_note,
-                    trailingIconRes = if (song.id == activeId) R.drawable.pause else R.drawable.play,
-                    isActive = song.id == activeId,
-                    onClick = { onSongClick(song) },
-                )
-            }
         }
     }
 }

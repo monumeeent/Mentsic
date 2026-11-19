@@ -78,6 +78,7 @@ fun DeveloperSettings(navController: NavController) {
         // a real index instead of two links and a "coming soon" placeholder.
         Material3SettingsGroup(
             title = stringResource(R.string.developer_options),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     Material3SettingsItem(
@@ -122,6 +123,7 @@ fun DeveloperSettings(navController: NavController) {
 
         Material3SettingsGroup(
             title = stringResource(R.string.recognizer_overlay_title),
+            isDeveloperGroup = true,
             items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.ic_widget_mic),
@@ -163,6 +165,7 @@ fun DeveloperSettings(navController: NavController) {
 
         Material3SettingsGroup(
             title = stringResource(R.string.launcher_icon_section),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     Material3SettingsItem(
@@ -195,6 +198,7 @@ fun DeveloperSettings(navController: NavController) {
 
         Material3SettingsGroup(
             title = stringResource(R.string.developer_diagnostics),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     Material3SettingsItem(

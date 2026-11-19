@@ -77,10 +77,12 @@ import com.metrolist.music.R
 import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.YouTubeQueue
 import androidx.compose.material3.IconButton
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -142,6 +144,8 @@ fun AboutScreen(
 ) {
     val uriHandler = LocalUriHandler.current
     val windowInsets = LocalPlayerAwareWindowInsets.current
+    // Developer Options is surfaced here too, but only while the hidden mode is on.
+    val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
 
     Column(
         modifier = Modifier
@@ -217,6 +221,29 @@ fun AboutScreen(
         MentsicCreatorCard(uriHandler)
 
         Spacer(Modifier.height(24.dp))
+
+        Spacer(Modifier.height(24.dp))
+
+        // Developer Options is reachable from here as well as Settings → System & About. The row
+        // only renders while Developer Mode is on, and the route itself is gated, so this cannot
+        // be used to bypass the hidden mode.
+        if (developerMode) {
+            Material3SettingsGroup(
+                title = stringResource(R.string.developer_section_title),
+                items =
+                    listOf(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.bug_report),
+                            title = { Text(stringResource(R.string.developer_options)) },
+                            isDeveloperOnly = true,
+                            description = { Text(stringResource(R.string.developer_options_desc)) },
+                            onClick = { navController.navigate("settings/developer") },
+                        ),
+                    ),
+            )
+
+            Spacer(Modifier.height(24.dp))
+        }
 
         Material3SettingsGroup(
             title = "Open-source notices",

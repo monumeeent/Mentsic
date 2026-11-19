@@ -367,8 +367,12 @@ fun ListenTogetherSettings(navController: NavController) {
         val selectedServer = remember(serverUrl) { ListenTogetherServers.findByUrl(serverUrl) }
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            // Dev-only diagnostic rows (blocked users, server URL, username, logs). They live in
+            // their own DEV-washed card so it is obvious they are troubleshooting tools rather
+            // than everyday preferences.
             IntegrationCard(
-                title = stringResource(R.string.settings),
+                title = stringResource(R.string.listen_together_developer),
+                isDeveloperGroup = true,
                 items =
                     listOf(
                         IntegrationCardItem(
@@ -424,6 +428,23 @@ fun ListenTogetherSettings(navController: NavController) {
                                     }
                                 },
                         ),
+                        IntegrationCardItem(
+                            icon = painterResource(R.drawable.bug_report),
+                            title = { Text(stringResource(R.string.listen_together_view_logs)) },
+                            description = {
+                                Text(stringResource(R.string.listen_together_view_logs_desc))
+                            },
+                            onClick = { showLogsDialog = true },
+                        ),
+                    ),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            IntegrationCard(
+                title = stringResource(R.string.settings),
+                items =
+                    listOf(
                         IntegrationCardItem(
                             icon = painterResource(R.drawable.done),
                             title = { Text(stringResource(R.string.listen_together_auto_approval_joins)) },
@@ -501,14 +522,6 @@ fun ListenTogetherSettings(navController: NavController) {
                                 )
                             },
                             onClick = { syncHostVolume = !syncHostVolume },
-                        ),
-                        IntegrationCardItem(
-                            icon = painterResource(R.drawable.bug_report),
-                            title = { Text(stringResource(R.string.listen_together_view_logs)) },
-                            description = {
-                                Text(stringResource(R.string.listen_together_view_logs_desc))
-                            },
-                            onClick = { showLogsDialog = true },
                         ),
                     ),
             )

@@ -712,6 +712,7 @@
     <string name="heatmap_stat_active_days">Active days</string>
     <string name="heatmap_stat_avg">Avg / day</string>
     <string name="heatmap_short_title">Heatmap</string>
+    <string name="heatmap_streak_days">%1$d-day streak</string>
 
     <!-- Launcher icon picker (Developer settings) -->
     <string name="launcher_icon_section">Launcher icon</string>
@@ -721,9 +722,10 @@
 
     <!-- Developer-only shining rows on the home feed -->
     <string name="dev_badge">DEV</string>
+    <string name="developer_section_title">Developer</string>
+    <string name="developer_options_desc">Hidden tools, diagnostics and layout experiments</string>
+    <string name="listen_together_developer">Developer diagnostics</string>
     <string name="dev_shining_rows">Developer features</string>
-    <string name="dev_shining_rows_loading">Loading your picks…</string>
-    <string name="dev_shining_rows_loading_desc">Rows with a shimmering tint are only visible in Developer Mode.</string>
 
     <!-- Tactical Command Hub (Settings → Appearance → Home layout).
          NOTE: `tactical_hub` itself is defined in strings.xml; do not redeclare it here. -->

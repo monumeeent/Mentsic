@@ -479,13 +479,13 @@ fun NavGraphBuilder.navigationBuilder(
 
     // Hidden developer area. Guarded here as well as in SettingsScreen so a stale deep link
     // (or a restored back stack) cannot open it once developer mode is switched off.
+    //
+    // It must use DeveloperOnlyRoute, not a bare `if (developerMode)`: the preference starts at
+    // its default `false` for the first frames while DataStore is still collecting, so the old
+    // inline `else { navigateUp() }` popped the screen immediately even when the mode was ON.
+    // That is why the Developer Options card appeared to do nothing when opened from System.
     composable("settings/developer") {
-        val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
-        if (developerMode) {
-            DeveloperSettings(navController)
-        } else {
-            LaunchedEffect(Unit) { navController.navigateUp() }
-        }
+        DeveloperOnlyRoute(navController) { DeveloperSettings(navController) }
     }
 
     composable("settings/player") {

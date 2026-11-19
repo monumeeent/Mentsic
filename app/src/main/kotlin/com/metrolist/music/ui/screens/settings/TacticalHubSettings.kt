@@ -87,6 +87,7 @@ fun TacticalHubSettings(navController: NavController) {
 
         Material3SettingsGroup(
             title = stringResource(R.string.tactical_hub),
+            isDeveloperGroup = true,
             items =
                 buildList {
                     add(
@@ -157,17 +158,19 @@ fun TacticalHubSettings(navController: NavController) {
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        // Developer-only grid geometry for the two Home grids.
-        val (sdColumns, onSdColumns) = rememberPreference(SpeedDialColumnsKey, 4)
-        val (sdRows, onSdRows) = rememberPreference(SpeedDialRowsKey, 6)
-        val (shColumns, onShColumns) = rememberPreference(ShuffleColumnsKey, 3)
-        val (shRows, onShRows) = rememberPreference(ShuffleRowsKey, 3)
+        // Developer-only grid geometry for the two Home grids. Defaults mirror the constants in
+        // NewHomeScreen (Speed Dial 6x3, Shuffles 5x2) so the sliders open on the live values.
+        val (sdColumns, onSdColumns) = rememberPreference(SpeedDialColumnsKey, 6)
+        val (sdRows, onSdRows) = rememberPreference(SpeedDialRowsKey, 3)
+        val (shColumns, onShColumns) = rememberPreference(ShuffleColumnsKey, 5)
+        val (shRows, onShRows) = rememberPreference(ShuffleRowsKey, 2)
 
         // Each grid gets two independent sliders — columns and rows — instead of a combined
         // ± stepper: a stepper could only change one dimension at a time and gave no feel for the
         // range. Sliders snap to whole cells and show the live value above the track.
         Material3SettingsGroup(
             title = stringResource(R.string.grid_customisation),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     gridSizeItem(
@@ -177,7 +180,7 @@ fun TacticalHubSettings(navController: NavController) {
                         onColumns = onSdColumns,
                         onRows = onSdRows,
                         minColumns = 2,
-                        maxColumns = 6,
+                        maxColumns = 8,
                         minRows = 1,
                         maxRows = 10,
                     ),
@@ -201,6 +204,7 @@ fun TacticalHubSettings(navController: NavController) {
         val (sessionMax, onSessionMax) = rememberPreference(SessionMaxMinutesKey, 120)
         Material3SettingsGroup(
             title = stringResource(R.string.listen_together),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     Material3SettingsItem(

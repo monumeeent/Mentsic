@@ -6,8 +6,10 @@
 package com.metrolist.music.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
@@ -56,6 +59,7 @@ import java.util.Locale
  * derived from `colorScheme.primary`, so the heatmap follows the user's accent colour and pure
  * black automatically. Empty days are still drawn so the grid keeps a stable shape.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun ListeningHeatmap(
     playsByDay: Map<String, Int>,
@@ -95,57 +99,129 @@ fun ListeningHeatmap(
         return (1 + (fraction * 3.99f).toInt()).coerceIn(1, 4)
     }
 
+    // Current run of consecutive days with at least one play, counting back from today. Shown as
+    // a caption because a grid alone never tells you how *consistent* the listening was.
+    val currentStreak =
+        remember(playsByDay, today) {
+            var streak = 0
+            var cursor = today
+            while ((playsByDay[cursor.toString()] ?: 0) > 0) {
+                streak++
+                cursor = cursor.minusDays(1)
+            }
+            streak
+        }
+
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
-            // Weekday rail. Only Mon/Wed/Fri are labelled; all seven rows still get a cell so the
-            // grid aligns with the columns.
-            Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
-                horizontalAlignment = Alignment.End,
-            ) {
-                listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
-                    .forEach { day ->
+        // Full column width is split evenly between the weekday rail and the weeks, so the grid
+        // fills the card on every screen size instead of hugging the left edge at a fixed 11dp.
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val railWidth = 20.dp
+            val gaps = Spacing.tiny * (weeksToShow - 1)
+            val available = maxWidth - railWidth - Spacing.small - gaps
+            val cell = (available / weeksToShow).coerceIn(9.dp, 22.dp)
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Month rail: a caption above the first column of each new month.
+                Row(
+                    modifier = Modifier.padding(start = railWidth + Spacing.small),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
+                ) {
+                    repeat(weeksToShow) { weekIndex ->
+                        val weekStart = startDate.plusDays(weekIndex * 7L)
+                        val label =
+                            if (weekIndex == 0 || weekStart.dayOfMonth <= 7) {
+                                weekStart.month
+                                    .getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                                    .take(3)
+                            } else {
+                                ""
+                            }
                         Text(
-                            text =
-                                if (day in listOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)) {
-                                    day.getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(2)
-                                } else {
-                                    ""
-                                },
+                            text = label,
                             style = MaterialTheme.typography.labelSmall,
                             color = scheme.onSurfaceVariant,
-                            modifier = Modifier.height(CELL_SIZE),
+                            maxLines = 1,
+                            modifier = Modifier.width(cell).padding(bottom = Spacing.tiny),
                         )
                     }
-            }
+                }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
-                repeat(weeksToShow) { weekIndex ->
-                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
-                        repeat(7) { dayIndex ->
-                            val date = startDate.plusDays((weekIndex * 7L) + dayIndex)
-                            val inFuture = date.isAfter(today)
-                            val count = playsByDay[date.toString()] ?: 0
-
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(CELL_SIZE)
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(
-                                            if (inFuture) {
-                                                // Future days stay invisible rather than reading as
-                                                // "zero plays", which would falsely imply inactivity.
-                                                scheme.surfaceContainerLow.copy(alpha = 0.25f)
-                                            } else {
-                                                levels[levelFor(count)]
-                                            },
-                                        )
-                                        .semantics {
-                                            contentDescription =
-                                                "$date: " + count + " " + "plays"
-                                        },
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+                    // Weekday rail. Only Mon/Wed/Fri are labelled; all seven rows still get a cell
+                    // so the grid aligns with the columns.
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+                        horizontalAlignment = Alignment.End,
+                    ) {
+                        listOf(
+                            DayOfWeek.MONDAY,
+                            DayOfWeek.TUESDAY,
+                            DayOfWeek.WEDNESDAY,
+                            DayOfWeek.THURSDAY,
+                            DayOfWeek.FRIDAY,
+                            DayOfWeek.SATURDAY,
+                            DayOfWeek.SUNDAY,
+                        ).forEach { day ->
+                            Text(
+                                text =
+                                    if (day in listOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)) {
+                                        day.getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(2)
+                                    } else {
+                                        ""
+                                    },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = scheme.onSurfaceVariant,
+                                modifier = Modifier.height(cell),
                             )
+                        }
+                    }
+
+                    Spacer(Modifier.width(Spacing.small))
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+                        repeat(weeksToShow) { weekIndex ->
+                            Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+                                repeat(7) { dayIndex ->
+                                    val date = startDate.plusDays((weekIndex * 7L) + dayIndex)
+                                    val inFuture = date.isAfter(today)
+                                    val count = playsByDay[date.toString()] ?: 0
+                                    val isToday = date == today
+
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .size(cell)
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(
+                                                    when {
+                                                        // Future days stay invisible rather than
+                                                        // reading as "zero plays".
+                                                        inFuture ->
+                                                            scheme.surfaceContainerLow.copy(alpha = 0.25f)
+
+                                                        else -> levels[levelFor(count)]
+                                                    },
+                                                )
+                                                // Today gets a ring so the grid has an anchor.
+                                                .then(
+                                                    if (isToday) {
+                                                        Modifier.border(
+                                                            width = 1.dp,
+                                                            color = scheme.primary,
+                                                            shape = RoundedCornerShape(3.dp),
+                                                        )
+                                                    } else {
+                                                        Modifier
+                                                    },
+                                                )
+                                                .semantics {
+                                                    contentDescription =
+                                                        "$date: $count " + "plays"
+                                                },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -158,6 +234,18 @@ fun ListeningHeatmap(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Streak caption replaces the empty left side of the legend row.
+            if (currentStreak > 0) {
+                Text(
+                    text = String.format(stringResource(R.string.heatmap_streak_days), currentStreak),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = scheme.primary,
+                )
+                Spacer(Modifier.weight(1f))
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
             Text(
                 text = stringResource(R.string.heatmap_less),
                 style = MaterialTheme.typography.labelSmall,
@@ -170,7 +258,7 @@ fun ListeningHeatmap(
                         Modifier
                             .padding(horizontal = 1.dp)
                             .size(10.dp)
-                            .clip(RoundedCornerShape(2.dp))
+                            .clip(RoundedCornerShape(3.dp))
                             .background(colour),
                 )
             }
@@ -202,6 +290,7 @@ enum class HeatmapRange(
  * Today's minutes deliberately live on the Personal Space streak card instead — this card answers
  * "how consistent was I over the week/month", not "how long have I listened today".
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun ListeningHeatmapCard(
     playsByDay: Map<String, Int>,

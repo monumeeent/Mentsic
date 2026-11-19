@@ -45,7 +45,10 @@ import com.metrolist.music.ui.theme.developerOnlyBrush
 fun Material3SettingsGroup(
     title: String? = null,
     items: List<Material3SettingsItem>,
-    useLowContrast: Boolean = false
+    useLowContrast: Boolean = false,
+    // Whole-group variant of `Material3SettingsItem.isDeveloperOnly`: every row in a group that
+    // can only exist in Developer Mode wears the DEV wash, without repeating the flag on each item.
+    isDeveloperGroup: Boolean = false,
 ) {
     Column(
         modifier = Modifier
@@ -67,6 +70,7 @@ fun Material3SettingsGroup(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             items.forEachIndexed { index, item ->
+                val devOnly = item.isDeveloperOnly || isDeveloperGroup
                 val shape = when {
                     items.size == 1 -> RoundedCornerShape(24.dp)
                     index == 0 -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 6.dp, bottomEnd = 6.dp)
@@ -91,14 +95,14 @@ fun Material3SettingsGroup(
                     Box(modifier = Modifier.fillMaxWidth()) {
                         // Developer-only rows are washed with the shared dev gradient so they are
                         // recognisable at a glance (they cannot be reached without Developer Mode).
-                        if (item.isDeveloperOnly) {
+                        if (devOnly) {
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
                                     .background(developerOnlyBrush()),
                             )
                         }
-                        Material3SettingsItemRow(item = item)
+                        Material3SettingsItemRow(item = item, isDeveloperOnly = devOnly)
                     }
                 }
             }
@@ -111,7 +115,8 @@ fun Material3SettingsGroup(
  */
 @Composable
 private fun Material3SettingsItemRow(
-    item: Material3SettingsItem
+    item: Material3SettingsItem,
+    isDeveloperOnly: Boolean = item.isDeveloperOnly,
 ) {
     Row(
         modifier = Modifier
@@ -135,7 +140,7 @@ private fun Material3SettingsItemRow(
                     .background(
                         // Highlighted (developer-only) rows get a brighter accent wash so they
                         // stand out from the regular options at a glance.
-                        if (item.isDeveloperOnly) {
+                        if (isDeveloperOnly) {
                             Brush.linearGradient(
                                 listOf(
                                     MaterialTheme.colorScheme.tertiaryContainer,
@@ -166,7 +171,7 @@ private fun Material3SettingsItemRow(
                             contentDescription = null,
                             tint = if (!item.enabled)
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                            else if (item.isDeveloperOnly)
+                            else if (isDeveloperOnly)
                                 MaterialTheme.colorScheme.tertiary
                             else
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
@@ -179,7 +184,7 @@ private fun Material3SettingsItemRow(
                         contentDescription = null,
                         tint = if (!item.enabled)
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        else if (item.isDeveloperOnly)
+                        else if (isDeveloperOnly)
                             MaterialTheme.colorScheme.tertiary
                         else
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),

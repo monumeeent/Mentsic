@@ -120,16 +120,19 @@ fun SettingsScreen(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.play),
                         title = { Text(stringResource(R.string.player_and_audio)) },
+                        isDeveloperOnly = true,
                         onClick = { navController.navigate("settings/player") }
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.language),
                         title = { Text(stringResource(R.string.content)) },
+                        isDeveloperOnly = true,
                         onClick = { navController.navigate("settings/content") }
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.translate),
                         title = { Text(stringResource(R.string.ai_lyrics_translation)) },
+                        isDeveloperOnly = true,
                         onClick = { navController.navigate("settings/ai") }
                     )
                 )
@@ -146,6 +149,7 @@ fun SettingsScreen(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.ic_android_auto),
                         title = { Text(stringResource(R.string.android_auto)) },
+                        isDeveloperOnly = true,
                         onClick = { navController.navigate("settings/android_auto") }
                     )
                 )
@@ -198,6 +202,7 @@ fun SettingsScreen(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.link),
                             title = { Text(stringResource(R.string.default_links)) },
+                            isDeveloperOnly = true,
                             onClick = {
                                 try {
                                     val intent = Intent(

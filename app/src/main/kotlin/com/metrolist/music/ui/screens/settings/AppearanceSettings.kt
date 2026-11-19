@@ -1035,6 +1035,7 @@ fun AppearanceSettings(
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.palette),
                                 title = { Text(stringResource(R.string.enable_dynamic_theme)) },
+                                isDeveloperOnly = true,
                                 trailingContent = {
                                     Switch(
                                         checked = dynamicTheme,
@@ -1211,6 +1212,7 @@ fun AppearanceSettings(
 
         if (developerMode) Material3SettingsGroup(
             title = stringResource(R.string.player),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     Material3SettingsItem(
@@ -1682,6 +1684,7 @@ fun AppearanceSettings(
         // each one changes navigation or gesture behaviour globally.
         if (developerMode) Material3SettingsGroup(
             title = stringResource(R.string.misc),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     Material3SettingsItem(

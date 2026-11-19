@@ -504,6 +504,7 @@ fun AccountSettings(
                             )
                         },
                         icon = painterResource(R.drawable.token),
+                        isDeveloperOnly = true,
                         onClick = {
                             if (!isLoggedIn) showTokenEditor = true
                             else if (!showToken) showToken = true
@@ -572,6 +573,7 @@ fun AccountSettings(
                         Material3SettingsItem(
                             title = { Text(stringResource(R.string.integrations)) },
                             icon = painterResource(R.drawable.integration),
+                            isDeveloperOnly = true,
                             onClick = {
                                 onClose()
                                 navController.navigate("settings/integrations")

@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import com.metrolist.music.ui.theme.developerOnlyBrush
 
 /**
  * A Material 3 Expressive style settings group component
@@ -42,7 +43,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun IntegrationCard(
     title: String? = null,
-    items: List<IntegrationCardItem>
+    items: List<IntegrationCardItem>,
+    // Same semantics as Material3SettingsGroup.isDeveloperGroup: wash every row in the card with
+    // the shared DEV gradient.
+    isDeveloperGroup: Boolean = false,
 ) {
     Column(
         modifier = Modifier
@@ -81,7 +85,16 @@ fun IntegrationCard(
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    IntegrationCardItemRow(item = item)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        if (isDeveloperGroup) {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(developerOnlyBrush()),
+                            )
+                        }
+                        IntegrationCardItemRow(item = item, isDeveloperOnly = isDeveloperGroup)
+                    }
                 }
             }
         }
@@ -93,7 +106,8 @@ fun IntegrationCard(
  */
 @Composable
 private fun IntegrationCardItemRow(
-    item: IntegrationCardItem
+    item: IntegrationCardItem,
+    isDeveloperOnly: Boolean = false,
 ) {
     Row(
         modifier = Modifier
