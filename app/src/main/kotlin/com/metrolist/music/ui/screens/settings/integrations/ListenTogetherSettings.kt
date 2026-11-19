@@ -86,6 +86,7 @@ import com.metrolist.music.listentogether.ConnectionState
 import com.metrolist.music.listentogether.ListenTogetherEvent
 import com.metrolist.music.listentogether.ListenTogetherServer
 import com.metrolist.music.listentogether.ListenTogetherServers
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.listentogether.LogEntry
 import com.metrolist.music.listentogether.LogLevel
 import com.metrolist.music.listentogether.RoomRole
@@ -103,6 +104,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun ListenTogetherSettings(navController: NavController) {
     val manager = LocalListenTogetherManager.current ?: return
     val context = LocalContext.current
+    // Diagnostics card is developer-only.
+    val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
     val cannotEditUsernameInRoomStr = stringResource(R.string.listen_together_cannot_edit_username_in_room)
     val coroutineScope = rememberCoroutineScope()
 
@@ -367,18 +370,18 @@ fun ListenTogetherSettings(navController: NavController) {
         val selectedServer = remember(serverUrl) { ListenTogetherServers.findByUrl(serverUrl) }
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            // Dev-only diagnostic rows (blocked users, server URL, username, logs). They live in
-            // their own DEV-washed card so it is obvious they are troubleshooting tools rather
-            // than everyday preferences.
-            IntegrationCard(
-                title = stringResource(R.string.listen_together_developer),
-                isDeveloperGroup = true,
-                items =
-                    listOf(
-                        IntegrationCardItem(
-                            icon = painterResource(R.drawable.person),
-                            title = { Text(stringResource(R.string.listen_together_blocked_users)) },
-                            description = {
+            // Dev-only diagnostic rows (blocked users, server URL, username, logs). The whole card
+            // is hidden outside Developer Mode — it is a troubleshooting surface, not a preference,
+            // and showing disabled-looking diagnostics to everyone was noise.
+            if (developerMode) IntegrationCard(
+                    title = stringResource(R.string.listen_together_developer),
+                    isDeveloperGroup = true,
+                    items =
+                        listOf(
+                            IntegrationCardItem(
+                                icon = painterResource(R.drawable.person),
+                                title = { Text(stringResource(R.string.listen_together_blocked_users)) },
+                                description = {
                                 Text(
                                     if (blockedUsernames.isNotEmpty()) {
                                         stringResource(R.string.listen_together_blocked_users_count, blockedUsernames.size)

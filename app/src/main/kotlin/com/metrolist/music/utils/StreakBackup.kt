@@ -6,6 +6,7 @@
 package com.metrolist.music.utils
 
 import android.content.Context
+import android.os.Environment
 import com.metrolist.music.constants.StreakCurrentKey
 import com.metrolist.music.constants.StreakHistoryKey
 import com.metrolist.music.constants.StreakLongestKey
@@ -21,17 +22,29 @@ import java.io.File
  *
  * Android Auto Backup (already enabled via `allowBackup` + `backup_rules.xml`) restores DataStore
  * on a new device — but only when the user has Backup turned on. Some do not. This writes a tiny
- * JSON copy of the streak to app-external storage (`Android/data/<pkg>/files`), which survives an
- * uninstall, and re-imports it on first launch when the local streak is empty.
+ * JSON copy of the streak to **public** storage (`Documents/Mentsic/streak_backup.json`), which
+ * survives an uninstall, and re-imports it on first launch when the local streak is empty.
+ *
+ * Public Documents (not `getExternalFilesDir`) is deliberate: the app-specific external directory
+ * is removed by the system on uninstall, so it cannot satisfy the "restore after reinstall" goal.
  *
  * Only the streak is mirrored here — four integers and a date list. Copying the whole database
  * would be far larger and duplicates what Auto Backup already does.
  */
 object StreakBackup {
     private const val FILE_NAME = "streak_backup.json"
+    private const val DIR_NAME = "Mentsic"
 
-    private fun file(context: Context): File =
-        File(context.getExternalFilesDir(null), FILE_NAME)
+    private fun file(context: Context): File? {
+        // Public Documents, resolved through Environment so the path is correct on every device
+        // (SD-card-primary, work profile, etc.). App-created files here need no permission on
+        // API 29+, and unlike `getExternalFilesDir` this survives an uninstall.
+        val documents =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+        val dir = File(documents, DIR_NAME)
+        if (dir.mkdirs() || dir.isDirectory) return File(dir, FILE_NAME)
+        return null
+    }
 
     /** Writes the current streak snapshot. Call after the streak advances. */
     suspend fun save(context: Context) =

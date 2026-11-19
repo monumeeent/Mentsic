@@ -79,6 +79,9 @@ data class CommunityPlaylistItem(
     val songs: List<SongItem>
 )
 
+/** Number of weekly columns the history query must cover (longest chart = Stats). */
+private const val HEATMAP_WEEKS = 23
+
 /** Number of random library songs appended to the Remixes row. */
 private const val REMIX_RANDOM_SAMPLE = 10
 
@@ -144,8 +147,9 @@ class HomeViewModel @Inject constructor(
     val heatmapPlays: StateFlow<Map<String, Int>> =
         database
             .dailyPlayCounts(
-                // 18 weeks to match ListeningHeatmap's default column count.
-                cutoffMillis = System.currentTimeMillis() - (18L * 7L * 24L * 60L * 60L * 1000L),
+                // Must cover the longest window any heatmap renders (22 weeks on Stats). Too short
+                // a cutoff silently blanks the older columns of the long-range chart.
+                cutoffMillis = System.currentTimeMillis() - (HEATMAP_WEEKS * 7L * 24L * 60L * 60L * 1000L),
             ).map { rows -> rows.associate { it.day to it.playCount } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 

@@ -175,6 +175,7 @@ import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.SYSTEM_DEFAULT
 import com.metrolist.music.constants.SelectedThemeColorKey
 import com.metrolist.music.constants.ShiningThemeKey
+import com.metrolist.music.ui.theme.ShiningGlitterOverlay
 import com.metrolist.music.constants.SimpMusicMigrationDoneKey
 import com.metrolist.music.constants.SlimNavBarHeight
 import com.metrolist.music.constants.SlimNavBarKey
@@ -220,6 +221,7 @@ import com.metrolist.music.ui.utils.appBarScrollBehavior
 import com.metrolist.music.ui.utils.resetHeightOffset
 import com.metrolist.music.utils.ReleaseInfo
 import com.metrolist.music.utils.LAUNCHER_ICON_STATIC
+import com.metrolist.music.utils.StreakBackup
 import com.metrolist.music.utils.applyLauncherIconVariant
 import com.metrolist.music.utils.SearchRoutes
 import com.metrolist.music.utils.SyncUtils
@@ -467,6 +469,11 @@ class MainActivity : FragmentActivity() {
             // get the default back after the next cold start.
             val launcherIconVariant = preferences[LauncherIconVariantKey] ?: LAUNCHER_ICON_STATIC
             runCatching { applyLauncherIconVariant(this@MainActivity, launcherIconVariant) }
+
+            // Restore the streak mirror if this is a fresh install (local streak is empty). The
+            // mirror lives in public Documents, so it survives an uninstall — combined with Android
+            // Auto Backup this covers both the "backup enabled" and "sideloaded" cases.
+            runCatching { StreakBackup.restoreIfEmpty(this@MainActivity) }
 
             // SimpMusic Removal Migration
             if (preferences[SimpMusicMigrationDoneKey] != true) {
@@ -1617,6 +1624,13 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 }
+
+                // Shining theme: a slow gold sheen + twinkling specks painted above all content.
+                // It never intercepts touches, and is skipped entirely for every other theme.
+                ShiningGlitterOverlay(
+                    enabled = shiningTheme,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
             }
         }

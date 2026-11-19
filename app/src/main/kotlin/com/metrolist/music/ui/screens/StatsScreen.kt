@@ -99,6 +99,7 @@ import com.metrolist.music.ui.component.ListeningReportCard
 import com.metrolist.music.ui.component.ListeningReportPlaceholder
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.LocalSongsGrid
+import com.metrolist.music.ui.component.ListeningHeatmapCard
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.PlaylistGridItem
 import com.metrolist.music.ui.component.TimeTransfer
@@ -110,6 +111,7 @@ import com.metrolist.music.utils.ListeningReportShare
 import com.metrolist.music.utils.joinByBullet
 import com.metrolist.music.utils.makeTimeString
 import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.viewmodels.HomeViewModel
 import com.metrolist.music.viewmodels.StatsViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -120,6 +122,10 @@ fun StatsScreen(
     navController: NavController,
     viewModel: StatsViewModel = hiltViewModel(),
 ) {
+    // Listening history lives in HomeViewModel (the same flow Personal Space uses), so the Stats
+    // heatmap shows identical numbers instead of a second query that could drift.
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    val heatmapPlays by homeViewModel.heatmapPlays.collectAsStateWithLifecycle()
     val sArtists = viewModel.selectedArtists // SnapshotStateList<Artist>
 
 // Helper actions:
@@ -468,6 +474,19 @@ fun StatsScreen(
                     currentValue = indexChips,
                     onValueUpdate = { viewModel.indexChips.value = it },
                 )
+            }
+
+            // Listening heatmap: the same calendar chart used in Personal Space, shown here with the
+            // full long-range window because the Stats page has the vertical space for it.
+            if (!isSearching && sArtists.isEmpty()) {
+                item(key = "stats_heatmap") {
+                    ListeningHeatmapCard(
+                        playsByDay = heatmapPlays,
+                        weeks = 22,
+                        cellSize = 9,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).animateItem(),
+                    )
+                }
             }
 
             if (visibleStatsPlaylists.isNotEmpty() && !isSearching && sArtists.isEmpty()) {

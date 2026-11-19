@@ -14,13 +14,25 @@
 
 package com.metrolist.music.ui.theme
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /** Seed used by the Theme screen when the Shining theme is picked. */
@@ -123,3 +135,106 @@ fun isShiningThemeActive(): Boolean = LocalShiningThemeActive.current
 @Composable
 fun shiningColorScheme(darkTheme: Boolean = isSystemInDarkTheme()): ColorScheme =
     if (darkTheme) ShiningDarkColorScheme else ShiningLightColorScheme
+
+/**
+ * Animated glitter layer painted over the whole app while the Shining theme is on.
+ *
+ * The effect is a slow diagonal gold sheen that travels across the screen, plus a sparse field of
+ * twinkling specks. Both are driven by a single infinite transition so they stay in sync and cost
+ * one frame callback each.
+ *
+ * Kept deliberately subtle: the overlay sits above *content*, so the sheen used at the top and
+ * bottom bands only, and the specks are small and mostly transparent. A full-screen bright wash
+ * would destroy text contrast — which is what the reference "glitter" gradients do when applied
+ * naively to a UI.
+ *
+ * The layer is drawn with `pointerInput`-free, non-interactive drawing: it never intercepts touches.
+ */
+@Composable
+fun ShiningGlitterOverlay(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    if (!enabled) return
+
+    val transition = rememberInfiniteTransition(label = "shining-glitter")
+
+    // Sheen: one full pass every ~7s. Slow enough to read as a highlight drifting, not a strobe.
+    val sheen by transition.animateFloat(
+        initialValue = -0.4f,
+        targetValue = 1.4f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 7000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+        label = "shining-sheen",
+    )
+
+    // Twinkle: a second, faster oscillation that scales the specks' alpha.
+    val twinkle by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 2600, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "shining-twinkle",
+    )
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val w = size.width
+        val h = size.height
+
+        // --- Sheen band --------------------------------------------------------------
+        // A diagonal band of gold, moving left → right. Offset by `sheen` so it re-enters from
+        // the edge every cycle instead of snapping.
+        val bandCenter = sheen * (w * 1.6f) - (w * 0.3f)
+        val bandHalf = w * 0.22f
+
+        val sheenBrush =
+            Brush.linearGradient(
+                colorStops =
+                    arrayOf(
+                        0f to Color.Transparent,
+                        ((bandCenter - bandHalf).coerceAtLeast(0f) / w) to Color.Transparent,
+                        (bandCenter / w).coerceIn(0.001f, 0.999f) to ShiningSeed.copy(alpha = 0.10f),
+                        ((bandCenter + bandHalf).coerceAtMost(w) / w) to Color.Transparent,
+                        1f to Color.Transparent,
+                    ),
+                start = Offset(0f, 0f),
+                end = Offset(w, h),
+            )
+
+        drawRect(brush = sheenBrush)
+
+        // --- Twinkling specks ---------------------------------------------------------
+        // Positions are derived from a fixed sequence rather than Random(), so the field is
+        // stable across recompositions and does not "jump" between frames.
+        repeat(GILTTER_SPECKS) { index ->
+            val fx = goldenFraction(index * 2 + 1)
+            val fy = goldenFraction(index * 2 + 2)
+            // Per-speck phase so they do not all blink in unison.
+            val phase = (twinkle + (index % 7) / 7f) % 1f
+            val alpha = (1f - kotlin.math.abs(phase * 2f - 1f)) * 0.45f
+            if (alpha <= 0.02f) return@repeat
+
+            drawCircle(
+                color = ShiningSeed.copy(alpha = alpha),
+                radius = (1.2f + (index % 3)) * density,
+                center = Offset(fx * w, fy * h),
+            )
+        }
+    }
+}
+
+/** Deterministic low-discrepancy value in 0..1, used to scatter specks without Random(). */
+private fun goldenFraction(n: Int): Float {
+    val phi = 0.6180339887498949f
+    val v = (n * phi) % 1f
+    return if (v < 0f) v + 1f else v
+}
+
+/** Number of twinkling specks. Sparse on purpose — it must read as dust, not snow. */
+private const val GILTTER_SPECKS = 42

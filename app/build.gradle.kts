@@ -137,9 +137,10 @@ android {
             )
         }
         debug {
-            if (applicationIdOverride == null) {
-                applicationIdSuffix = ".debug"
-            }
+            // No `.debug` applicationId suffix: the CI publishes debug APKs as the installable
+            // build, and a suffix made every build register as a *different app* — which is why
+            // updates demanded an uninstall first. Keeping the id identical means a new APK
+            // upgrades the existing install in place.
             isDebuggable = true
             if (appNameOverride == null) {
                 resValue("string", "app_name", "Mentsic Debug")

@@ -713,6 +713,9 @@
     <string name="heatmap_stat_avg">Avg / day</string>
     <string name="heatmap_short_title">Heatmap</string>
     <string name="heatmap_streak_days">%1$d-day streak</string>
+    <string name="heatmap_play_count">%1$d plays &#183; %2$s</string>
+    <string name="heatmap_window_total">%1$d plays in %2$d weeks</string>
+    <string name="heatmap_unit_plays">plays</string>
 
     <!-- Launcher icon picker (Developer settings) -->
     <string name="launcher_icon_section">Launcher icon</string>

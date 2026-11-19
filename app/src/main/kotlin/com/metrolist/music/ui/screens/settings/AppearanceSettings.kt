@@ -1827,6 +1827,7 @@ fun AppearanceSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.grid_view),
                         title = { Text(stringResource(R.string.grid_cell_size)) },
+                        suppressDeveloperStyle = true,
                         description = {
                             Text(
                                 when (gridItemSize) {
@@ -1840,6 +1841,7 @@ fun AppearanceSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.grid_view),
                         title = { Text(stringResource(R.string.display_density)) },
+                        suppressDeveloperStyle = true,
                         description = {
                             Text(DensityScale.fromValue(densityScale).label)
                         },
@@ -1850,8 +1852,12 @@ fun AppearanceSettings(
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        Material3SettingsGroup(
+        // Auto Playlists is a developer surface: it exposes playlists that are otherwise hidden
+        // media (auto-generated, offline-only, uploaded). Gated + washed like the rest of the dev
+        // block so it is never mistaken for an everyday preference.
+        if (developerMode) Material3SettingsGroup(
             title = stringResource(R.string.auto_playlists),
+            isDeveloperGroup = true,
             items =
                 listOf(
                     Material3SettingsItem(

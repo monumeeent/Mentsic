@@ -432,7 +432,12 @@ fun NewHomeScreen(
                     if (!hubHeatmapCollapsedFlag) {
                         item(key = "hub_zone_heatmap") {
                             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium)) {
-                                ListeningHeatmapCard(playsByDay = heatmapPlays)
+                                ListeningHeatmapCard(
+                                    playsByDay = heatmapPlays,
+                                    // Full-width surface: show the long calendar range with the
+                                    // weekday rail instead of the short Personal Space window.
+                                    weeks = 12,
+                                )
                             }
                         }
                     }
@@ -1175,9 +1180,11 @@ private fun ListeningActivitySlide(
                 ListeningHeatmap(
                     playsByDay = playsByDay,
                     weeksToShow = weeksToShow,
-                    // The card already has a glass tint; a firmer empty tone keeps idle days
-                    // visible instead of reading as a missing grid.
-                    emptyDayAlpha = 1f,
+                    // Compact: the card is short, so the weekday rail is dropped and cells shrink
+                    // to keep 2 / 4 week columns filling the card width.
+                    cellSize = 8,
+                    gap = 2,
+                    showWeekdayRail = false,
                 )
             }
         }

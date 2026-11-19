@@ -70,7 +70,9 @@ fun Material3SettingsGroup(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             items.forEachIndexed { index, item ->
-                val devOnly = item.isDeveloperOnly || isDeveloperGroup
+                // A row may opt out of a dev-only group: these are ordinary display preferences that
+                // happen to live in a dev-only card, so they keep the normal card styling.
+                val devOnly = (item.isDeveloperOnly || isDeveloperGroup) && !item.suppressDeveloperStyle
                 val shape = when {
                     items.size == 1 -> RoundedCornerShape(24.dp)
                     index == 0 -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 6.dp, bottomEnd = 6.dp)
@@ -247,6 +249,9 @@ data class Material3SettingsItem(
     val trailingContent: (@Composable () -> Unit)? = null,
     val showBadge: Boolean = false,
     val isDeveloperOnly: Boolean = false,
+    // Opts a row out of the DEV gradient even when its parent group carries `isDeveloperGroup`.
+    // Used for ordinary preferences that are merely *placed* inside a developer-only card.
+    val suppressDeveloperStyle: Boolean = false,
     val enabled: Boolean = true,
     val onClick: (() -> Unit)? = null
 )
