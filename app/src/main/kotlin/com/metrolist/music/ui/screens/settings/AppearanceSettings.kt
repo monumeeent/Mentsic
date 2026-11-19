@@ -1605,10 +1605,13 @@ fun AppearanceSettings(
                             onClick = { onRespectAgentPositioningChange(!respectAgentPositioning) },
                         ),
                     )
-                    add(
+                    // Developer-only lyrics behaviour: tap-to-change and auto-scroll alter how the
+                    // lyrics screen reacts to touch and playback, which is surprising as a default.
+                    if (developerMode) add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.lyrics),
                             title = { Text(stringResource(R.string.lyrics_click_change)) },
+                            isDeveloperOnly = true,
                             trailingContent = {
                                 Switch(
                                     checked = lyricsClick,
@@ -1628,10 +1631,11 @@ fun AppearanceSettings(
                             onClick = { onLyricsClickChange(!lyricsClick) },
                         ),
                     )
-                    add(
+                    if (developerMode) add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.lyrics),
                             title = { Text(stringResource(R.string.lyrics_auto_scroll)) },
+                            isDeveloperOnly = true,
                             trailingContent = {
                                 Switch(
                                     checked = lyricsScroll,
@@ -1651,10 +1655,11 @@ fun AppearanceSettings(
                             onClick = { onLyricsScrollChange(!lyricsScroll) },
                         ),
                     )
-                    add(
+                    if (developerMode) add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.lyrics),
                             title = { Text(stringResource(R.string.hide_status_bar_fullscreen)) },
+                            isDeveloperOnly = true,
                             description = { Text(stringResource(R.string.hide_status_bar_fullscreen_desc)) },
                             trailingContent = {
                                 Switch(
@@ -1838,6 +1843,16 @@ fun AppearanceSettings(
                         },
                         onClick = { showGridSizeDialog = true },
                     ),
+                ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        // Display density is an everyday readability preference, not a developer experiment: it
+        // lives outside the developer-gated Misc group so it stays reachable on stable builds.
+        Material3SettingsGroup(
+            items =
+                listOf(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.grid_view),
                         title = { Text(stringResource(R.string.display_density)) },

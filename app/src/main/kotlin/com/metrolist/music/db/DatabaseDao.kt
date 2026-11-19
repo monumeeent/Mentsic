@@ -1551,6 +1551,43 @@ interface DatabaseDao {
     )
     fun eventsOnDate(date: String): Flow<List<EventWithSong>>
 
+    /**
+     * Per-day listening aggregate for the monthly heatmap.
+     *
+     * One row per day with the play count, total listening time and the most-replayed track, so the
+     * grid and its day capsule render from a single query instead of one query per tapped cell.
+     * `topSongId` is resolved with a correlated subquery ordered by that song's play count for the
+     * day — the same "track of the day" the plan asks for.
+     */
+    @Query(
+        """
+        SELECT date(timestamp / 1000, 'unixepoch') AS day,
+               COUNT(*) AS playCount,
+               COALESCE(SUM(playTime), 0) AS listenMillis,
+               (SELECT e2.songId FROM event e2
+                 WHERE date(e2.timestamp / 1000, 'unixepoch') = date(event.timestamp / 1000, 'unixepoch')
+                 GROUP BY e2.songId
+                 ORDER BY COUNT(*) DESC, MAX(e2.timestamp) DESC
+                 LIMIT 1) AS topSongId
+        FROM event
+        WHERE timestamp >= :cutoffMillis
+        GROUP BY day
+        ORDER BY day ASC
+        """,
+    )
+    fun dailyListeningStats(cutoffMillis: Long): Flow<List<DailyListeningStats>>
+
+    /** Lifetime totals: plays, listening time and distinct active days. */
+    @Query(
+        """
+        SELECT COUNT(*) AS totalPlays,
+               COALESCE(SUM(playTime), 0) AS totalMillis,
+               COUNT(DISTINCT date(timestamp / 1000, 'unixepoch')) AS activeDays
+        FROM event
+        """,
+    )
+    fun allTimeStats(): Flow<AllTimeStats>
+
     @Transaction
     @Query("DELETE FROM event")
     fun clearListenHistory()

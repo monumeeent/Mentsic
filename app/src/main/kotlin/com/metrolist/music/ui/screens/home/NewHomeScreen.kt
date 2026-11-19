@@ -79,7 +79,9 @@ import com.metrolist.music.R
 import com.metrolist.music.LocalNavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
+import com.metrolist.music.db.entities.AllTimeStats
 import com.metrolist.music.db.entities.Album
+import com.metrolist.music.db.entities.DailyListeningStats
 import com.metrolist.music.db.entities.Song
 import com.metrolist.music.extensions.getQueueWindows
 import com.metrolist.music.extensions.metadata
@@ -90,8 +92,7 @@ import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.GlassCard
-import com.metrolist.music.ui.component.ListeningHeatmap
-import com.metrolist.music.ui.component.ListeningHeatmapCard
+import com.metrolist.music.ui.component.MonthlyPlayHeatmap
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.TacticalCollapsibleHeatmapHeader
 import com.metrolist.music.ui.component.title
@@ -176,6 +177,8 @@ fun NewHomeScreen(
     val todayMinutes by viewModel.todayMinutes.collectAsStateWithLifecycle()
     val trending by viewModel.trending.collectAsStateWithLifecycle()
     val heatmapPlays by viewModel.heatmapPlays.collectAsStateWithLifecycle()
+    val dailyStats by viewModel.dailyStats.collectAsStateWithLifecycle()
+    val allTimeStats by viewModel.allTimeStats.collectAsStateWithLifecycle()
 
     // Home layout preset. Filters which sections render; the feed itself stays one implementation.
     val (homePresetKey) = rememberPreference(HomeLayoutPresetKey, HomeLayoutPreset.Default.key)
@@ -432,11 +435,9 @@ fun NewHomeScreen(
                     if (!hubHeatmapCollapsedFlag) {
                         item(key = "hub_zone_heatmap") {
                             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium)) {
-                                ListeningHeatmapCard(
-                                    playsByDay = heatmapPlays,
-                                    // Full-width surface: show the long calendar range with the
-                                    // weekday rail instead of the short Personal Space window.
-                                    weeks = 12,
+                                MonthlyPlayHeatmap(
+                                    dailyStats = dailyStats,
+                                    allTime = allTimeStats,
                                 )
                             }
                         }
@@ -469,6 +470,7 @@ fun NewHomeScreen(
                                     .take(3),
                                 todayMinutes = todayMinutes,
                                 playsByDay = heatmapPlays,
+                                dailyStats = dailyStats,
                                 onResume = {
                                     activeSong?.let { target ->
                                         haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -857,6 +859,7 @@ private fun PersonalSpacePager(
     topArtists: List<String>,
     todayMinutes: Long,
     playsByDay: Map<String, Int>,
+    dailyStats: Map<String, DailyListeningStats>,
     smartPlaylists: List<SmartPlaylist>,
     onResume: () -> Unit,
     onOpenPersonalSpace: () -> Unit,
@@ -1115,7 +1118,7 @@ private fun PersonalSpacePager(
                 }
 
                 else -> ListeningActivitySlide(
-                    playsByDay = playsByDay,
+                    dailyStats = dailyStats,
                     onOpen = onOpenListeningActivity,
                 )
             }
@@ -1127,49 +1130,23 @@ private fun PersonalSpacePager(
 /**
  * Listening-activity card: a compact heatmap with a weekly / monthly window switch.
  *
- * Deliberately shows only the activity windows — no "today's minutes" readout. That number lives
- * on the streak page and, duplicated here, competed with the heatmap for the little vertical
- * space the card has.
+ * Shows a monthly calendar of daily play counts — one box per day, brighter for heavier listening.
+ * Today's minutes are not repeated here: that number lives on the streak page.
  *
- * Clicking the card body opens the listening-activity destination; the period chips handle their
- * own clicks and do not bubble up.
+ * Clicking the card body opens the listening-activity destination.
  */
 @Composable
 private fun ListeningActivitySlide(
-    playsByDay: Map<String, Int>,
+    dailyStats: Map<String, DailyListeningStats>,
     onOpen: () -> Unit,
 ) {
-    // Two weekly columns = "this week + last week" (a glance), four monthly columns = the last
-    // month. Wider windows make each cell too small to read inside the Personal Space card.
-    var weekly by rememberSaveable { mutableStateOf(true) }
-    val weeksToShow = if (weekly) 2 else 4
-
     PersonalSpaceSlide(respond = onOpen) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.heatmap_short_title),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f),
-                )
-                // Two compact period chips. They stop the touch from reaching the card's
-                // click target so switching the window never navigates away.
-                PeriodChip(
-                    label = stringResource(R.string.heatmap_period_weekly),
-                    selected = weekly,
-                    onClick = { weekly = true },
-                )
-                Spacer(Modifier.width(Spacing.tiny))
-                PeriodChip(
-                    label = stringResource(R.string.heatmap_period_monthly),
-                    selected = !weekly,
-                    onClick = { weekly = false },
-                )
-            }
+            Text(
+                text = stringResource(R.string.heatmap_short_title),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
             Spacer(Modifier.height(Spacing.small))
             Box(
                 modifier = Modifier.pointerInput(Unit) {
@@ -1177,14 +1154,12 @@ private fun ListeningActivitySlide(
                     detectHorizontalDragGestures { _, _ -> }
                 },
             ) {
-                ListeningHeatmap(
-                    playsByDay = playsByDay,
-                    weeksToShow = weeksToShow,
-                    // Compact: the card is short, so the weekday rail is dropped and cells shrink
-                    // to keep 2 / 4 week columns filling the card width.
-                    cellSize = 8,
-                    gap = 2,
-                    showWeekdayRail = false,
+                // Monthly calendar: one box per day, brightness = play count. Compact variant:
+                // no all-time ribbon, since the card only has room for the grid itself.
+                MonthlyPlayHeatmap(
+                    dailyStats = dailyStats,
+                    allTime = AllTimeStats(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }

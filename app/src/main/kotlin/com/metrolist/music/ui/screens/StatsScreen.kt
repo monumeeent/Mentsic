@@ -99,7 +99,7 @@ import com.metrolist.music.ui.component.ListeningReportCard
 import com.metrolist.music.ui.component.ListeningReportPlaceholder
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.LocalSongsGrid
-import com.metrolist.music.ui.component.ListeningHeatmapCard
+import com.metrolist.music.ui.component.MonthlyPlayHeatmap
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.PlaylistGridItem
 import com.metrolist.music.ui.component.TimeTransfer
@@ -125,7 +125,8 @@ fun StatsScreen(
     // Listening history lives in HomeViewModel (the same flow Personal Space uses), so the Stats
     // heatmap shows identical numbers instead of a second query that could drift.
     val homeViewModel: HomeViewModel = hiltViewModel()
-    val heatmapPlays by homeViewModel.heatmapPlays.collectAsStateWithLifecycle()
+    val dailyStats by homeViewModel.dailyStats.collectAsStateWithLifecycle()
+    val allTimeStats by homeViewModel.allTimeStats.collectAsStateWithLifecycle()
     val sArtists = viewModel.selectedArtists // SnapshotStateList<Artist>
 
 // Helper actions:
@@ -480,10 +481,9 @@ fun StatsScreen(
             // full long-range window because the Stats page has the vertical space for it.
             if (!isSearching && sArtists.isEmpty()) {
                 item(key = "stats_heatmap") {
-                    ListeningHeatmapCard(
-                        playsByDay = heatmapPlays,
-                        weeks = 22,
-                        cellSize = 9,
+                    MonthlyPlayHeatmap(
+                        dailyStats = dailyStats,
+                        allTime = allTimeStats,
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).animateItem(),
                     )
                 }

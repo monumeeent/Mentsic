@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -72,7 +73,7 @@ import com.metrolist.music.ui.component.AvatarPreset
 import com.metrolist.music.ui.component.AvatarShape
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.InfoLabel
-import com.metrolist.music.ui.component.ListeningHeatmapCard
+import com.metrolist.music.ui.component.MonthlyPlayHeatmap
 import com.metrolist.music.ui.component.ProfileAvatar
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
@@ -351,7 +352,8 @@ fun AccountSettings(
         // Listening activity. Lives here because "my listening data" is an account-shaped
         // question; the heatmap had no reachable home before (its Home header rendered without
         // a grid). Collapsed by default: it is tall and pushes the profile controls off-screen.
-        val heatmapPlays by homeViewModel.heatmapPlays.collectAsStateWithLifecycle()
+        val dailyStats by homeViewModel.dailyStats.collectAsStateWithLifecycle()
+        val allTimeStats by homeViewModel.allTimeStats.collectAsStateWithLifecycle()
         var heatmapExpanded by rememberSaveable { mutableStateOf(false) }
 
         Material3SettingsItem(
@@ -378,7 +380,18 @@ fun AccountSettings(
         )
 
         if (heatmapExpanded) {
-            ListeningHeatmapCard(playsByDay = heatmapPlays)
+            // Monthly calendar + all-time ribbon, same component as Personal Space and Stats.
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium),
+            ) {
+                MonthlyPlayHeatmap(
+                    dailyStats = dailyStats,
+                    allTime = allTimeStats,
+                    modifier = Modifier.padding(Spacing.medium),
+                )
+            }
         }
 
         Spacer(Modifier.height(Spacing.medium))

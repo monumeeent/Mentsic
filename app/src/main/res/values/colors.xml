@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_static_background">#000000</color>
+    <!-- Matches the artwork's own tile colour (#0D0E12). Using pure black here made the logo's
+         rounded outer corners show as a visible ring on launcher masks. -->
+    <color name="ic_launcher_static_background">#0D0E12</color>
 
     <!-- Widget colors for light mode -->
     <color name="widget_text_primary">#1C1B1F</color>

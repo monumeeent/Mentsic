@@ -1,5 +1,9 @@
 name: Build Mentsic APK
 
+# Requires the repository secret DEBUG_KEYSTORE_BASE64 (base64 of a stable debug keystore).
+# Without it the job fails on purpose: a build signed by a random key cannot install over the
+# previous APK, and uninstalling first wipes app data.
+
 on:
   push:
     branches: [ main, master, redesign/mentsic ]
@@ -32,16 +36,31 @@ jobs:
         METROLIST_DEBUG_KEYSTORE_PATH: ${{ github.workspace }}/app/debug.keystore
         DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
       run: |
-        mkdir -p "$(dirname "$METROLIST_DEBUG_KEYSTORE_PATH")"
-        if [ -n "$DEBUG_KEYSTORE_B64" ]; then
-          # Stable key: keeps the signature identical across builds so an update installs
-          # over the previous APK instead of demanding an uninstall first.
-          echo "$DEBUG_KEYSTORE_B64" | base64 -d > "$METROLIST_DEBUG_KEYSTORE_PATH"
-        else
-          echo "::warning::DEBUG_KEYSTORE_BASE64 secret is not set — generating a throwaway keystore. APKs from this run will NOT install over a previous build."
-          rm -f "$METROLIST_DEBUG_KEYSTORE_PATH"
-          keytool -genkey -v -keystore "$METROLIST_DEBUG_KEYSTORE_PATH" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        # The APK must be signed by the SAME key on every run, otherwise Android treats each build
+        # as a different app and refuses to update in place — forcing an uninstall first (which
+        # also wipes app data such as the listening streak).
+        #
+        # Required repository secret: DEBUG_KEYSTORE_BASE64
+        #   base64 -w0 mentsic-debug.keystore
+        #
+        # Hard-fail instead of silently generating a throwaway key: a "build succeeded" artifact
+        # that cannot be installed over the previous one is worse than a failed build.
+        if [ -z "$DEBUG_KEYSTORE_B64" ]; then
+          echo "::error::DEBUG_KEYSTORE_BASE64 secret is not set. Add it under Settings → Secrets and variables → Actions, or every APK this workflow produces will require an uninstall before installing."
+          exit 1
         fi
+
+        mkdir -p "$(dirname "$METROLIST_DEBUG_KEYSTORE_PATH")"
+        echo "$DEBUG_KEYSTORE_B64" | base64 -d > "$METROLIST_DEBUG_KEYSTORE_PATH"
+
+        # Print the certificate fingerprint so two consecutive runs can be compared: if the
+        # SHA-256 line changes, the signing identity changed and in-place updates will break.
+        echo "Keystore SHA-256 fingerprint (must stay identical between builds):"
+        keytool -list -v \
+          -keystore "$METROLIST_DEBUG_KEYSTORE_PATH" \
+          -storepass android \
+          -alias androiddebugkey \
+          | grep -E "SHA256:|Alias name:" || true
 
     - name: Build FOSS Debug APK
       env:

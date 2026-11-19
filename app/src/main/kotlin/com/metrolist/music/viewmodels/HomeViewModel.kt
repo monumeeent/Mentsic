@@ -34,7 +34,9 @@ import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.QuickPicks
 import com.metrolist.music.constants.QuickPicksKey
 import com.metrolist.music.db.MusicDatabase
+import com.metrolist.music.db.entities.AllTimeStats
 import com.metrolist.music.db.entities.Album
+import com.metrolist.music.db.entities.DailyListeningStats
 import com.metrolist.music.db.entities.LocalItem
 import com.metrolist.music.db.entities.Song
 import com.metrolist.music.db.entities.SpeedDialItem
@@ -81,6 +83,9 @@ data class CommunityPlaylistItem(
 
 /** Number of weekly columns the history query must cover (longest chart = Stats). */
 private const val HEATMAP_WEEKS = 23
+
+/** Days of rich per-day history kept for the monthly calendar (2 years). */
+private const val HEATMAP_DAYS = 730L
 
 /** Number of random library songs appended to the Remixes row. */
 private const val REMIX_RANDOM_SAMPLE = 10
@@ -144,6 +149,12 @@ class HomeViewModel @Inject constructor(
      * Live rather than one-shot: the event table grows while music plays, and the heatmap sits on
      * a screen the user can leave open.
      */
+    /**
+     * Per-day play counts for the compact Personal Space strip.
+     *
+     * Kept separate from [dailyStats] because the strip only needs a number per day; loading the
+     * top-track subquery for two years of history would be wasted work.
+     */
     val heatmapPlays: StateFlow<Map<String, Int>> =
         database
             .dailyPlayCounts(
@@ -152,6 +163,25 @@ class HomeViewModel @Inject constructor(
                 cutoffMillis = System.currentTimeMillis() - (HEATMAP_WEEKS * 7L * 24L * 60L * 60L * 1000L),
             ).map { rows -> rows.associate { it.day to it.playCount } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
+
+    /**
+     * Rich per-day rows (plays, listening time, top track) for the monthly calendar.
+     *
+     * Two years of history so the month switcher can scrub well back. `Lazily` because most users
+     * never open the Stats tab, and the aggregate is the most expensive query on this screen.
+     */
+    val dailyStats: StateFlow<Map<String, DailyListeningStats>> =
+        database
+            .dailyListeningStats(
+                cutoffMillis = System.currentTimeMillis() - (HEATMAP_DAYS * 24L * 60L * 60L * 1000L),
+            ).map { rows -> rows.associateBy { it.day } }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
+
+    /** Lifetime plays / listening time / active days for the stats ribbon. */
+    val allTimeStats: StateFlow<AllTimeStats> =
+        database
+            .allTimeStats()
+            .stateIn(viewModelScope, SharingStarted.Lazily, AllTimeStats())
 
     /**
      * Minutes listened since local midnight, for the Personal Space counter.

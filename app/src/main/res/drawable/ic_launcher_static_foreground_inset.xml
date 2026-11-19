@@ -2,11 +2,11 @@
 <!--
     Adaptive-icon foreground for the real Mentsic logo.
 
-    The launcher scales an adaptive foreground by ~1.5x and only the central 66dp of a 108dp
-    canvas is guaranteed visible, so a full-bleed artwork loses its corners to the mask. Insetting
-    the source by 16% keeps the whole rounded-square logo inside every launcher shape (circle,
-    squircle, rounded square, teardrop) without rescaling the PNG itself.
+    The source PNG was cropped to the artwork's own rounded tile (its white margin removed), so it
+    already fills the canvas edge to edge. An 11% inset keeps the tile's corners inside the 72dp
+    safe zone every launcher mask respects; the background colour matches the tile, so a circular
+    or squircle mask shows the logo on its own dark ground rather than a white ring.
 -->
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ic_launcher_static_foreground"
-    android:inset="16%" />
+    android:inset="11%" />
