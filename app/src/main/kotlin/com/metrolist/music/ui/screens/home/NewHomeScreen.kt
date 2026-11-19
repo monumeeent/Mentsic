@@ -91,6 +91,7 @@ import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.ListeningHeatmap
+import com.metrolist.music.ui.component.ListeningHeatmapCard
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.TacticalCollapsibleHeatmapHeader
 import com.metrolist.music.ui.component.title
@@ -369,7 +370,7 @@ fun NewHomeScreen(
                 // normal feed, so it keeps pull-to-refresh and the live ViewModel data.
                 if (hubModeEnabled) {
                     item(key = "hub_zone_speed_dial") {
-                        HomeSectionHeaderV2(title = stringResource(R.string.zone1_speed_dial_pager))
+                        DevSectionHeader(label = stringResource(R.string.zone1_speed_dial_pager))
                         HubZoneSpeedDial(
                             items = uiState.speedDialItems,
                             onItemClick = { item ->
@@ -382,7 +383,7 @@ fun NewHomeScreen(
                     }
 
                     item(key = "hub_zone_active_session") {
-                        HomeSectionHeaderV2(title = stringResource(R.string.zone2_active_session))
+                        DevSectionHeader(label = stringResource(R.string.zone2_active_session))
                         HubZoneActiveSession(
                             target = activeSong,
                             isPlaying = isPlaying && activeSong?.id == mediaMetadata?.id,
@@ -431,7 +432,7 @@ fun NewHomeScreen(
                     if (!hubHeatmapCollapsedFlag) {
                         item(key = "hub_zone_heatmap") {
                             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.medium)) {
-                                ListeningHeatmap(playsByDay = heatmapPlays, weeksToShow = 12)
+                                ListeningHeatmapCard(playsByDay = heatmapPlays)
                             }
                         }
                     }
@@ -1328,7 +1329,12 @@ private fun HubZoneActiveSession(
     }
 }
 
-/** Command Hub zone 3: community picks and account playlists as full-width rows. */
+/**
+ * Command Hub zone 3: community picks and account playlists as full-width rows.
+ *
+ * These are ordinary user data (your playlists / daily-discover picks), not developer-only
+ * surfaces, so the rows deliberately opt out of the DEV wash.
+ */
 @Composable
 private fun HubZoneCommunity(items: List<YTItem>, onItemClick: (YTItem) -> Unit) {
     val rows = items.distinctBy { it.id }.take(5)
@@ -1341,6 +1347,7 @@ private fun HubZoneCommunity(items: List<YTItem>, onItemClick: (YTItem) -> Unit)
                 title = stringResource(R.string.zone3_community_picks),
                 subtitle = stringResource(R.string.dev_shining_rows_loading_desc),
                 leadingIconRes = R.drawable.playlist_play,
+                isDeveloperOnly = false,
             )
         } else {
             rows.forEach { item ->
@@ -1355,6 +1362,7 @@ private fun HubZoneCommunity(items: List<YTItem>, onItemClick: (YTItem) -> Unit)
                     artworkUrl = item.thumbnail,
                     leadingIconRes = R.drawable.playlist_play,
                     trailingIconRes = R.drawable.play,
+                    isDeveloperOnly = false,
                     onClick = { onItemClick(item) },
                 )
             }

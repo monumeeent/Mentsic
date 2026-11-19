@@ -77,8 +77,8 @@ private const val ShinePeakAlpha = 0.18f
  * @param artworkUrl optional artwork; [leadingIconRes] is drawn when null.
  * @param leadingIconRes drawn inside the artwork slot when no artwork is available.
  * @param trailingIconRes icon at the end of the row (usually a play or more-vert glyph).
- * @param showDevBadge draws the small "DEV" pill; on by default because this card is only ever
- *   used for developer-only content.
+ * @param isDeveloperOnly draws the DEV gradient wash, the "DEV" pill and the sweep. Set to `false`
+ *   for the same row geometry on ordinary content (e.g. your own playlists inside hub mode).
  */
 @Composable
 fun ShiningRowCard(
@@ -89,7 +89,7 @@ fun ShiningRowCard(
     artworkUrl: String? = null,
     leadingIconRes: Int? = null,
     trailingIconRes: Int? = null,
-    showDevBadge: Boolean = true,
+    isDeveloperOnly: Boolean = true,
     onClick: () -> Unit = {},
 ) {
     val shape = MaterialTheme.shapes.large
@@ -110,10 +110,12 @@ fun ShiningRowCard(
         },
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // 1. Developer-only gradient wash (static identity).
-            Box(modifier = Modifier.fillMaxSize().background(wash))
-            // 2. Animated sweep on top of the wash (motion identity).
-            ShineOverlay()
+            if (isDeveloperOnly) {
+                // 1. Developer-only gradient wash (static identity).
+                Box(modifier = Modifier.fillMaxSize().background(wash))
+                // 2. Animated sweep on top of the wash (motion identity).
+                ShineOverlay()
+            }
 
             Row(
                 modifier = Modifier
@@ -125,6 +127,7 @@ fun ShiningRowCard(
                     artworkUrl = artworkUrl,
                     iconRes = leadingIconRes,
                     isActive = isActive,
+                    isDeveloperOnly = isDeveloperOnly,
                 )
                 Spacer(Modifier.width(Spacing.medium))
                 Column(modifier = Modifier.weight(1f)) {
@@ -150,7 +153,7 @@ fun ShiningRowCard(
                         )
                     }
                 }
-                if (showDevBadge) {
+                if (isDeveloperOnly) {
                     Spacer(Modifier.width(Spacing.small))
                     DevBadge()
                 }
@@ -159,7 +162,11 @@ fun ShiningRowCard(
                     Icon(
                         painter = painterResource(trailingIconRes),
                         contentDescription = null,
-                        tint = developerOnlyAccent(),
+                        tint = if (isDeveloperOnly) {
+                            developerOnlyAccent()
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -191,6 +198,7 @@ private fun ArtworkSlot(
     artworkUrl: String?,
     iconRes: Int?,
     isActive: Boolean,
+    isDeveloperOnly: Boolean,
 ) {
     Box(
         modifier = Modifier
@@ -216,7 +224,11 @@ private fun ArtworkSlot(
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                tint = developerOnlyAccent(),
+                tint = if (isDeveloperOnly) {
+                    developerOnlyAccent()
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
                 modifier = Modifier.size(22.dp),
             )
         }

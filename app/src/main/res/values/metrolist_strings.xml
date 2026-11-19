@@ -721,9 +721,9 @@
 
     <!-- Developer-only shining rows on the home feed -->
     <string name="dev_badge">DEV</string>
-    <string name="dev_shining_rows">Shining rows (dev)</string>
+    <string name="dev_shining_rows">Developer features</string>
     <string name="dev_shining_rows_loading">Loading your picks…</string>
-    <string name="dev_shining_rows_loading_desc">Shining cards appear here once Quick Picks are ready.</string>
+    <string name="dev_shining_rows_loading_desc">Rows with a shimmering tint are only visible in Developer Mode.</string>
 
     <!-- Tactical Command Hub (Settings → Appearance → Home layout).
          NOTE: `tactical_hub` itself is defined in strings.xml; do not redeclare it here. -->

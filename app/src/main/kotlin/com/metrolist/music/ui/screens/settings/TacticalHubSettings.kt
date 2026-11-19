@@ -130,6 +130,7 @@ fun TacticalHubSettings(navController: NavController) {
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.stats),
                                 title = { Text(stringResource(R.string.hub_heatmap_collapsed)) },
+                                isDeveloperOnly = true,
                                 description = { Text(stringResource(R.string.hub_heatmap_collapsed_desc)) },
                                 trailingContent = {
                                     Switch(

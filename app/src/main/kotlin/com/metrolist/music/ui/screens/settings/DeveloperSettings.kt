@@ -169,7 +169,6 @@ fun DeveloperSettings(navController: NavController) {
                         icon = painterResource(R.drawable.grid_view),
                         title = { Text(stringResource(R.string.launcher_icon_use_real)) },
                         isDeveloperOnly = true,
-                        isDeveloperOnly = true,
                         description = { Text(stringResource(R.string.launcher_icon_use_real_desc)) },
                         trailingContent = {
                             Switch(
