@@ -176,7 +176,6 @@ fun NewHomeScreen(
     val remixes by viewModel.remixes.collectAsStateWithLifecycle()
     val todayMinutes by viewModel.todayMinutes.collectAsStateWithLifecycle()
     val trending by viewModel.trending.collectAsStateWithLifecycle()
-    val heatmapPlays by viewModel.heatmapPlays.collectAsStateWithLifecycle()
     val dailyStats by viewModel.dailyStats.collectAsStateWithLifecycle()
     val allTimeStats by viewModel.allTimeStats.collectAsStateWithLifecycle()
 
@@ -469,7 +468,6 @@ fun NewHomeScreen(
                                     .distinct()
                                     .take(3),
                                 todayMinutes = todayMinutes,
-                                playsByDay = heatmapPlays,
                                 dailyStats = dailyStats,
                                 onResume = {
                                     activeSong?.let { target ->
@@ -858,7 +856,6 @@ private fun PersonalSpacePager(
     isPlaying: Boolean,
     topArtists: List<String>,
     todayMinutes: Long,
-    playsByDay: Map<String, Int>,
     dailyStats: Map<String, DailyListeningStats>,
     smartPlaylists: List<SmartPlaylist>,
     onResume: () -> Unit,
@@ -1112,7 +1109,7 @@ private fun PersonalSpacePager(
                     }
                 } else {
                     ListeningActivitySlide(
-                        playsByDay = playsByDay,
+                        dailyStats = dailyStats,
                         onOpen = onOpenListeningActivity,
                     )
                 }
