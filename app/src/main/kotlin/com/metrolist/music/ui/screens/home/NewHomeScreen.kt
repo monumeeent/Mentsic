@@ -94,6 +94,7 @@ import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
+import com.metrolist.music.ui.component.CurrentWeekHeatmap
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.MonthlyPlayHeatmap
 import com.metrolist.music.ui.component.NavigationTitle
