@@ -2100,9 +2100,10 @@ fun BottomSheetPlayer(
                     // Audio visualizer - shown when enabled and not in fullscreen or lyrics mode
                     if (enableAudioVisualizer && !isFullScreen && !showInlineLyrics) {
                         val visualizerColors = listOf(
-                            textButtonColor.copy(alpha = 0.8f),
-                            textButtonColor,
-                            textButtonColor.copy(alpha = 0.6f),
+                            // Low → high ramp: quiet bars sit near the secondary accent, peaks bloom
+                            // into the primary, so the colour itself encodes amplitude.
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f),
+                            MaterialTheme.colorScheme.primary,
                         )
                         AudioVisualizer(
                             colors = visualizerColors,

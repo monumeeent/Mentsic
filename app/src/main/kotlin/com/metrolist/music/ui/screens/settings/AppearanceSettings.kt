@@ -100,6 +100,8 @@ import com.metrolist.music.constants.ShowDownloadedPlaylistKey
 import com.metrolist.music.constants.ShowLikedPlaylistKey
 import com.metrolist.music.constants.ShowTopPlaylistKey
 import com.metrolist.music.constants.ShowUploadedPlaylistKey
+import com.metrolist.music.constants.EnableAudioVisualizerKey
+import com.metrolist.music.constants.ResumeOnBluetoothConnectKey
 import com.metrolist.music.constants.SliderStyle
 import com.metrolist.music.constants.SliderStyleKey
 import com.metrolist.music.constants.SlimNavBarKey
@@ -281,6 +283,12 @@ fun AppearanceSettings(
             SquigglySliderKey,
             defaultValue = false,
         )
+    // Reached here rather than from Player & Audio (a developer-only screen): both are ordinary
+    // playback preferences and must work without Developer Mode.
+    val (enableAudioVisualizer, onEnableAudioVisualizerChange) =
+        rememberPreference(EnableAudioVisualizerKey, defaultValue = false)
+    val (resumeOnBluetoothConnect, onResumeOnBluetoothConnectChange) =
+        rememberPreference(ResumeOnBluetoothConnectKey, defaultValue = false)
     val (swipeThumbnail, onSwipeThumbnailChange) =
         rememberPreference(
             SwipeThumbnailKey,
@@ -1117,6 +1125,54 @@ fun AppearanceSettings(
                                 )
                             },
                             onClick = { showSliderOptionDialog = true },
+                        ),
+                    )
+                    // Audio visualizer + auto-resume are everyday playback preferences. They used
+                    // to live inside the developer-only Player & Audio screen, which made the whole
+                    // feature unreachable without Developer Mode.
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.equalizer),
+                            title = { Text(stringResource(R.string.audio_visualizer)) },
+                            description = { Text(stringResource(R.string.audio_visualizer_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = enableAudioVisualizer,
+                                    onCheckedChange = onEnableAudioVisualizerChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter = painterResource(
+                                                id = if (enableAudioVisualizer) R.drawable.check else R.drawable.close,
+                                            ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onEnableAudioVisualizerChange(!enableAudioVisualizer) },
+                        ),
+                    )
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.bluetooth),
+                            title = { Text(stringResource(R.string.resume_on_bluetooth_connect)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = resumeOnBluetoothConnect,
+                                    onCheckedChange = onResumeOnBluetoothConnectChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter = painterResource(
+                                                id = if (resumeOnBluetoothConnect) R.drawable.check else R.drawable.close,
+                                            ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onResumeOnBluetoothConnectChange(!resumeOnBluetoothConnect) },
                         ),
                     )
                     // Home layout is only offered while developer mode is on: the Command Hub

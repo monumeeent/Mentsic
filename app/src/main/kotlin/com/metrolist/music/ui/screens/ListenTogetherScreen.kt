@@ -100,7 +100,11 @@ import com.metrolist.music.listentogether.ListenTogetherEvent
 import com.metrolist.music.listentogether.RoomRole
 import com.metrolist.music.listentogether.SuggestionReceivedPayload
 import com.metrolist.music.listentogether.UserInfo
+import com.metrolist.music.ui.component.BroadcastRoomCode
 import com.metrolist.music.ui.component.DefaultDialog
+import com.metrolist.music.ui.component.ListenerConstellation
+import com.metrolist.music.ui.component.StagePulse
+import com.metrolist.music.ui.theme.Spacing
 import androidx.compose.material3.IconButton as MaterialIconButton
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.utils.backToMain
@@ -301,6 +305,15 @@ fun ListenTogetherScreen(
             },
             onLeaveRoom = { listenTogetherManager.leaveRoom() },
             onOpenSettings = { navController.navigate("settings/integrations/listen_together") },
+            listeners =
+                roomState?.users
+                    ?.map { Pair(it.username, it.isConnected) }
+                    .orEmpty(),
+            hostIndex =
+                roomState?.users
+                    ?.indexOfFirst { it.userId == roomState?.hostId }
+                    ?.takeIf { it >= 0 }
+                    ?: 0,
             windowInsets = windowInsets,
         )
         return
@@ -1577,6 +1590,8 @@ private fun ListenTogetherStageLayout(
     onJoinRoom: () -> Unit,
     onLeaveRoom: () -> Unit,
     onOpenSettings: () -> Unit,
+    listeners: List<Pair<String, Boolean>>,
+    hostIndex: Int,
     windowInsets: WindowInsets,
 ) {
     val insets = windowInsets.asPaddingValues()
@@ -1594,65 +1609,101 @@ private fun ListenTogetherStageLayout(
             ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+        // ── Stage core ─────────────────────────────────────────────────────────────────────
+        // The breathing orb encodes the connection state as *energy*: nervous while connecting,
+        // calm while connected, still while idle. It stands in for a flat status line.
+        val energy =
+            when (connectionState) {
+                ConnectionState.CONNECTING, ConnectionState.RECONNECTING -> 0.9f
+                ConnectionState.ERROR -> 1f
+                ConnectionState.CONNECTED -> if (isInRoom) 0.35f else 0.22f
+                ConnectionState.DISCONNECTED -> 0.1f
+            }
+
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            StagePulse(energy = energy, color = MaterialTheme.colorScheme.primary)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = stringResource(R.string.listen_together),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = when {
-                        isInRoom -> stringResource(R.string.listen_together_in_room)
-                        connectionState == ConnectionState.CONNECTED -> stringResource(R.string.connected)
-                        else -> stringResource(R.string.disconnected)
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(20.dp))
-                if (isInRoom) {
-                    Button(
-                        onClick = onLeaveRoom,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError,
-                        ),
-                    ) {
-                        Text(stringResource(R.string.leave_room))
-                    }
-                } else {
-                    Button(
-                        onClick = {
-                            when {
-                                connectionState == ConnectionState.CONNECTING ||
-                                    connectionState == ConnectionState.RECONNECTING -> onReconnect()
-                                connectionState != ConnectionState.CONNECTED -> onConnect()
-                                else -> onDisconnect()
-                            }
+                Text(
+                    text =
+                        when (connectionState) {
+                            ConnectionState.CONNECTED ->
+                                if (isInRoom) {
+                                    stringResource(R.string.listen_together_in_room)
+                                } else {
+                                    stringResource(R.string.connected)
+                                }
+                            ConnectionState.CONNECTING ->
+                                stringResource(R.string.listen_together_connecting)
+                            ConnectionState.RECONNECTING ->
+                                stringResource(R.string.listen_together_reconnecting)
+                            ConnectionState.ERROR -> stringResource(R.string.listen_together_error)
+                            ConnectionState.DISCONNECTED ->
+                                stringResource(R.string.disconnected)
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = when {
-                                connectionState == ConnectionState.CONNECTED ->
-                                    stringResource(R.string.disconnect)
-                                connectionState == ConnectionState.CONNECTING ||
-                                    connectionState == ConnectionState.RECONNECTING ->
-                                    stringResource(R.string.reconnect)
-                                else -> stringResource(R.string.connect)
-                            },
-                        )
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
+        // ── Room ────────────────────────────────────────────────────────────────────────────
+        if (isInRoom) {
+            BroadcastRoomCode(code = roomCode)
+            Spacer(Modifier.height(Spacing.small))
+        }
+
+        // ── Listeners ──────────────────────────────────────────────────────────────────────
+        if (listeners.isNotEmpty()) {
+            ListenerConstellation(
+                listeners = listeners,
+                isHostIndex = hostIndex,
+            )
+            Spacer(Modifier.height(Spacing.small))
+        }
+
+        // ── Primary action ─────────────────────────────────────────────────────────────────
+        if (isInRoom) {
+            Button(
+                onClick = onLeaveRoom,
+                modifier = Modifier.fillMaxWidth(),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+            ) {
+                Text(stringResource(R.string.leave_room))
+            }
+        } else {
+            Button(
+                onClick = {
+                    when {
+                        connectionState == ConnectionState.CONNECTING ||
+                            connectionState == ConnectionState.RECONNECTING -> onReconnect()
+                        connectionState != ConnectionState.CONNECTED -> onConnect()
+                        else -> onDisconnect()
                     }
-                }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text =
+                        when {
+                            connectionState == ConnectionState.CONNECTED ->
+                                stringResource(R.string.disconnect)
+                            connectionState == ConnectionState.CONNECTING ||
+                                connectionState == ConnectionState.RECONNECTING ->
+                                stringResource(R.string.reconnect)
+                            else -> stringResource(R.string.connect)
+                        },
+                )
             }
         }
 

@@ -619,6 +619,23 @@ fun AccountSettings(
                         }
                     )
                 )
+                // Hidden developer area, same entry as Settings → System & About. Only rendered
+                // while Developer Mode is on; the route is gated independently, so this row cannot
+                // be used to reach it once the mode is switched off.
+                if (developerMode) {
+                    add(
+                        Material3SettingsItem(
+                            title = { Text(stringResource(R.string.developer_options)) },
+                            description = { Text(stringResource(R.string.developer_options_desc)) },
+                            icon = painterResource(R.drawable.bug_report),
+                            isDeveloperOnly = true,
+                            onClick = {
+                                onClose()
+                                navController.navigate("settings/developer")
+                            }
+                        )
+                    )
+                }
             },
             useLowContrast = true
         )
