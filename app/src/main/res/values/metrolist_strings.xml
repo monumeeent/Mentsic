@@ -724,6 +724,13 @@
     <string name="heatmap_day_summary">%1$d plays &#183; %2$d min</string>
     <string name="heatmap_day_empty">Opened, nothing played</string>
     <string name="heatmap_open_day">Open this day</string>
+    <string name="heatmap_this_week">This week</string>
+    <string name="heatmap_week_plays">%1$d plays</string>
+    <string name="heatmap_full_month">Full month</string>
+
+    <!-- Alternate Listen Together layout (Developer settings) -->
+    <string name="listen_together_alt_ui">Stage layout</string>
+    <string name="listen_together_alt_ui_desc">Replace the stacked screen with a single hero connection card</string>
     <string name="heatmap_active_days">Active days</string>
     <string name="heatmap_total_plays">Plays</string>
     <string name="heatmap_hours">Hours</string>

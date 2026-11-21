@@ -288,6 +288,10 @@ val ListenTogetherSyncVolumeKey = booleanPreferencesKey("listenTogetherSyncVolum
 val ListenTogetherBlockedUsersKey = stringPreferencesKey("listenTogetherBlockedUsers")
 val ListenTogetherInTopBarKey = booleanPreferencesKey("listenTogetherInTopBar")
 
+// Alternate "stage" layout for the Listen Together tab. Developer-only experiment, toggled from
+// the hidden developer settings. Off keeps the original stacked-card screen.
+val ListenTogetherAltUiKey = booleanPreferencesKey("listenTogetherAltUi")
+
 // Per-section visibility switches for the Home feed. They are *additive*: a section renders only
 // when its switch is on AND the active preset includes it, so the presets keep working as coarse
 // shortcuts while these give fine control.

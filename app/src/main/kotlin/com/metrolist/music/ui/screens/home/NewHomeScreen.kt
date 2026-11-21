@@ -1,8 +1,10 @@
 package com.metrolist.music.ui.screens.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +34,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.material3.ScrollableTabRow
@@ -193,6 +196,9 @@ fun NewHomeScreen(
 
     // Developer mode gates the Command Hub layout and the shining developer rows.
     val (developerMode) = rememberPreference(DeveloperModeKey, defaultValue = false)
+
+    // Tapping the week strip in Personal Space opens the full month in a floating card.
+    var showFullHeatmap by remember { mutableStateOf(false) }
 
     // Command Hub layout (same zone structure as the standalone hub screen) with the heatmap
     // starting collapsed. Both switches live in Settings → Tactical Hub.
@@ -488,6 +494,7 @@ fun NewHomeScreen(
                                 onOpenPersonalSpace = { navController.navigate("account") },
                                 onOpenListeningActivity = {
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                    showFullHeatmap = true
                                 },
                                 smartPlaylists = smartPlaylists,
                                 onOpenSmartPlaylist = { navController.navigate("smart_playlist/${it.id}") },
@@ -728,11 +735,95 @@ fun NewHomeScreen(
                     Icon(painterResource(R.drawable.shuffle), contentDescription = stringResource(R.string.shuffle))
                 }
             }
+
+            // Floating full-month heatmap. The Personal Space card only has room for the current
+            // week, so tapping it expands to the whole calendar here instead of navigating away.
+            if (showFullHeatmap) {
+                FloatingHeatmapSheet(
+                    dailyStats = dailyStats,
+                    allTime = allTimeStats,
+                    onDismiss = { showFullHeatmap = false },
+                )
+            }
         }
     }
 }
 
 
+
+/**
+ * Floating card showing the full monthly heatmap, opened from the Personal Space week strip.
+ *
+ * Implemented as an in-place scrim + card rather than a ModalBottomSheet so it renders over the
+ * feed without changing navigation state: dismissing it returns to the exact scroll position.
+ * Back press dismisses it (see the BackHandler) instead of leaving Home.
+ */
+@Composable
+private fun FloatingHeatmapSheet(
+    dailyStats: Map<String, DailyListeningStats>,
+    allTime: AllTimeStats,
+    onDismiss: () -> Unit,
+) {
+    BackHandler(onBack = onDismiss)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // Scrim: catches taps outside the card so the sheet closes on a background tap.
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismiss,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.medium)
+                // Swallow taps inside the card so they do not reach the scrim's dismiss handler.
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                )
+                .animateContentSize(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            Column(modifier = Modifier.padding(Spacing.large)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.heatmap_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            painter = painterResource(R.drawable.close),
+                            contentDescription = stringResource(R.string.close),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(Spacing.small))
+
+                MonthlyPlayHeatmap(
+                    dailyStats = dailyStats,
+                    allTime = allTime,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun DeveloperCreditRow() {
@@ -1110,12 +1201,14 @@ private fun PersonalSpacePager(
                 } else {
                     ListeningActivitySlide(
                         dailyStats = dailyStats,
+                        today = today,
                         onOpen = onOpenListeningActivity,
                     )
                 }
 
                 else -> ListeningActivitySlide(
                     dailyStats = dailyStats,
+                    today = today,
                     onOpen = onOpenListeningActivity,
                 )
             }
@@ -1125,16 +1218,18 @@ private fun PersonalSpacePager(
 }
 
 /**
- * Listening-activity card: a compact heatmap with a weekly / monthly window switch.
+ * Listening-activity card: **current week only** — seven boxes, one per day.
  *
- * Shows a monthly calendar of daily play counts — one box per day, brighter for heavier listening.
- * Today's minutes are not repeated here: that number lives on the streak page.
+ * The Personal Space card is far too short for a month grid, and a month inside a 156dp pager made
+ * every cell unreadable. Tapping the card opens the full month in a floating sheet instead, so the
+ * card stays a glance and the detail is one tap away.
  *
- * Clicking the card body opens the listening-activity destination.
+ * Today's minutes are not repeated here; that number lives on the streak page.
  */
 @Composable
 private fun ListeningActivitySlide(
     dailyStats: Map<String, DailyListeningStats>,
+    today: LocalDate,
     onOpen: () -> Unit,
 ) {
     PersonalSpaceSlide(respond = onOpen) {
@@ -1151,11 +1246,9 @@ private fun ListeningActivitySlide(
                     detectHorizontalDragGestures { _, _ -> }
                 },
             ) {
-                // Monthly calendar: one box per day, brightness = play count. Compact variant:
-                // no all-time ribbon, since the card only has room for the grid itself.
-                MonthlyPlayHeatmap(
+                CurrentWeekHeatmap(
                     dailyStats = dailyStats,
-                    allTime = AllTimeStats(),
+                    today = today,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

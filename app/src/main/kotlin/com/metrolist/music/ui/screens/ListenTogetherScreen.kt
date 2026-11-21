@@ -90,6 +90,7 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.AppBarHeight
 import com.metrolist.music.constants.DeveloperModeKey
+import com.metrolist.music.constants.ListenTogetherAltUiKey
 import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.listentogether.ConnectionState
@@ -132,6 +133,8 @@ fun ListenTogetherScreen(
     val shouldShowTopBar = showTopBar || listenTogetherInTopBar
     // Room creation is a developer feature; joining stays open to everybody.
     val developerMode by rememberPreference(DeveloperModeKey, defaultValue = false)
+    // Alternate "stage" layout — developer-only experiment, off by default.
+    val (altUi) = rememberPreference(ListenTogetherAltUiKey, defaultValue = false)
 
     var savedUsername by rememberPreference(ListenTogetherUsernameKey, "")
     var roomCodeInput by rememberSaveable { mutableStateOf("") }
@@ -254,6 +257,19 @@ fun ListenTogetherScreen(
             lazyListState.animateScrollToItem(0)
             backStackEntry?.savedStateHandle?.set("scrollToTop", false)
         }
+    }
+
+    // Developer-only alternate "stage" layout. Falls through to the original stack when off.
+    if (altUi) {
+        ListenTogetherStageLayout(
+            connectionState = connectionState,
+            isInRoom = isInRoom,
+            onConnect = { listenTogetherManager.connect() },
+            onDisconnect = { listenTogetherManager.disconnect() },
+            onReconnect = { listenTogetherManager.forceReconnect() },
+            windowInsets = windowInsets,
+        )
+        return
     }
 
     LazyColumn(
@@ -1500,6 +1516,129 @@ private fun UserActionDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Developer-only alternate "stage" layout for Listen Together.
+ *
+ * A single hero stage card (connection state + primary action) sits above a compact
+ * two-column status strip. No room lists, no request queues — intentionally minimal so it
+ * can be evaluated as a future default without changing the real screen.
+ */
+@Composable
+private fun ListenTogetherStageLayout(
+    connectionState: ConnectionState,
+    isInRoom: Boolean,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit,
+    onReconnect: () -> Unit,
+    windowInsets: WindowInsets,
+) {
+    val insets = windowInsets.asPaddingValues()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = insets.calculateTopPadding() + 16.dp,
+                bottom = insets.calculateBottomPadding() + 16.dp + AppBarHeight,
+            ),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = stringResource(R.string.listen_together),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = when {
+                        isInRoom -> stringResource(R.string.listen_together_in_room)
+                        connectionState == ConnectionState.CONNECTED -> stringResource(R.string.connected)
+                        else -> stringResource(R.string.disconnected)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(20.dp))
+                Button(
+                    onClick = {
+                        when {
+                            !isInRoom && connectionState != ConnectionState.CONNECTED -> onConnect()
+                            connectionState == ConnectionState.CONNECTED -> onDisconnect()
+                            else -> onReconnect()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = when {
+                            !isInRoom && connectionState != ConnectionState.CONNECTED ->
+                                stringResource(R.string.connect)
+                            connectionState == ConnectionState.CONNECTED ->
+                                stringResource(R.string.disconnect)
+                            else -> stringResource(R.string.reconnect)
+                        },
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            StageStatTile(
+                label = stringResource(R.string.connection),
+                value = connectionState.name.lowercase().replaceFirstChar { it.uppercase() },
+                modifier = Modifier.weight(1f),
+            )
+            StageStatTile(
+                label = stringResource(R.string.room),
+                value = if (isInRoom) stringResource(R.string.active) else stringResource(R.string.none),
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun StageStatTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }

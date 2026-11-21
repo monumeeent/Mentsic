@@ -59,6 +59,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
+import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 
 /**
@@ -100,6 +101,9 @@ fun MonthlyPlayHeatmap(
     allTime: AllTimeStats,
     modifier: Modifier = Modifier,
     initialMonth: YearMonth = YearMonth.now(),
+    // Compact mode drops the all-time ribbon and the day capsule: used inside the Personal Space
+    // card, where the grid alone has to fit a fixed height.
+    showRibbon: Boolean = true,
     onOpenDay: (LocalDate) -> Unit = {},
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -152,20 +156,108 @@ fun MonthlyPlayHeatmap(
             )
         }
 
-        selectedDay?.let { iso ->
-            val date = remember(iso) { runCatching { LocalDate.parse(iso) }.getOrNull() }
-            val stats = byDay[iso]
-            if (date != null) {
-                Spacer(Modifier.height(Spacing.small))
-                DayCapsule(date = date, stats = stats, onOpenDay = onOpenDay)
+        if (showRibbon) {
+            selectedDay?.let { iso ->
+                val date = remember(iso) { runCatching { LocalDate.parse(iso) }.getOrNull() }
+                val stats = byDay[iso]
+                if (date != null) {
+                    Spacer(Modifier.height(Spacing.small))
+                    DayCapsule(date = date, stats = stats, onOpenDay = onOpenDay)
+                }
             }
+
+            Spacer(Modifier.height(Spacing.medium))
+
+            AllTimeRibbon(allTime = allTime)
         }
-
-        Spacer(Modifier.height(Spacing.medium))
-
-        AllTimeRibbon(allTime = allTime)
     }
 }
+
+/**
+ * Current-week heatmap: one row of seven boxes for the week containing [today].
+ *
+ * Used by the Personal Space card, which is far too short for a full month grid. The intensity
+ * scale stays percentage-based against the busiest day *of that week*, so a quiet week still
+ * shows contrast instead of seven identical pale cells.
+ *
+ * @param weekOffset 0 = the current week, -1 = the previous one, and so on.
+ */
+@Composable
+fun WeeklyPlayHeatmap(
+    dailyStats: Map<String, DailyListeningStats>,
+    modifier: Modifier = Modifier,
+    today: LocalDate = LocalDate.now(),
+) {
+    val weekStart = remember(today) { today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek())) }
+    val days = remember(weekStart) { (0L..6L).map { weekStart.plusDays(it) } }
+    // Peak of the visible week: the denominator for the percentage ramp.
+    val peakPlays =
+        remember(days, dailyStats) {
+            days.maxOfOrNull { dailyStats[it.toString()]?.playCount ?: 0 } ?: 0
+        }
+    val weekPlays = remember(days, dailyStats) {
+        days.sumOf { dailyStats[it.toString()]?.playCount ?: 0 }
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.heatmap_this_week),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.heatmap_week_summary, weekPlays),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        Spacer(Modifier.height(Spacing.small))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
+        ) {
+            days.forEach { date ->
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                    Spacer(Modifier.height(Spacing.tiny))
+                    HeatmapCell(
+                        date = date,
+                        stats = dailyStats[date.toString()],
+                        peakPlays = peakPlays,
+                        isSelected = false,
+                        isToday = date == today,
+                        isFuture = date.isAfter(today),
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {},
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Locale's first day of week, matching [WeekdayHeaderRow]. */
+private fun firstDayOfWeek(): java.time.DayOfWeek =
+    when (Locale.getDefault().country) {
+        "US", "CA", "JP", "IN" -> java.time.DayOfWeek.SUNDAY
+        else -> java.time.DayOfWeek.MONDAY
+    }
 
 /** Month name, that month's totals, and the scrub chevrons. */
 @Composable
@@ -248,6 +340,96 @@ private fun WeekdayHeaderRow() {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Current-week strip: seven cells for the week containing [today], labelled by weekday.
+ *
+ * The intensity ramp is measured against the busiest day **of that week**, so a light week still
+ * shows contrast instead of seven identically pale boxes. Used by the Personal Space card, which
+ * has room for one row but not a month grid.
+ */
+@Composable
+fun CurrentWeekHeatmap(
+    dailyStats: Map<String, DailyListeningStats>,
+    modifier: Modifier = Modifier,
+    today: LocalDate = LocalDate.now(),
+) {
+    val weekStart = remember(today) {
+        // Monday-first everywhere the app is Monday-first; Sunday-first for the locales that
+        // expect it. Mirrors WeekdayHeaderRow so the strip and the month grid agree.
+        val mondayFirst = when (Locale.getDefault().country) {
+            "US", "CA", "JP", "IN" -> false
+            else -> true
+        }
+        val back = if (mondayFirst) today.dayOfWeek.value - 1 else today.dayOfWeek.value % 7
+        today.minusDays(back.toLong())
+    }
+    val days = remember(weekStart) { (0L..6L).map { weekStart.plusDays(it) } }
+    val peakPlays =
+        remember(days, dailyStats) {
+            days.maxOfOrNull { dailyStats[it.toString()]?.playCount ?: 0 } ?: 0
+        }
+    val weekPlays = remember(days, dailyStats) {
+        days.sumOf { dailyStats[it.toString()]?.playCount ?: 0 }
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.heatmap_this_week),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.heatmap_week_plays, weekPlays),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        Spacer(Modifier.height(Spacing.small))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
+        ) {
+            days.forEach { date ->
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    HeatmapCell(
+                        date = date,
+                        stats = dailyStats[date.toString()],
+                        peakPlays = peakPlays,
+                        isSelected = false,
+                        isToday = date == today,
+                        isFuture = date.isAfter(today),
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {},
+                    )
+                    Spacer(Modifier.height(Spacing.tiny))
+                    Text(
+                        text = date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                        style = MaterialTheme.typography.labelSmall,
+                        color =
+                            if (date == today) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }

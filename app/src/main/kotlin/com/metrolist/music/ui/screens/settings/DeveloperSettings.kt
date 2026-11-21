@@ -36,6 +36,7 @@ import com.metrolist.music.LocalChangelogState
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.LauncherIconVariantKey
+import com.metrolist.music.constants.ListenTogetherAltUiKey
 import com.metrolist.music.recognition.RecognitionOverlay
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
@@ -155,6 +156,10 @@ fun DeveloperSettings(navController: NavController) {
             rememberPreference(LauncherIconVariantKey, LAUNCHER_ICON_STATIC)
         var pendingLauncherVariant by remember { mutableStateOf<String?>(null) }
 
+        // Alternate Listen Together layout (stage card instead of the stacked screen).
+        val (listenTogetherAltUi, onListenTogetherAltUiChange) =
+            rememberPreference(ListenTogetherAltUiKey, defaultValue = false)
+
         LaunchedEffect(pendingLauncherVariant) {
             val target = pendingLauncherVariant ?: return@LaunchedEffect
             // Component changes restart the process on some launchers, so persistence comes first.
@@ -190,6 +195,31 @@ fun DeveloperSettings(navController: NavController) {
                                     LAUNCHER_ICON_STATIC
                                 }
                         },
+                    ),
+                ),
+        )
+
+        Spacer(Modifier.height(Spacing.medium))
+
+        // Alternate Listen Together layout. Developer-only experiment: it swaps the stacked-card
+        // screen for a single hero "stage" card, so it can be judged without changing the default.
+        Material3SettingsGroup(
+            title = stringResource(R.string.listen_together),
+            isDeveloperGroup = true,
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.group),
+                        title = { Text(stringResource(R.string.listen_together_alt_ui)) },
+                        isDeveloperOnly = true,
+                        description = { Text(stringResource(R.string.listen_together_alt_ui_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = listenTogetherAltUi,
+                                onCheckedChange = { onListenTogetherAltUiChange(it) },
+                            )
+                        },
+                        onClick = { onListenTogetherAltUiChange(!listenTogetherAltUi) },
                     ),
                 ),
         )
