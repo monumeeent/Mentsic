@@ -1093,6 +1093,32 @@ fun AppearanceSettings(
                             onClick = { navController.navigate("settings/appearance/theme") },
                         ),
                     )
+                    // Player slider style is an ordinary appearance preference (not a hidden
+                    // experiment), so it lives here rather than in the developer-only Player group.
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.sliders),
+                            title = { Text(stringResource(R.string.player_slider_style)) },
+                            description = {
+                                Text(
+                                    when (sliderStyle) {
+                                        SliderStyle.DEFAULT -> stringResource(R.string.default_)
+                                        SliderStyle.WAVY ->
+                                            if (squigglySlider) {
+                                                stringResource(R.string.squiggly)
+                                            } else {
+                                                stringResource(R.string.wavy)
+                                            }
+                                        SliderStyle.SLIM -> stringResource(R.string.slim)
+                                        SliderStyle.THICK -> stringResource(R.string.slider_thick)
+                                        SliderStyle.MINIMAL -> stringResource(R.string.slider_minimal)
+                                        SliderStyle.SEGMENTED -> stringResource(R.string.slider_segmented)
+                                    },
+                                )
+                            },
+                            onClick = { showSliderOptionDialog = true },
+                        ),
+                    )
                     // Home layout is only offered while developer mode is on: the Command Hub
                     // is still an unfinished surface, and the route itself is gated too.
                     if (developerMode) {
@@ -1308,46 +1334,6 @@ fun AppearanceSettings(
                             )
                         },
                         onClick = { showPlayerButtonsStyleDialog = true },
-                    ),
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.sliders),
-                        title = { Text(stringResource(R.string.player_slider_style)) },
-                        description = {
-                            Text(
-                                when (sliderStyle) {
-                                    SliderStyle.DEFAULT -> {
-                                        stringResource(R.string.default_)
-                                    }
-
-                                    SliderStyle.WAVY -> {
-                                        if (squigglySlider) {
-                                            stringResource(R.string.squiggly)
-                                        } else {
-                                            stringResource(
-                                                R.string.wavy,
-                                            )
-                                        }
-                                    }
-
-                                    SliderStyle.SLIM -> {
-                                        stringResource(R.string.slim)
-                                    }
-
-                                    SliderStyle.THICK -> {
-                                        stringResource(R.string.slider_thick)
-                                    }
-
-                                    SliderStyle.MINIMAL -> {
-                                        stringResource(R.string.slider_minimal)
-                                    }
-
-                                    SliderStyle.SEGMENTED -> {
-                                        stringResource(R.string.slider_segmented)
-                                    }
-                                },
-                            )
-                        },
-                        onClick = { showSliderOptionDialog = true },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.swipe),

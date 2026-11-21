@@ -43,6 +43,7 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -264,9 +265,42 @@ fun ListenTogetherScreen(
         ListenTogetherStageLayout(
             connectionState = connectionState,
             isInRoom = isInRoom,
+            username = usernameInput,
+            onUsernameChange = { usernameInput = it },
+            roomCode = roomCodeInput,
+            onRoomCodeChange = { roomCodeInput = it },
+            canCreateRoom = developerMode,
             onConnect = { listenTogetherManager.connect() },
             onDisconnect = { listenTogetherManager.disconnect() },
             onReconnect = { listenTogetherManager.forceReconnect() },
+            onCreateRoom = {
+                val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
+                val finalUsername = listenTogetherName(username)
+                if (finalUsername.isNotBlank()) {
+                    savedUsername = finalUsername
+                    listenTogetherManager.connect()
+                    listenTogetherManager.createRoom(finalUsername)
+                } else {
+                    Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onJoinRoom = {
+                val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
+                val finalUsername = listenTogetherName(username)
+                savedUsername = finalUsername
+                if (finalUsername.isNotBlank()) {
+                    Toast
+                        .makeText(
+                            context,
+                            String.format(joiningRoomTemplate, roomCodeInput),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    listenTogetherManager.connect()
+                    listenTogetherManager.joinRoom(roomCodeInput, finalUsername)
+                }
+            },
+            onLeaveRoom = { listenTogetherManager.leaveRoom() },
+            onOpenSettings = { navController.navigate("settings/integrations/listen_together") },
             windowInsets = windowInsets,
         )
         return
@@ -1523,17 +1557,26 @@ private fun UserActionDialog(
 /**
  * Developer-only alternate "stage" layout for Listen Together.
  *
- * A single hero stage card (connection state + primary action) sits above a compact
- * two-column status strip. No room lists, no request queues — intentionally minimal so it
- * can be evaluated as a future default without changing the real screen.
+ * A hero stage card (connection state + primary action) sits above a compact status strip, then
+ * the same essentials the stacked screen exposes: username, room code and the Settings entry.
+ * Room lists and request queues stay out — the point of this layout is a one-glance surface.
  */
 @Composable
 private fun ListenTogetherStageLayout(
     connectionState: ConnectionState,
     isInRoom: Boolean,
+    username: String,
+    onUsernameChange: (String) -> Unit,
+    roomCode: String,
+    onRoomCodeChange: (String) -> Unit,
+    canCreateRoom: Boolean,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     onReconnect: () -> Unit,
+    onCreateRoom: () -> Unit,
+    onJoinRoom: () -> Unit,
+    onLeaveRoom: () -> Unit,
+    onOpenSettings: () -> Unit,
     windowInsets: WindowInsets,
 ) {
     val insets = windowInsets.asPaddingValues()
@@ -1541,6 +1584,8 @@ private fun ListenTogetherStageLayout(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .imePadding()
             .padding(
                 start = 16.dp,
                 end = 16.dp,
@@ -1573,25 +1618,40 @@ private fun ListenTogetherStageLayout(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(20.dp))
-                Button(
-                    onClick = {
-                        when {
-                            !isInRoom && connectionState != ConnectionState.CONNECTED -> onConnect()
-                            connectionState == ConnectionState.CONNECTED -> onDisconnect()
-                            else -> onReconnect()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = when {
-                            !isInRoom && connectionState != ConnectionState.CONNECTED ->
-                                stringResource(R.string.connect)
-                            connectionState == ConnectionState.CONNECTED ->
-                                stringResource(R.string.disconnect)
-                            else -> stringResource(R.string.reconnect)
+                if (isInRoom) {
+                    Button(
+                        onClick = onLeaveRoom,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        ),
+                    ) {
+                        Text(stringResource(R.string.leave_room))
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            when {
+                                connectionState == ConnectionState.CONNECTING ||
+                                    connectionState == ConnectionState.RECONNECTING -> onReconnect()
+                                connectionState != ConnectionState.CONNECTED -> onConnect()
+                                else -> onDisconnect()
+                            }
                         },
-                    )
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = when {
+                                connectionState == ConnectionState.CONNECTED ->
+                                    stringResource(R.string.disconnect)
+                                connectionState == ConnectionState.CONNECTING ||
+                                    connectionState == ConnectionState.RECONNECTING ->
+                                    stringResource(R.string.reconnect)
+                                else -> stringResource(R.string.connect)
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -1610,6 +1670,67 @@ private fun ListenTogetherStageLayout(
                 value = if (isInRoom) stringResource(R.string.active) else stringResource(R.string.none),
                 modifier = Modifier.weight(1f),
             )
+        }
+
+        // Identity + room controls. Shown only when not in a room, matching the stacked screen:
+        // both fields are fixed for the duration of a session.
+        if (!isInRoom) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = onUsernameChange,
+                        label = { Text(stringResource(R.string.listen_together_username)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = roomCode,
+                        onValueChange = onRoomCodeChange,
+                        label = { Text(stringResource(R.string.listen_together_room_code)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Button(
+                        onClick = onJoinRoom,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.listen_together_join_room))
+                    }
+                    // Hosting stays developer-only, same rule as the stacked screen.
+                    if (canCreateRoom) {
+                        OutlinedButton(
+                            onClick = onCreateRoom,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.listen_together_create_room))
+                        }
+                    }
+                }
+            }
+        }
+
+        // Settings entry — same destination as the stacked screen's Settings link card.
+        OutlinedButton(
+            onClick = onOpenSettings,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.settings),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.settings))
         }
     }
 }
