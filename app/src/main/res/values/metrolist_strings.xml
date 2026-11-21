@@ -847,6 +847,13 @@
     <string name="listen_together_room_code">Room code</string>
     <string name="listen_together_you_are_host">You are the host</string>
     <string name="listen_together_you_are_guest">You are a guest</string>
+    <string name="listen_together_in_room">In a room</string>
+    <!-- Short labels used by the compact status tiles on the Listen Together screen. -->
+    <string name="connection">Connection</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="room">Room</string>
+    <string name="active">Active</string>
     <string name="mute">Mute</string>
     <string name="unmute">Unmute</string>
     <string name="listen_together_join_requests">Join requests</string>
