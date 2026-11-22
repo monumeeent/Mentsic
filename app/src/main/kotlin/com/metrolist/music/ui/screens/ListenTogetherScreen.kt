@@ -100,6 +100,7 @@ import com.metrolist.music.listentogether.ListenTogetherEvent
 import com.metrolist.music.listentogether.RoomRole
 import com.metrolist.music.listentogether.SuggestionReceivedPayload
 import com.metrolist.music.listentogether.UserInfo
+import com.metrolist.music.listentogether.users
 import com.metrolist.music.ui.component.BroadcastRoomCode
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.ListenerConstellation
