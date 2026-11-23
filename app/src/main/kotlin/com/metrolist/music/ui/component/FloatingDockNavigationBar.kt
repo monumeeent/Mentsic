@@ -18,6 +18,7 @@ package com.metrolist.music.ui.component
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -27,6 +28,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -156,7 +158,7 @@ private fun RowScope.DockItem(
         animationSpec = tween(220),
         label = "dock-icon-tint",
     )
-    val containerAlpha by animateColorAsState(
+    val containerAlpha by animateFloatAsState(
         targetValue = if (isSelected) 1f else 0f,
         animationSpec = tween(220),
         label = "dock-pill-alpha",
