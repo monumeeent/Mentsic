@@ -141,6 +141,7 @@ import com.metrolist.music.constants.AppLanguageKey
 import com.metrolist.music.constants.CheckForUpdatesKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DefaultOpenTabKey
+import com.metrolist.music.constants.DevFloatingDockKey
 import com.metrolist.music.constants.DismissedKmpUpdateKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
 import com.metrolist.music.constants.DensityScale
@@ -198,6 +199,7 @@ import com.metrolist.music.ui.component.AppNavigationBar
 import com.metrolist.music.ui.component.AppNavigationRail
 import com.metrolist.music.ui.component.BottomSheetMenu
 import com.metrolist.music.ui.component.BottomSheetPage
+import com.metrolist.music.ui.component.FloatingDockHeight
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.rememberBottomSheetState
@@ -834,6 +836,10 @@ class MainActivity : FragmentActivity() {
                 }
                 val (forceBottomNav) = rememberPreference(ForceBottomNavBarKey, defaultValue = false)
                 val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
+                // Developer-only alternate navigation bar (floating expandable dock).
+                val (devFloatingDockPref) = rememberPreference(DevFloatingDockKey, defaultValue = false)
+                val (devModeForDock) = rememberPreference(DeveloperModeKey, defaultValue = false)
+                val useFloatingDock = devFloatingDockPref && devModeForDock
                 val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
                 val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.HOME.name)
                 val defaultOpenTab = remember(defaultOpenTabInt) {
@@ -911,10 +917,16 @@ class MainActivity : FragmentActivity() {
                 val isTablet = configuration.containerDpSize.width >= 600.dp
 
                 val showRail = !forceBottomNav && (isLandscape || isTablet) && !inSearchScreen
+                // The floating dock has no rail form; keep the rail for landscape/tablet.
+                val dockActive = useFloatingDock && !showRail
 
                 val navPadding =
                     if (shouldShowNavigationBar && !showRail) {
-                        if (slimNav) SlimNavBarHeight else NavigationBarHeight
+                        when {
+                            dockActive -> FloatingDockHeight
+                            slimNav -> SlimNavBarHeight
+                            else -> NavigationBarHeight
+                        }
                     } else {
                         0.dp
                     }
@@ -1279,6 +1291,7 @@ class MainActivity : FragmentActivity() {
                                         currentRoute = currentRoute,
                                         onItemClick = onNavItemClick,
                                         slimNav = slimNav,
+                                        floatingDock = dockActive,
                                         onSearchLongClick = onSearchLongClick,
                                         onHomeLongHold = { showAccountDialog = true },
                                         modifier =

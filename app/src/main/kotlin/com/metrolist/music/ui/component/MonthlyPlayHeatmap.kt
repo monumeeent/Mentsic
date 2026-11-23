@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +53,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.metrolist.music.R
 import com.metrolist.music.db.entities.AllTimeStats
 import com.metrolist.music.db.entities.DailyListeningStats
@@ -405,7 +408,15 @@ private fun MonthGrid(
     }
 }
 
-/** One day cell: fill intensity encodes that day's play count. */
+/**
+ * One day cell: fill intensity encodes that day's play count.
+ *
+ * Layering is deliberate, back to front: **density fill → contrast scrim → day number**. The
+ * intensity ramp reaches full `primary`, which is exactly where `onSurfaceVariant` text used to
+ * vanish. The scrim is a translucent veil derived from `surfaceContainerLowest` / `onSurface` so the
+ * date number is legible on every intensity level, in every palette (including OLED black and the
+ * gold Shining theme) and in both light and dark.
+ */
 @Composable
 private fun HeatmapCell(
     date: LocalDate,
@@ -438,6 +449,29 @@ private fun HeatmapCell(
         animationSpec = tween(400),
         label = "heatmap-glow",
     )
+
+    // Compact calendar cells are ~34-46dp wide: a single line of `labelSmall` fits everywhere and
+    // never wraps the date onto a second row.
+    val numberStyle = MaterialTheme.typography.labelSmall.copy(lineHeight = 11.sp)
+
+    // Legend-style contrast: the label sits on whichever of onSurface / onPrimary reads against the
+    // fill, rather than on the fill itself. Light fills get onSurface, inky fills get onPrimary.
+    val numberColor =
+        when {
+            isFuture -> scheme.onSurfaceVariant.copy(alpha = 0.30f)
+            level >= 3 -> scheme.onPrimary
+            level == 0 -> scheme.onSurfaceVariant.copy(alpha = 0.55f)
+            else -> scheme.onSurface.copy(alpha = 0.85f)
+        }
+
+    // Top scrim: an alpha wash over the fill that darkens (dark theme) or lightens (light theme)
+    // the density colour under the date. Derived from surface roles, never a literal black/white.
+    val scrimColor =
+        if (scheme.onSurface.luminance() > 0.5f) {
+            scheme.onSurface.copy(alpha = 0.06f)
+        } else {
+            scheme.surfaceContainerLowest.copy(alpha = 0.28f)
+        }
 
     val shape = RoundedCornerShape(4.dp)
 
@@ -484,13 +518,29 @@ private fun HeatmapCell(
                             else -> Modifier
                         },
                     ),
+            contentAlignment = Alignment.Center,
         ) {
-            if (level == 0 && !isFuture) {
-                // Faint day number keeps the grid readable even with no plays at all.
+            if (!isFuture) {
+                // Layer 1: contrast scrim over the density fill, under the number.
+                Box(
+                    modifier =
+                        Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, scrimColor),
+                                ),
+                            ),
+                )
+
+                // Layer 2: the date, always on top. Weak shadows are intentionally avoided — the
+                // colour switch above handles contrast without an extra draw pass per cell.
                 Text(
                     text = date.dayOfMonth.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = scheme.onSurfaceVariant.copy(alpha = 0.55f),
+                    style = numberStyle,
+                    fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = numberColor,
+                    maxLines = 1,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }

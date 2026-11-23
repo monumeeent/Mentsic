@@ -35,7 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
 @Stable
-private fun isRouteSelected(currentRoute: String?, screenRoute: String, navigationItems: List<Screens>): Boolean {
+internal fun isRouteSelected(currentRoute: String?, screenRoute: String, navigationItems: List<Screens>): Boolean {
     if (currentRoute == null) return false
     if (currentRoute == screenRoute) return true
     if (navigationItems.any { it.route == screenRoute } &&
@@ -143,9 +143,23 @@ fun AppNavigationBar(
     onItemClick: (Screens, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     slimNav: Boolean = false,
+    // Developer experiment: swaps this bar for the floating expandable dock.
+    floatingDock: Boolean = false,
     onSearchLongClick: (() -> Unit)? = null,
     onHomeLongHold: (() -> Unit)? = null,
 ) {
+    if (floatingDock) {
+        AppFloatingDockNavigationBar(
+            navigationItems = navigationItems,
+            currentRoute = currentRoute,
+            onItemClick = onItemClick,
+            modifier = modifier,
+            onSearchLongClick = onSearchLongClick,
+            onHomeLongHold = onHomeLongHold,
+        )
+        return
+    }
+
     val containerColor = MaterialTheme.colorScheme.surfaceContainer
     val contentColor = MaterialTheme.colorScheme.onSurfaceVariant
     val haptics = LocalHapticFeedback.current

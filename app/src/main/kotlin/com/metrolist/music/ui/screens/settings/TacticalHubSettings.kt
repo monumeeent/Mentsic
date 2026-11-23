@@ -34,6 +34,7 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
+import com.metrolist.music.constants.DevFloatingDockKey
 import com.metrolist.music.constants.HubModeEnabledKey
 import com.metrolist.music.constants.HomeShowDiscoveryKey
 import com.metrolist.music.constants.HomeShowPersonalSpaceKey
@@ -67,6 +68,9 @@ fun TacticalHubSettings(navController: NavController) {
     val (hubEnabled, onHubEnabledChange) = rememberPreference(HubModeEnabledKey, defaultValue = false)
     val (heatmapCollapsed, onHeatmapCollapsedChange) =
         rememberPreference(HubHeatmapCollapsedKey, defaultValue = true)
+    // Developer-only alternate navigation bar (floating dock). Read by MainActivity.
+    val (floatingDock, onFloatingDockChange) =
+        rememberPreference(DevFloatingDockKey, defaultValue = false)
 
     Column(
         modifier =
@@ -153,6 +157,32 @@ fun TacticalHubSettings(navController: NavController) {
                             ),
                         )
                     }
+                    // Navigation surface: the stock bar or the floating dock experiment.
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.nav_bar),
+                            title = { Text(stringResource(R.string.floating_dock_navbar)) },
+                            isDeveloperOnly = true,
+                            description = { Text(stringResource(R.string.floating_dock_navbar_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = floatingDock,
+                                    onCheckedChange = onFloatingDockChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter =
+                                                painterResource(
+                                                    id = if (floatingDock) R.drawable.check else R.drawable.close,
+                                                ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onFloatingDockChange(!floatingDock) },
+                        ),
+                    )
                 },
         )
 

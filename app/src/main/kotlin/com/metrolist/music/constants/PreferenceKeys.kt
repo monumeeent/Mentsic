@@ -138,6 +138,9 @@ val HubSelectedFilterKey = stringPreferencesKey("hubSelectedFilter")
 val HubHeatmapCollapsedKey = booleanPreferencesKey("hubHeatmapCollapsed")
 val ForceBottomNavBarKey = booleanPreferencesKey("forceBottomNavBar")
 val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
+
+// Developer-only alternate navigation bar: a floating, expandable dock instead of the stock bar.
+val DevFloatingDockKey = booleanPreferencesKey("devFloatingDock")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
 val SliderStyleKey = stringPreferencesKey("sliderStyle")
 val SquigglySliderKey = booleanPreferencesKey("squigglySlider")
