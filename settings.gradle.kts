@@ -8,6 +8,11 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        // Mirrors declared last, so Maven Central and the Portal always answer first and these only
+        // act as a fallback during a transient outage. Without them, one flaky response fails the
+        // whole build with "Plugin [id: 'com.google.dagger.hilt.android', ...] was not found".
+        maven("https://maven.aliyun.com/repository/gradle-plugin")
+        maven("https://maven.aliyun.com/repository/public")
     }
 }
 

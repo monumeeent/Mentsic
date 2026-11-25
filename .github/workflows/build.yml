@@ -65,7 +65,26 @@ jobs:
     - name: Build FOSS Debug APK
       env:
         METROLIST_DEBUG_KEYSTORE_PATH: ${{ github.workspace }}/app/debug.keystore
-      run: ./gradlew :app:assembleFossDebug --stacktrace
+      run: |
+        # Plugin/dependency resolution occasionally fails on a transient repository error (a 5xx or
+        # timeout from the Gradle Plugin Portal), which surfaces as the misleading
+        # "Plugin [id: 'com.google.dagger.hilt.android' ...] was not found in any of the following
+        # sources". The artifact exists, so retrying is the correct response — not a version bump.
+        # --refresh-dependencies also discards any negative cache entry left by the failed attempt.
+        for attempt in 1 2 3; do
+          echo "::group::Gradle attempt $attempt"
+          if ./gradlew :app:assembleFossDebug --stacktrace $([ "$attempt" -gt 1 ] && echo --refresh-dependencies); then
+            echo "::endgroup::"
+            exit 0
+          fi
+          echo "::endgroup::"
+          if [ "$attempt" -lt 3 ]; then
+            echo "::warning::Gradle attempt $attempt failed; retrying in 20s (likely a transient repository error)."
+            sleep 20
+          fi
+        done
+        echo "::error::Gradle failed after 3 attempts — this is now a real failure, not a repository blip."
+        exit 1
 
     - name: Upload Debug APK Artifact
       uses: actions/upload-artifact@v4
