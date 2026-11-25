@@ -100,6 +100,7 @@ import com.metrolist.music.constants.ShowDownloadedPlaylistKey
 import com.metrolist.music.constants.ShowLikedPlaylistKey
 import com.metrolist.music.constants.ShowTopPlaylistKey
 import com.metrolist.music.constants.ShowUploadedPlaylistKey
+import com.metrolist.music.constants.AudioVisualizerStyleKey
 import com.metrolist.music.constants.EnableAudioVisualizerKey
 import com.metrolist.music.constants.ResumeOnBluetoothConnectKey
 import com.metrolist.music.constants.SliderStyle
@@ -120,6 +121,7 @@ import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.PlayerSliderTrack
 import com.metrolist.music.ui.component.SquigglySlider
+import com.metrolist.music.ui.component.VisualizerStyle
 import com.metrolist.music.ui.component.WavySlider
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.PlayerSliderColors
@@ -287,6 +289,21 @@ fun AppearanceSettings(
     // playback preferences and must work without Developer Mode.
     val (enableAudioVisualizer, onEnableAudioVisualizerChange) =
         rememberPreference(EnableAudioVisualizerKey, defaultValue = false)
+    // Visualizer preset. Tapping the row cycles through the presets — the cheapest way to preview
+    // them, since the player re-renders its visualizer on the next frame.
+    val (visualizerStyleName, onVisualizerStyleChange) =
+        rememberPreference(AudioVisualizerStyleKey, defaultValue = VisualizerStyle.RIBBON.name)
+    val visualizerStyle =
+        remember(visualizerStyleName) {
+            runCatching { VisualizerStyle.valueOf(visualizerStyleName) }.getOrDefault(VisualizerStyle.RIBBON)
+        }
+    val cycleVisualizerStyle: () -> Unit =
+        remember(visualizerStyle) {
+            {
+                val next = VisualizerStyle.entries[(visualizerStyle.ordinal + 1) % VisualizerStyle.entries.size]
+                onVisualizerStyleChange(next.name)
+            }
+        }
     val (resumeOnBluetoothConnect, onResumeOnBluetoothConnectChange) =
         rememberPreference(ResumeOnBluetoothConnectKey, defaultValue = false)
     val (swipeThumbnail, onSwipeThumbnailChange) =
@@ -1153,6 +1170,29 @@ fun AppearanceSettings(
                             onClick = { onEnableAudioVisualizerChange(!enableAudioVisualizer) },
                         ),
                     )
+                    // Preset picker, only meaningful while the visualizer is on.
+                    if (enableAudioVisualizer) {
+                        add(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.equalizer),
+                                title = { Text(stringResource(R.string.audio_visualizer_style)) },
+                                description = {
+                                    Text(
+                                        stringResource(
+                                            when (visualizerStyle) {
+                                                VisualizerStyle.RIBBON -> R.string.visualizer_ribbon
+                                                VisualizerStyle.BARS -> R.string.visualizer_bars
+                                                VisualizerStyle.WAVE -> R.string.visualizer_wave
+                                                VisualizerStyle.DOTS -> R.string.visualizer_dots
+                                                VisualizerStyle.MIRROR_WAVE -> R.string.visualizer_mirror_wave
+                                            },
+                                        ),
+                                    )
+                                },
+                                onClick = { cycleVisualizerStyle() },
+                            ),
+                        )
+                    }
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.bluetooth),

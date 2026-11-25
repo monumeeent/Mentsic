@@ -16,6 +16,10 @@ import java.time.ZoneOffset
 val EnableHighRefreshRateKey = booleanPreferencesKey("enableHighRefreshRate")
 val EnableLandscapeScalingKey = booleanPreferencesKey("enableLandscapeScaling")
 val EnableAudioVisualizerKey = booleanPreferencesKey("enableAudioVisualizer")
+
+// Which visualizer preset to draw. Stored as the enum name so a new preset can be added without
+// renumbering; an unknown/missing value falls back to RIBBON at the read site.
+val AudioVisualizerStyleKey = stringPreferencesKey("audioVisualizerStyle")
 val DynamicThemeKey = booleanPreferencesKey("dynamicTheme")
 val SelectedThemeColorKey = intPreferencesKey("selectedThemeColor")
 
@@ -157,6 +161,10 @@ val SwipeToSongKey = booleanPreferencesKey("SwipeToSong")
 val SwipeToRemoveSongKey = booleanPreferencesKey("SwipeToRemoveSong")
 val UseNewPlayerDesignKey = booleanPreferencesKey("useNewPlayerDesign")
 val UseNewMiniPlayerDesignKey = booleanPreferencesKey("useNewMiniPlayerDesign")
+
+// Third mini-player design: a compact "capsule" bar with a live waveform instead of the
+// thumbnail-and-controls row. Developer-gated, off by default.
+val MiniPlayerCapsuleKey = booleanPreferencesKey("miniPlayerCapsule")
 val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val CropAlbumArtKey = booleanPreferencesKey("cropAlbumArt")
 val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")

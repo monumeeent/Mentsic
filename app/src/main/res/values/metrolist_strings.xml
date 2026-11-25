@@ -158,6 +158,14 @@
     <string name="dock_orb_size">Orb size</string>
     <string name="dock_orb_lift">Orb lift</string>
     <string name="dock_corner_radius">Corner radius</string>
+    <string name="audio_visualizer_style">Visualizer design</string>
+    <string name="visualizer_ribbon">Ribbon \u2014 mirrored bars around a centre line</string>
+    <string name="visualizer_bars">Bars \u2014 classic spectrum rising from the bottom</string>
+    <string name="visualizer_wave">Wave \u2014 a single flowing line</string>
+    <string name="visualizer_dots">Dots \u2014 swelling circles, lightest to render</string>
+    <string name="visualizer_mirror_wave">Mirrored wave \u2014 a line reflected with a soft fill</string>
+    <string name="mini_player_capsule">Capsule mini player</string>
+    <string name="mini_player_capsule_desc">A narrow floating capsule with the album art, one line of text, and a live waveform in place of a progress bar.</string>
     <string name="auto_playlists">Auto playlists</string>
     <string name="show_liked_playlist">Show Liked playlist</string>
     <string name="show_downloaded_playlist">Show Downloaded playlist</string>

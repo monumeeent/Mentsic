@@ -36,7 +36,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,6 +63,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -73,6 +73,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.metrolist.music.constants.DockBodyHeightKey
 import com.metrolist.music.constants.DockCornerRadiusKey
@@ -85,47 +86,68 @@ import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.roundToInt
 
 /**
  * Every tunable of the notched bar, as immutable data.
  *
- * Defaults are the reference look: a 64dp body, a 76dp notch mouth, and a 48dp orb lifted 12dp so
- * roughly a third of it sits proud of the notch. The live instance comes from
- * [rememberFloatingNotchSpec], which overlays the developer settings on top of [Default], so the
- * notch, orb travel, touch geometry and the height reserved by MainActivity all follow one value.
+ * Defaults are **golden-ratio derived** from [bodyHeight] = 65dp (φ ≈ 1.618):
+ *  - notch mouth   120dp ≈ 65 × φ² / 1.42  — wide enough that the orb never pinches the curve;
+ *  - notch depth    36dp ≈ 65 × 0.5539 (1/φ)   — the cradle is exactly as deep as the orb sinks;
+ *  - orb size       54dp ≈ 65 × 0.83  (φ/2 ≈ 0.809) — the orb dominates but never fills the notch;
+ *  - orb lift       12dp ≈ 65 / φ²/2  — a third of the orb stays above the bar top;
+ *  - corner radius   0dp — square body, so the notch is the only curve on screen.
+ *
+ * The live instance comes from [rememberFloatingNotchSpec], which overlays the developer settings,
+ * so notch, orb travel, touch geometry and the height MainActivity reserves all follow one value.
  */
 data class FloatingNotchSpec(
     /** Height of the visible body (excludes [floatInset]). */
-    val bodyHeight: Dp = 64.dp,
+    val bodyHeight: Dp = 65.dp,
     /** Gap below the body, so the bar reads as hovering rather than docked. */
     val floatInset: Dp = 8.dp,
     /** Horizontal margin from the screen edges. */
     val sideMargin: Dp = Spacing.medium,
-    /** Corner radius of the body; clamped to bodyHeight / 2 when drawing. */
-    val cornerRadius: Dp = 26.dp,
+    /** Corner radius of the body; 0 = square body. Clamped to bodyHeight / 2 when drawing. */
+    val cornerRadius: Dp = 0.dp,
     /** Width of the notch mouth (the span the curve covers). */
-    val notchWidth: Dp = 76.dp,
+    val notchWidth: Dp = 120.dp,
     /** How far the curve dips below the body's top edge. */
-    val notchDepth: Dp = 22.dp,
+    val notchDepth: Dp = 36.dp,
     /** Diameter of the floating orb. */
-    val orbSize: Dp = 48.dp,
+    val orbSize: Dp = 54.dp,
     /** How far the orb's centre sits above the bar's top edge (positive = lifted). */
     val orbLift: Dp = 12.dp,
     /** Icon size, inside the orb and on the bar. */
     val iconSize: Dp = 22.dp,
     /** Notch + orb travel time, used when [useSpring] is false. */
-    val travelMillis: Int = 320,
+    val travelMillis: Int = 380,
     /** Spring travel (true) or a flat [travelMillis] ease-out (false). */
     val useSpring: Boolean = true,
     /** Press-down scale for a tapped tab. */
     val pressScale: Float = 0.94f,
     /** Peak scale of the orb's settle pop. */
-    val popScale: Float = 1.08f,
+    val popScale: Float = 1.06f,
     /** Colour shift duration between muted and accent. */
     val tintMillis: Int = 200,
 ) {
     /** Total height to reserve in the scaffold for this bar. */
-    val reservedHeight: Dp get() = bodyHeight + floatInset
+    val reservedHeight: Dp get() = bodyHeight + floatInset + orbProtrusion
+
+    /**
+     * How far the orb's top edge rises above the bar container's own top (0 when it does not).
+     *
+     * The orb is vertically centred on the notch and then raised by [orbLift]. When the cradle is
+     * shallower than the orb (the default: 36dp notch vs a 54dp orb) the badge necessarily pokes
+     * above the body, and the reserved height has to account for it — otherwise the mini-player and
+     * list content would be drawn over the protruding half of the orb.
+     */
+    val orbProtrusion: Dp
+        get() = maxOf(0.dp, orbSize / 2f + orbLift - notchDepth / 2f)
+
+    /** Y offset of the orb's top edge, relative to the bar container's top. May be negative. */
+    val orbTopOffset: Dp
+        get() = floatInset + notchDepth / 2f - orbLift - orbSize / 2f + orbProtrusion
 
     companion object {
         val Default = FloatingNotchSpec()
@@ -233,15 +255,18 @@ fun AppFloatingDockNavigationBar(
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val slotWidthPx = constraints.maxWidth.toFloat() / navigationItems.size
 
+            // One frame-time source for all three layers. `progress.value` is read ONLY inside
+            // draw/offset lambdas below — never into a composition-scope val — because a composition
+            // read would recompose the entire bar (icons, semantics, strings) on every animation
+            // frame. That was the lag: ~60 recompositions per tab switch instead of zero.
+            val frameX: () -> Float = { slotWidthPx * (progress.value + 0.5f) }
+
             // ── Layer 1: notched body ───────────────────────────────────────────────────────
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val top = spec.floatInset.toPx()
                 val bodyPx = size.height - top
-                // The state read must stay inside this draw scope, so the Canvas invalidates every
-                // animation frame instead of only when the composable recomposes.
-                val animX = slotWidthPx * (progress.value + 0.5f)
                 drawNotchedBody(
-                    centreX = animX,
+                    centreX = frameX(),
                     top = top,
                     heightPx = bodyPx,
                     widthPx = size.width,
@@ -276,18 +301,22 @@ fun AppFloatingDockNavigationBar(
             }
 
             // ── Layer 3: the floating orb ───────────────────────────────────────────────────
-            val orbX =
-                with(density) {
-                    (slotWidthPx * (progress.value + 0.5f) - spec.orbSize.toPx() / 2f).toDp()
-                }
-            val orbY = spec.floatInset + spec.orbLift - spec.orbSize / 2f
+            // Position is applied in the *offset* lambda (placement phase), so travelling the orb
+            // never recomposes this row — only the placement pass re-runs.
+            val orbSizePx = with(density) { spec.orbSize.toPx() }
+            val orbTopPx = with(density) { spec.orbTopOffset.toPx() }
 
             Box(
                 modifier =
                     Modifier
-                        .offset(x = orbX, y = orbY)
+                        .offset { IntOffset((frameX() - orbSizePx / 2f).roundToInt(), orbTopPx.roundToInt()) }
                         .size(spec.orbSize)
-                        .scale(orbScale.value)
+                        .graphicsLayer {
+                            // Scale in the draw phase for the same reason as the offset above.
+                            val s = orbScale.value
+                            scaleX = s
+                            scaleY = s
+                        }
                         .clip(CircleShape)
                         .background(
                             Brush.verticalGradient(
@@ -334,7 +363,9 @@ private fun DrawScope.drawNotchedBody(
 
     val path =
         Path().apply {
-            moveTo(cornerPx, top)
+            // With a square body there are no arcs, so the outline starts at the true top-left
+            // corner; with rounded corners it starts where the top-left arc ends.
+            moveTo(if (cornerPx > 0f) cornerPx else 0f, top)
             lineTo(centreX - notchHalfPx, top)
 
             // Down into the cradle…
@@ -350,14 +381,23 @@ private fun DrawScope.drawNotchedBody(
                 centreX + notchHalfPx, top,
             )
 
-            lineTo(right - cornerPx, top)
-            arcTo(Rect(right - cornerPx * 2f, top, right, top + cornerPx * 2f), -90f, 90f, false)
-            lineTo(right, bottom - cornerPx)
-            arcTo(Rect(right - cornerPx * 2f, bottom - cornerPx * 2f, right, bottom), 0f, 90f, false)
-            lineTo(cornerPx, bottom)
-            arcTo(Rect(0f, bottom - cornerPx * 2f, cornerPx * 2f, bottom), 90f, 90f, false)
-            lineTo(0f, top + cornerPx)
-            arcTo(Rect(0f, top, cornerPx * 2f, top + cornerPx * 2f), 180f, 90f, false)
+            lineTo(if (cornerPx > 0f) right - cornerPx else right, top)
+            if (cornerPx > 0f) {
+                arcTo(Rect(right - cornerPx * 2f, top, right, top + cornerPx * 2f), -90f, 90f, false)
+                lineTo(right, bottom - cornerPx)
+                arcTo(Rect(right - cornerPx * 2f, bottom - cornerPx * 2f, right, bottom), 0f, 90f, false)
+                lineTo(cornerPx, bottom)
+                arcTo(Rect(0f, bottom - cornerPx * 2f, cornerPx * 2f, bottom), 90f, 90f, false)
+                lineTo(0f, top + cornerPx)
+                arcTo(Rect(0f, top, cornerPx * 2f, top + cornerPx * 2f), 180f, 90f, false)
+            } else {
+                // Square body (cornerPx == 0): plain corners. Skipping arcTo here matters because a
+                // zero-size Rect makes the arc degenerate, which some devices render as a notch in
+                // the corner or drop the path segment entirely.
+                lineTo(right, bottom)
+                lineTo(0f, bottom)
+                lineTo(0f, top)
+            }
             close()
         }
 
@@ -438,10 +478,15 @@ private fun DockTab(
                 .semantics { selected = isSelected },
         contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = Modifier.padding(top = spec.floatInset).fillMaxSize(),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+        // The icon is centred on the *body*, not on the whole reserved height. The container also
+        // reserves `floatInset + orbProtrusion` of empty space around the bar, so centring on the
+        // full slot would pull every icon down by half of that. Shifting by the difference puts the
+        // inactive icons exactly on the body's midline — which is what "a little low" actually was.
+        val bodyCentreShift = (spec.floatInset - spec.orbProtrusion) / 2f
+
+        Box(
+            modifier = Modifier.offset(y = bodyCentreShift),
+            contentAlignment = Alignment.Center,
         ) {
             if (isSelected) {
                 // Invisible placeholder with the same size, so the slot does not resize.

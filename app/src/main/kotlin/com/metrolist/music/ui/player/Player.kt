@@ -141,6 +141,7 @@ import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.EnableAudioVisualizerKey
+import com.metrolist.music.constants.AudioVisualizerStyleKey
 import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.HidePlayerThumbnailKey
@@ -167,6 +168,7 @@ import com.metrolist.music.extensions.toggleRepeatMode
 import com.metrolist.music.listentogether.RoomRole
 import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.ui.component.AudioVisualizer
+import com.metrolist.music.ui.component.VisualizerStyle
 import com.metrolist.music.ui.component.BottomSheet
 import com.metrolist.music.ui.component.BottomSheetState
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
@@ -230,6 +232,12 @@ fun BottomSheetPlayer(
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val (enableAudioVisualizer, onEnableAudioVisualizerChange) = rememberPreference(EnableAudioVisualizerKey, false)
+    // Preset for the visualizer; unknown values fall back to RIBBON rather than crashing.
+    val (visualizerStyleName) = rememberPreference(AudioVisualizerStyleKey, VisualizerStyle.RIBBON.name)
+    val visualizerStyle =
+        remember(visualizerStyleName) {
+            runCatching { VisualizerStyle.valueOf(visualizerStyleName) }.getOrDefault(VisualizerStyle.RIBBON)
+        }
 
     var showInlineLyrics by rememberSaveable {
         mutableStateOf(false)
@@ -2111,6 +2119,7 @@ fun BottomSheetPlayer(
                                 .fillMaxWidth()
                                 .padding(horizontal = PlayerHorizontalPadding),
                             enabled = isPlaying,
+                            style = visualizerStyle,
                         )
                         Spacer(Modifier.height(8.dp))
                     }

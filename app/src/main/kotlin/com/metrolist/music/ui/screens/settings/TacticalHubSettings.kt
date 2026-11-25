@@ -35,6 +35,7 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.DevFloatingDockKey
+import com.metrolist.music.constants.MiniPlayerCapsuleKey
 import com.metrolist.music.constants.DockBodyHeightKey
 import com.metrolist.music.constants.DockCornerRadiusKey
 import com.metrolist.music.constants.DockNotchDepthKey
@@ -77,6 +78,9 @@ fun TacticalHubSettings(navController: NavController) {
     // Developer-only alternate navigation bar (floating dock). Read by MainActivity.
     val (floatingDock, onFloatingDockChange) =
         rememberPreference(DevFloatingDockKey, defaultValue = false)
+    // Developer-only third mini player (capsule). Read by MiniPlayer.
+    val (capsuleMiniPlayer, onCapsuleMiniPlayerChange) =
+        rememberPreference(MiniPlayerCapsuleKey, defaultValue = false)
 
     Column(
         modifier =
@@ -189,6 +193,32 @@ fun TacticalHubSettings(navController: NavController) {
                             onClick = { onFloatingDockChange(!floatingDock) },
                         ),
                     )
+                    // Third mini-player layout.
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.queue_music),
+                            title = { Text(stringResource(R.string.mini_player_capsule)) },
+                            isDeveloperOnly = true,
+                            description = { Text(stringResource(R.string.mini_player_capsule_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = capsuleMiniPlayer,
+                                    onCheckedChange = onCapsuleMiniPlayerChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter =
+                                                painterResource(
+                                                    id = if (capsuleMiniPlayer) R.drawable.check else R.drawable.close,
+                                                ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onCapsuleMiniPlayerChange(!capsuleMiniPlayer) },
+                        ),
+                    )
                 },
         )
 
@@ -198,12 +228,12 @@ fun TacticalHubSettings(navController: NavController) {
         // and MainActivity's reserved space both read, so tuning here is immediately visible: leave
         // the screen and the dock has already changed.
         if (floatingDock) {
-            val (dockBodyHeight, onDockBodyHeight) = rememberPreference(DockBodyHeightKey, 64f)
-            val (dockNotchWidth, onDockNotchWidth) = rememberPreference(DockNotchWidthKey, 76f)
-            val (dockNotchDepth, onDockNotchDepth) = rememberPreference(DockNotchDepthKey, 22f)
-            val (dockOrbSize, onDockOrbSize) = rememberPreference(DockOrbSizeKey, 48f)
+            val (dockBodyHeight, onDockBodyHeight) = rememberPreference(DockBodyHeightKey, 65f)
+            val (dockNotchWidth, onDockNotchWidth) = rememberPreference(DockNotchWidthKey, 120f)
+            val (dockNotchDepth, onDockNotchDepth) = rememberPreference(DockNotchDepthKey, 36f)
+            val (dockOrbSize, onDockOrbSize) = rememberPreference(DockOrbSizeKey, 54f)
             val (dockOrbLift, onDockOrbLift) = rememberPreference(DockOrbLiftKey, 12f)
-            val (dockCorner, onDockCorner) = rememberPreference(DockCornerRadiusKey, 26f)
+            val (dockCorner, onDockCorner) = rememberPreference(DockCornerRadiusKey, 0f)
 
             Material3SettingsGroup(
                 title = stringResource(R.string.floating_dock_geometry),
@@ -214,19 +244,19 @@ fun TacticalHubSettings(navController: NavController) {
                             title = stringResource(R.string.dock_body_height),
                             value = dockBodyHeight,
                             onChange = onDockBodyHeight,
-                            range = 48f..88f,
+                            range = 48f..96f,
                         ),
                         dockSlider(
                             title = stringResource(R.string.dock_notch_width),
                             value = dockNotchWidth,
                             onChange = onDockNotchWidth,
-                            range = 48f..120f,
+                            range = 64f..160f,
                         ),
                         dockSlider(
                             title = stringResource(R.string.dock_notch_depth),
                             value = dockNotchDepth,
                             onChange = onDockNotchDepth,
-                            range = 0f..36f,
+                            range = 0f..48f,
                         ),
                         dockSlider(
                             title = stringResource(R.string.dock_orb_size),

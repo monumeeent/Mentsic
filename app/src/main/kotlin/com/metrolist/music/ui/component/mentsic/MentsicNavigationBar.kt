@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -51,8 +52,11 @@ fun MentsicNavigationBar(
         modifier = modifier.fillMaxWidth().height(80.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
+            // Centre the slots on the bar's midline. Without this the Row's children align to the
+            // top of the 80dp Surface and the icons read as sitting high/low against the bar.
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             destinations.forEachIndexed { index, destination ->
                 val isSelected = index == selectedIndex
@@ -74,7 +78,9 @@ fun MentsicNavigationBar(
                     }
 
                     Column(
-                        modifier = Modifier.padding(bottom = 4.dp),
+                        // No vertical padding: the group (icon + label) must be centred on the bar's
+                        // midline. A bottom pad here used to shift every icon off-centre.
+                        modifier = Modifier.padding(vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
