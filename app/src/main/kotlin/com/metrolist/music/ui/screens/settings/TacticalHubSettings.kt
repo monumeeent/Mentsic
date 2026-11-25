@@ -35,6 +35,12 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.DevFloatingDockKey
+import com.metrolist.music.constants.DockBodyHeightKey
+import com.metrolist.music.constants.DockCornerRadiusKey
+import com.metrolist.music.constants.DockNotchDepthKey
+import com.metrolist.music.constants.DockNotchWidthKey
+import com.metrolist.music.constants.DockOrbLiftKey
+import com.metrolist.music.constants.DockOrbSizeKey
 import com.metrolist.music.constants.HubModeEnabledKey
 import com.metrolist.music.constants.HomeShowDiscoveryKey
 import com.metrolist.music.constants.HomeShowPersonalSpaceKey
@@ -187,6 +193,64 @@ fun TacticalHubSettings(navController: NavController) {
         )
 
         Spacer(modifier = Modifier.height(27.dp))
+
+        // Developer-only geometry for the floating notched bar. Every slider writes the value the bar
+        // and MainActivity's reserved space both read, so tuning here is immediately visible: leave
+        // the screen and the dock has already changed.
+        if (floatingDock) {
+            val (dockBodyHeight, onDockBodyHeight) = rememberPreference(DockBodyHeightKey, 64f)
+            val (dockNotchWidth, onDockNotchWidth) = rememberPreference(DockNotchWidthKey, 76f)
+            val (dockNotchDepth, onDockNotchDepth) = rememberPreference(DockNotchDepthKey, 22f)
+            val (dockOrbSize, onDockOrbSize) = rememberPreference(DockOrbSizeKey, 48f)
+            val (dockOrbLift, onDockOrbLift) = rememberPreference(DockOrbLiftKey, 12f)
+            val (dockCorner, onDockCorner) = rememberPreference(DockCornerRadiusKey, 26f)
+
+            Material3SettingsGroup(
+                title = stringResource(R.string.floating_dock_geometry),
+                isDeveloperGroup = true,
+                items =
+                    listOf(
+                        dockSlider(
+                            title = stringResource(R.string.dock_body_height),
+                            value = dockBodyHeight,
+                            onChange = onDockBodyHeight,
+                            range = 48f..88f,
+                        ),
+                        dockSlider(
+                            title = stringResource(R.string.dock_notch_width),
+                            value = dockNotchWidth,
+                            onChange = onDockNotchWidth,
+                            range = 48f..120f,
+                        ),
+                        dockSlider(
+                            title = stringResource(R.string.dock_notch_depth),
+                            value = dockNotchDepth,
+                            onChange = onDockNotchDepth,
+                            range = 0f..36f,
+                        ),
+                        dockSlider(
+                            title = stringResource(R.string.dock_orb_size),
+                            value = dockOrbSize,
+                            onChange = onDockOrbSize,
+                            range = 36f..64f,
+                        ),
+                        dockSlider(
+                            title = stringResource(R.string.dock_orb_lift),
+                            value = dockOrbLift,
+                            onChange = onDockOrbLift,
+                            range = -12f..28f,
+                        ),
+                        dockSlider(
+                            title = stringResource(R.string.dock_corner_radius),
+                            value = dockCorner,
+                            onChange = onDockCorner,
+                            range = 0f..40f,
+                        ),
+                    ),
+            )
+
+            Spacer(modifier = Modifier.height(27.dp))
+        }
 
         // Developer-only grid geometry for the two Home grids. Defaults mirror the constants in
         // NewHomeScreen (Speed Dial 6x3, Shuffles 5x2) so the sliders open on the live values.
@@ -345,6 +409,30 @@ private fun gridSizeItem(
                 steps = (maxRows - minRows - 1).coerceAtLeast(0),
             )
         }
+    },
+    onClick = {},
+)
+
+/**
+ * One dp slider for the floating dock geometry. The live value is printed beside the title in dp so
+ * the tuning is precise instead of "a bit more than last time".
+ */
+@Composable
+private fun dockSlider(
+    title: String,
+    value: Float,
+    onChange: (Float) -> Unit,
+    range: ClosedFloatingPointRange<Float>,
+) = Material3SettingsItem(
+    title = { Text("$title · ${value.roundToInt()}dp") },
+    description = {
+        Slider(
+            value = value,
+            onValueChange = onChange,
+            valueRange = range,
+            // One stop per 1dp step, so a slider release lands on a whole dp.
+            steps = (range.endInclusive - range.start).roundToInt() - 1,
+        )
     },
     onClick = {},
 )

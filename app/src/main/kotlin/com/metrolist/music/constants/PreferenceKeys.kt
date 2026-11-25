@@ -141,6 +141,15 @@ val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 
 // Developer-only alternate navigation bar: a floating, expandable dock instead of the stock bar.
 val DevFloatingDockKey = booleanPreferencesKey("devFloatingDock")
+
+// Geometry of the floating notched bar, in dp. Floats so the sliders can move in 1dp steps; the
+// bar reads them through `rememberFloatingNotchSpec()`, which is also what MainActivity reserves.
+val DockBodyHeightKey = floatPreferencesKey("dockBodyHeight")
+val DockNotchWidthKey = floatPreferencesKey("dockNotchWidth")
+val DockNotchDepthKey = floatPreferencesKey("dockNotchDepth")
+val DockOrbSizeKey = floatPreferencesKey("dockOrbSize")
+val DockOrbLiftKey = floatPreferencesKey("dockOrbLift")
+val DockCornerRadiusKey = floatPreferencesKey("dockCornerRadius")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
 val SliderStyleKey = stringPreferencesKey("sliderStyle")
 val SquigglySliderKey = booleanPreferencesKey("squigglySlider")

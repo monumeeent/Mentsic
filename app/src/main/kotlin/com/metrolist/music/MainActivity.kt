@@ -199,7 +199,7 @@ import com.metrolist.music.ui.component.AppNavigationBar
 import com.metrolist.music.ui.component.AppNavigationRail
 import com.metrolist.music.ui.component.BottomSheetMenu
 import com.metrolist.music.ui.component.BottomSheetPage
-import com.metrolist.music.ui.component.FloatingDockHeight
+import com.metrolist.music.ui.component.rememberFloatingNotchSpec
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.rememberBottomSheetState
@@ -919,11 +919,14 @@ class MainActivity : FragmentActivity() {
                 val showRail = !forceBottomNav && (isLandscape || isTablet) && !inSearchScreen
                 // The floating dock has no rail form; keep the rail for landscape/tablet.
                 val dockActive = useFloatingDock && !showRail
+                // Same live spec the bar draws with, so the space reserved here matches pixel for
+                // pixel even after the geometry is retuned in developer settings.
+                val dockHeight = rememberFloatingNotchSpec().reservedHeight
 
                 val navPadding =
                     if (shouldShowNavigationBar && !showRail) {
                         when {
-                            dockActive -> FloatingDockHeight
+                            dockActive -> dockHeight
                             slimNav -> SlimNavBarHeight
                             else -> NavigationBarHeight
                         }

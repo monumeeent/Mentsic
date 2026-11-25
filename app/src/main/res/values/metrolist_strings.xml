@@ -150,7 +150,14 @@
     <string name="force_bottom_navbar">Force bottom navigation bar</string>
     <string name="slim_navbar">Slim bottom navigation bar</string>
     <string name="floating_dock_navbar">Floating dock navigation bar</string>
-    <string name="floating_dock_navbar_desc">Experimental bar: a hovering dock where the selected tab expands into a labelled pill. Only applies while developer mode is on.</string>
+    <string name="floating_dock_navbar_desc">Notched bar whose top edge dips under the active tab, with the icon floating in a tinted orb above it. Only applies while developer mode is on.</string>
+    <string name="floating_dock_geometry">Floating dock geometry</string>
+    <string name="dock_body_height">Bar height</string>
+    <string name="dock_notch_width">Notch width</string>
+    <string name="dock_notch_depth">Notch depth</string>
+    <string name="dock_orb_size">Orb size</string>
+    <string name="dock_orb_lift">Orb lift</string>
+    <string name="dock_corner_radius">Corner radius</string>
     <string name="auto_playlists">Auto playlists</string>
     <string name="show_liked_playlist">Show Liked playlist</string>
     <string name="show_downloaded_playlist">Show Downloaded playlist</string>
