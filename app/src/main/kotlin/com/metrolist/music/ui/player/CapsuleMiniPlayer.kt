@@ -36,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,11 +50,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
+import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.MiniPlayerHeight
 import com.metrolist.music.ui.component.AudioVisualizer
-import com.metrolist.music.ui.component.LocalPlayerConnection
 import com.metrolist.music.ui.component.VisualizerStyle
+import com.metrolist.music.utils.joinToArtistString
 import com.metrolist.music.ui.theme.Spacing
 
 /**
@@ -68,6 +70,8 @@ fun CapsuleMiniPlayer(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
+    // `LocalPlayerConnection` lives in `com.metrolist.music` (declared next to the provider in
+    // MainActivity), not in `ui.component` — importing it from the wrong package is what failed here.
     val playerConnection = LocalPlayerConnection.current ?: return
     val scheme = MaterialTheme.colorScheme
 
@@ -164,7 +168,11 @@ fun CapsuleMiniPlayer(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = mediaMetadata?.artists?.joinToString(", ") { it.name }.orEmpty(),
+                    text =
+                        mediaMetadata
+                            ?.artists
+                            ?.joinToArtistString(", ") { it.name }
+                            .orEmpty(),
                     style = MaterialTheme.typography.labelSmall,
                     color = scheme.onSurfaceVariant,
                     maxLines = 1,
