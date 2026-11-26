@@ -11,6 +11,15 @@ on:
     branches: [ main, master, redesign/mentsic ]
   workflow_dispatch:
 
+# Cancel superseded runs instead of stacking them.
+#
+# Every extra concurrent run is another full set of dependency downloads, and Maven Central rate
+# limits per IP: a burst of overlapping builds is the usual trigger for HTTP 429, which Gradle then
+# reports as "60 more failures" because it disables the repository after the first error.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -66,21 +75,28 @@ jobs:
       env:
         METROLIST_DEBUG_KEYSTORE_PATH: ${{ github.workspace }}/app/debug.keystore
       run: |
-        # Plugin/dependency resolution occasionally fails on a transient repository error (a 5xx or
-        # timeout from the Gradle Plugin Portal), which surfaces as the misleading
-        # "Plugin [id: 'com.google.dagger.hilt.android' ...] was not found in any of the following
-        # sources". The artifact exists, so retrying is the correct response — not a version bump.
-        # --refresh-dependencies also discards any negative cache entry left by the failed attempt.
+        # Dependency/plugin resolution can fail transiently for two different reasons, and they need
+        # different handling:
+        #
+        #  1. A flaky 5xx/timeout on one artifact. Retrying fixes it.
+        #  2. HTTP 429 "Too Many Requests" from Maven Central. Gradle then reports "60 more failures
+        #     with identical causes" because it stops using that repository for the rest of the
+        #     build. Retrying immediately makes this *worse* — it adds to the burst. Hence the
+        #     escalating back-off below, and the mirror-first order in settings.gradle.kts.
+        #
+        # Never bump a dependency version in response to either: the artifact exists.
+        backoff=30
         for attempt in 1 2 3; do
           echo "::group::Gradle attempt $attempt"
-          if ./gradlew :app:assembleFossDebug --stacktrace $([ "$attempt" -gt 1 ] && echo --refresh-dependencies); then
+          if ./gradlew :app:assembleFossDebug --stacktrace; then
             echo "::endgroup::"
             exit 0
           fi
           echo "::endgroup::"
           if [ "$attempt" -lt 3 ]; then
-            echo "::warning::Gradle attempt $attempt failed; retrying in 20s (likely a transient repository error)."
-            sleep 20
+            echo "::warning::Gradle attempt $attempt failed; waiting ${backoff}s before retrying (rate limits need real time to clear)."
+            sleep "$backoff"
+            backoff=$((backoff * 2))
           fi
         done
         echo "::error::Gradle failed after 3 attempts — this is now a real failure, not a repository blip."

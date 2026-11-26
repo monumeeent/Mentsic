@@ -7,9 +7,11 @@ plugins {
 buildscript {
     repositories {
         google()
+        // Mirror before Central: see settings.gradle.kts for why (HTTP 429 disables a repository for
+        // the remainder of the build).
+        maven { setUrl("https://maven.aliyun.com/repository/public") }
         mavenCentral()
         maven { setUrl("https://jitpack.io") }
-        maven { setUrl("https://maven.aliyun.com/repository/public") }
     }
     dependencies {
         classpath(libs.gradle)
