@@ -57,7 +57,9 @@ data class VisualizerFrame(
 
     companion object {
         /** Flat, quiet, pulse-less frame: what a visualizer shows when nothing is playing. */
-        fun resting(bandCount: Int = BandCount): VisualizerFrame =
+        // Qualified: `BandCount` is declared on `VisualizerState`, and an unqualified reference from
+        // inside this companion does not resolve — the receiver there is `VisualizerFrame.Companion`.
+        fun resting(bandCount: Int = VisualizerState.BandCount): VisualizerFrame =
             VisualizerFrame(
                 bands = FloatArray(bandCount) { 0f },
                 level = 0f,
