@@ -5,14 +5,13 @@
 
 package com.metrolist.music.ui.component
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -28,22 +27,18 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlin.math.PI
-import kotlin.math.max
-import kotlin.math.sin
-import kotlin.math.sqrt
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.metrolist.music.playback.audio.VisualizerState
 
 /**
- * Visualiser presets. Each is a different *way* of reading the same coherent harmonic field, so they
- * share one animation clock and cost the same to run.
+ * Visualiser presets. Each is a different *way* of painting the same analysed audio, so they all
+ * share one data source and cost the same to run.
  *
- *  - [RIBBON]      mirrored bars around a centre spine (the original).
+ *  - [RIBBON]      mirrored bars around a centre spine.
  *  - [BARS]        classic bottom-anchored spectrum, no mirroring.
- *  - [WAVE]        a single stroked sine path, amplitude-modulated by the field.
- *  - [DOTS]        a row of swelling circles — reads as "sensitive", good on AMOLED.
- *  - [MIRROR_WAVE] the sine path drawn twice, reflected, with a soft fill between the halves.
+ *  - [WAVE]        a single flowing line through the band energies.
+ *  - [DOTS]        a row of swelling circles — lightest to render.
+ *  - [MIRROR_WAVE] the line drawn twice, reflected, with a soft fill between the halves.
  */
 enum class VisualizerStyle {
     RIBBON,
@@ -54,19 +49,27 @@ enum class VisualizerStyle {
 }
 
 /**
+ * Resting height while nothing is playing: a thin, calm line, not a zeroed block.
+ *
+ * Nothing here is generated. Every value comes from [VisualizerState], which is fed by the audio
+ * processor sitting in ExoPlayer's pipeline — so the movement is the music, not a timer.
+ */
+private const val REST_HEIGHT = 0.045f
+
+/**
  * Audio-reactive visualiser.
  *
- * The field itself is always the same three-harmonic sample ([sampleBar]) — the preset only changes
- * how it is painted. One `Animatable` per sample drives all presets, and every read happens inside
- * the draw scope, so switching preset or animating costs no recomposition.
+ * Reads [VisualizerState.frame] and expands the analysed bands onto [barCount] bars. Every preset
+ * draws from that one array, so the full player and the capsule mini player can never disagree about
+ * what the music is doing — they only differ in density.
  *
- * @param barCount number of samples. Even values centre cleanly on the mirrored presets.
+ * @param barCount bars to draw. The analysed bands are stretched across this width.
  * @param barSpacing gap between bars/dots.
  * @param colors ramp the shapes are tinted with, low → high.
- * @param amplitude motion intensity, 0..1.
- * @param enabled when false the shape settles to its resting line instead of animating.
+ * @param enabled draw the audio at all; when false the shape rests flat.
  * @param style which preset to draw.
- * @param height canvas height; the caller may override it per placement.
+ * @param height canvas height; callers override it per placement.
+ * @param intensity scales the amplitude, for dense placements where full height is too loud.
  */
 @Composable
 fun AudioVisualizer(
@@ -82,40 +85,73 @@ fun AudioVisualizer(
     val density = LocalDensity.current
     val gapPx = with(density) { barSpacing.toPx() }
 
-    // One Animatable per sample. Animating the *rendered* value toward a sampled target — rather than
-    // redrawing a raw sample every frame — is what keeps the motion smooth at any frame rate.
-    val bars = remember(barCount) { Array(barCount) { Animatable(REST_HEIGHT) } }
+    // Collected once per placement; the processor already smooths, so there is no easing pass here.
+    // Reading it in the draw lambda keeps playback from recomposing the canvas.
+    val frame by VisualizerState.frame.collectAsStateWithLifecycle()
 
-    LaunchedEffect(enabled, barCount) {
-        // Phase accumulates from wall-clock time, so the animation keeps a constant tempo even if a
-        // frame is dropped. `delay` sets the sampling cadence only.
-        val start = System.currentTimeMillis()
-        // Sample at ~60Hz but never faster than the display: over-sampling just burns CPU on a
-        // 120Hz panel and changes nothing visible, which is what made the old loop feel heavy.
-        while (isActive) {
-            val seconds = (System.currentTimeMillis() - start) / 1000f
-            for (index in bars.indices) {
-                val target = if (enabled) sampleBar(index, barCount, seconds, intensity) else REST_HEIGHT
-                bars[index].snapTo(target)
-            }
-            delay(16L)
-        }
+    // Ask the analyser for data only while a visualizer is actually composed and enabled. The
+    // processor sits in the hot audio path, so leaving it on with nothing to draw would burn CPU
+    // for every song the user never opens the player over.
+    DisposableEffect(enabled) {
+        if (enabled) VisualizerState.retain() else VisualizerState.release()
+        onDispose { if (enabled) VisualizerState.release() }
     }
 
     Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height)
-            .padding(horizontal = 16.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(height)
+                .padding(horizontal = 16.dp),
     ) {
-        // Snapshot copies once per frame rather than per draw call.
+        // The compose snapshot is read here, in the draw phase: a new frame invalidates the draw
+        // only, never the composition.
+        val live = frame
+        val values =
+            if (enabled && !live.silent) {
+                expandBands(live.bands, barCount, live.pulse, intensity)
+            } else {
+                List(barCount) { REST_HEIGHT }
+            }
+
         drawVisualizer(
-            values = bars.map { it.value },
+            values = values,
             palette = colors,
             gap = gapPx,
             style = style,
+            pulse = if (enabled && !live.silent) live.pulse else 0f,
         )
     }
+}
+
+/**
+ * Stretches [bands] (typically 8) onto [count] bars by linear interpolation, so a narrow capsule and
+ * a wide player show the same spectrum at different densities.
+ *
+ * The onset pulse is mixed in as a uniform lift, which makes the whole shape breathe on a beat
+ * instead of only the bars near the loudest band.
+ */
+private fun expandBands(
+    bands: FloatArray,
+    count: Int,
+    pulse: Float,
+    intensity: Float,
+): List<Float> {
+    if (bands.isEmpty() || count <= 0) return emptyList()
+    if (bands.size == 1) return List(count) { (bands[0] * intensity).coerceIn(0f, 1f) }
+
+    val result = ArrayList<Float>(count)
+    for (i in 0 until count) {
+        // Map bar index onto the band axis, mirroring the ends so the edges are not clipped flat.
+        val pos = (i.toFloat() / (count - 1).coerceAtLeast(1)) * (bands.size - 1)
+        val lo = pos.toInt().coerceIn(0, bands.size - 1)
+        val hi = (lo + 1).coerceAtMost(bands.size - 1)
+        val t = pos - lo
+        val value = bands[lo] + (bands[hi] - bands[lo]) * t
+        val withPulse = value + pulse * 0.22f
+        result.add((withPulse * intensity).coerceIn(0f, 1f))
+    }
+    return result
 }
 
 /** Dispatches to the selected preset. Pure draw code — no state reads, no allocation per bar. */
@@ -124,9 +160,10 @@ private fun DrawScope.drawVisualizer(
     palette: List<Color>,
     gap: Float,
     style: VisualizerStyle,
+    pulse: Float = 0f,
 ) {
     when (style) {
-        VisualizerStyle.RIBBON -> drawMirroredRibbon(bars = values, palette = palette, gap = gap)
+        VisualizerStyle.RIBBON -> drawMirroredRibbon(bars = values, palette = palette, gap = gap, pulse = pulse)
         VisualizerStyle.BARS -> drawBars(bars = values, palette = palette, gap = gap)
         VisualizerStyle.WAVE -> drawWave(bars = values, palette = palette, mirror = false)
         VisualizerStyle.MIRROR_WAVE -> drawWave(bars = values, palette = palette, mirror = true)
@@ -245,40 +282,18 @@ private fun DrawScope.drawDots(bars: List<Float>, palette: List<Color>, gap: Flo
     }
 }
 
-/** Resting height while the player is paused: a thin, calm line, not a zeroed block. */
-private const val REST_HEIGHT = 0.045f
-
 /**
- * Samples one bar from three harmonics.
+ * Paints the ribbon: mirrored bars around the vertical centre, tinted by height.
  *
- * Each harmonic is a full sine over the field width, so the phase offset per bar creates a
- * travelling shape rather than independent wobbles. Frequencies are deliberately non-integer
- * multiples so the pattern does not visibly repeat within the visible width.
+ * @param pulse onset envelope from the analyser. It drives a soft bloom over the whole field, which
+ *   replaces the old wall-clock highlight sweep — the glow now marks a real transient.
  */
-private fun sampleBar(index: Int, count: Int, seconds: Float, intensity: Float): Float {
-    val position = index.toFloat() / max(1, count - 1).toFloat()
-
-    // 1. Slow swell — the body of the wave, one crest across the field.
-    val swell = sin((position * 1.0f + seconds * 0.22f) * 2f * PI).toFloat()
-
-    // 2. Fast detail — individual peaks, faster and smaller.
-    val detail = sin((position * 2.7f - seconds * 0.55f) * 2f * PI).toFloat()
-
-    // 3. Envelope — a slower rising/falling breath that gates how alive the field looks.
-    val envelope = 0.6f + 0.4f * sin(seconds * 0.35f).toFloat()
-
-    // Centre-weighted window: bars near the edges stay quieter, which reads as depth.
-    val window = sqrt(1f - (2f * position - 1f).let { it * it }).coerceIn(0f, 1f)
-
-    val raw = 0.16f + window * envelope * (0.34f * (1f + swell) * 0.5f + 0.22f * (1f + detail) * 0.5f)
-    return (REST_HEIGHT + (raw - REST_HEIGHT) * intensity).coerceIn(REST_HEIGHT, 0.98f)
-}
-
-/**
- * Paints the ribbon: mirrored bars around the vertical centre, tinted by height, plus a travelling
- * highlight.
- */
-private fun DrawScope.drawMirroredRibbon(bars: List<Float>, palette: List<Color>, gap: Float) {
+private fun DrawScope.drawMirroredRibbon(
+    bars: List<Float>,
+    palette: List<Color>,
+    gap: Float,
+    pulse: Float = 0f,
+) {
     val count = bars.size
     if (count == 0) return
 
@@ -312,25 +327,21 @@ private fun DrawScope.drawMirroredRibbon(bars: List<Float>, palette: List<Color>
         )
     }
 
-    // Travelling highlight: a narrow vertical band sweeping the field, drawn once over the bars.
-    // Its position is derived from the same clock as the bars, so it feels attached to the music.
-    val sweep = ((System.currentTimeMillis() % 4200L) / 4200f)
-    val sweepX = sweep * size.width
-    val bandHalf = size.width * 0.06f
-
-    val highlight =
-        androidx.compose.ui.graphics.Brush.horizontalGradient(
-            colorStops =
-                arrayOf(
-                    (0f) to Color.Transparent,
-                    ((sweepX - bandHalf).coerceIn(0f, size.width) / size.width) to Color.Transparent,
-                    (sweepX / size.width).coerceIn(0.001f, 0.999f) to high.copy(alpha = 0.16f),
-                    ((sweepX + bandHalf).coerceIn(0f, size.width) / size.width) to Color.Transparent,
-                    1f to Color.Transparent,
+    // Beat bloom: instead of a highlight sweeping on a 4.2s timer, the field brightens on a real
+    // transient. Uniform across the width, so it reads as the whole shape reacting at once.
+    if (pulse > 0.01f) {
+        drawRect(
+            brush =
+                Brush.verticalGradient(
+                    listOf(
+                        Color.Transparent,
+                        high.copy(alpha = 0.20f * pulse),
+                        Color.Transparent,
+                    ),
                 ),
+            size = Size(size.width, size.height),
         )
-
-    drawRect(brush = highlight, size = Size(size.width, size.height))
+    }
 
     // Centre spine: a hairline that anchors the mirror axis without competing with the bars.
     drawRect(

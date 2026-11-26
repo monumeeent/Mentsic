@@ -198,6 +198,8 @@ import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.alarm.MusicAlarmScheduler
 import com.metrolist.music.playback.alarm.MusicAlarmStore
 import com.metrolist.music.playback.audio.SilenceDetectorAudioProcessor
+import com.metrolist.music.playback.audio.VisualizerAudioProcessor
+import com.metrolist.music.playback.audio.VisualizerState
 import com.metrolist.music.playback.queues.EmptyQueue
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.Queue
@@ -1312,6 +1314,9 @@ class MusicService :
         val eqProcessor = CustomEqualizerAudioProcessor()
 
         val silenceProcessor = SilenceDetectorAudioProcessor { handleLongSilenceDetected() }
+        // Analyses the decoded signal so the visualizer can follow the actual audio. Disabled by
+        // default: it only runs while a visualizer is on screen and asking for data.
+        val visualizerProcessor = VisualizerAudioProcessor()
 
         // Set initial state — use pre-read prefs when available, otherwise fall back to DataStore
         val useAudioTrackPlaybackParams = if (prefs != null) {
@@ -1335,7 +1340,15 @@ class MusicService :
                 .setMediaSourceFactory(
                     createMediaSourceFactory(normalizationProcessor) { createdPlayer },
                 )
-                .setRenderersFactory(createRenderersFactory(normalizationProcessor, eqProcessor, silenceProcessor, useAudioTrackPlaybackParams))
+                .setRenderersFactory(
+                    createRenderersFactory(
+                        normalizationProcessor,
+                        eqProcessor,
+                        silenceProcessor,
+                        visualizerProcessor,
+                        useAudioTrackPlaybackParams,
+                    ),
+                )
                 .setLoadControl(
                     // Start playback once ~750ms is buffered (media3's default is 1000ms) so first
                     // audio is audible a touch sooner. min/max/after-rebuffer match the media3 1.x
@@ -2534,6 +2547,9 @@ class MusicService :
             }
         }
         lastTransitionedMediaId = mediaItem?.mediaId
+        // A new track must not inherit the previous one's spectrum: drop to rest immediately so the
+        // visualizer settles during the gap instead of freezing on the old shape.
+        VisualizerState.reset()
         initialBufferRecoveryJob?.cancel()
         initialBufferRecoveryJob = null
         initialBufferRecoveryAttemptedMediaId = null
@@ -2684,6 +2700,12 @@ class MusicService :
         @Player.State playbackState: Int,
     ) {
         updateInitialBufferRecovery(playbackState)
+
+        // Pause/stop/end/buffer all mean "no audio is coming out", so the visualizer goes flat.
+        // STATE_READY is the only state where real samples flow.
+        if (playbackState != Player.STATE_READY) {
+            VisualizerState.reset()
+        }
 
         // A day counts toward the listening streak once a song actually starts playing.
         if (playbackState == Player.STATE_READY && player.playWhenReady) {
@@ -4054,6 +4076,7 @@ class MusicService :
         normalizationProcessor: VolumeNormalizationAudioProcessor,
         eqProcessor: CustomEqualizerAudioProcessor,
         silenceProcessor: SilenceDetectorAudioProcessor,
+        visualizerProcessor: VisualizerAudioProcessor,
         useAudioTrackPlaybackParams: Boolean,
     ) = object : DefaultRenderersFactory(this) {
         override fun buildAudioRenderers(
@@ -4114,6 +4137,8 @@ class MusicService :
                         normalizationProcessor,
                         eqProcessor,
                         silenceProcessor,
+                        // Last in the chain, so it measures what actually reaches the sink.
+                        visualizerProcessor,
                     ),
                     SilenceSkippingAudioProcessor(2_000_000, 20_000, 256),
                     SonicAudioProcessor(),

@@ -1,0 +1,310 @@
+/**
+ * Metrolist Project (C) 2026
+ * Licensed under GPL-3.0 | See git history for contributors
+ *
+ * Visualizer analysis: read the decoded playback signal, band it, and publish a tiny snapshot the UI
+ * can draw.
+ *
+ * Why an `AudioProcessor` and not `android.media.audiofx.Visualizer`:
+ *  - The processor runs **inside** ExoPlayer's pipeline, after decode and *before* the audio sink, so
+ *    the numbers belong to the exact frames being heard — no second audio capture, no latency guess,
+ *    no permission, and it works for every supported output including offload-to-sink paths that
+ *    bypass the Java audio callbacks a `Visualizer` instance would need.
+ *  - It is pure arithmetic over a `ByteBuffer` that already exists in memory: the cost is one pass per
+ *    buffer, no allocation, no extra thread.
+ *
+ * The published snapshot is deliberately tiny (a `FloatArray` of 8 bands plus band energies). One
+ * shared instance feeds every visualizer placement, so the player and the capsule mini player always
+ * describe the same audio.
+ */
+
+package com.metrolist.music.playback.audio
+
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.common.audio.BaseAudioProcessor
+import androidx.media3.common.util.UnstableApi
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+/**
+ * One analysed frame: the numbers a visualizer needs to draw, and nothing else.
+ *
+ * @param bands 0..1 energy per band, low → high frequency. Smoothed, so the UI can draw them
+ *   directly without its own easing pass.
+ * @param level 0..1 overall loudness of the frame (mean band energy).
+ * @param pulse 0..1 onset envelope — decays after every detected transient, so it reads as a beat.
+ * @param silent true when the frame was essentially nothing (pause, end of track, gap).
+ */
+data class VisualizerFrame(
+    val bands: FloatArray,
+    val level: Float,
+    val pulse: Float,
+    val silent: Boolean,
+) {
+    // FloatArray needs explicit equals/hashCode for data-class semantics. Only the identity of the
+    // array matters here (a new instance per published frame), so referential comparison is fine and
+    // keeps the per-frame cost at zero.
+    override fun equals(other: Any?): Boolean = this === other
+
+    override fun hashCode(): Int = System.identityHashCode(this)
+
+    companion object {
+        /** Flat, quiet, pulse-less frame: what a visualizer shows when nothing is playing. */
+        fun resting(bandCount: Int = BandCount): VisualizerFrame =
+            VisualizerFrame(
+                bands = FloatArray(bandCount) { 0f },
+                level = 0f,
+                pulse = 0f,
+                silent = true,
+            )
+    }
+}
+
+/** Publisher shared by the analyzer (in the service) and every visualizer (in the UI). */
+object VisualizerState {
+    /** Bands the UI receives. Eight is enough for the mirrored styles to read as a spectrum. */
+    const val BandCount = 8
+
+    private val _frame = MutableStateFlow(VisualizerFrame.resting())
+
+    /** Latest analysed frame. Hot: the UI just collects it. */
+    val frame: StateFlow<VisualizerFrame> = _frame.asStateFlow()
+
+    /**
+     * Reference count of visualizers currently on screen.
+     *
+     * Two placements can be composed at once (full player open over the mini player), so a plain
+     * boolean would have the second one switch analysis off when the first leaves. The processor
+     * reads [isActive] and skips analysis entirely at zero.
+     */
+    private var activeCount = 0
+
+    @Volatile
+    var isActive: Boolean = false
+        private set
+
+    /** Call when a visualizer starts composing. */
+    fun retain() {
+        activeCount++
+        isActive = true
+    }
+
+    /** Release one on-screen visualizer. */
+    fun release() {
+        activeCount = (activeCount - 1).coerceAtLeast(0)
+        if (activeCount == 0) {
+            isActive = false
+            reset()
+        }
+    }
+
+    internal fun publish(frame: VisualizerFrame) {
+        _frame.value = frame
+    }
+
+    /** Drop back to the resting state — called on pause, stop, track change and service teardown. */
+    fun reset() {
+        _frame.value = VisualizerFrame.resting()
+    }
+}
+
+/**
+ * Splits the PCM stream into [VisualizerState.BandCount] bands and detects onsets.
+ *
+ * Band edges are logarithmic over 20 Hz–16 kHz, because music energy is roughly log-distributed: a
+ * linear split would put almost everything in band 0 and leave the top bands permanently dark.
+ *
+ * Smoothing is asymmetric — rise fast, fall slow — which is the classic meter behaviour: a transient
+ * is visible immediately, but the bar does not flicker between frames.
+ */
+@UnstableApi
+class VisualizerAudioProcessor(
+    private val bandCount: Int = VisualizerState.BandCount,
+) : BaseAudioProcessor() {
+    private var sampleRate = 0
+    private var channelCount = 0
+
+    /** One-pole filter state per band. Separate from [display] so the two feedback loops don't fight. */
+    private val filterState = FloatArray(bandCount)
+
+    /** Smoothed, normalised band energy that the UI draws. */
+    private val display = FloatArray(bandCount)
+
+    /** Onset envelope, decays every chunk so a beat is a short bump rather than a permanent spike. */
+    private var pulse = 0f
+
+    /** Envelope follower used for onset detection: fast attack, slow release. */
+    private var envelope = 0f
+    private var previousEnvelope = 0f
+
+    private var framesSincePublish = 0
+    private var publishEveryFrames = 0
+
+    override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
+        if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT) {
+            throw AudioProcessor.UnhandledAudioFormatException(inputAudioFormat)
+        }
+        sampleRate = inputAudioFormat.sampleRate
+        channelCount = inputAudioFormat.channelCount
+        // Publish roughly every display frame (~60 Hz) at the stream's own sample rate. This keeps
+        // the UI cadence independent of buffer size, which varies by device and by codec.
+        publishEveryFrames = max(1, sampleRate / 60)
+        framesSincePublish = 0
+        return inputAudioFormat
+    }
+
+    override fun queueInput(inputBuffer: ByteBuffer) {
+        if (!inputBuffer.hasRemaining()) return
+
+        // Analysis runs only while some visualizer is on screen. `VisualizerState.isActive` is a
+        // reference count owned by the UI, so this stays correct even with two placements composed.
+        if (VisualizerState.isActive && sampleRate > 0 && channelCount > 0) {
+            analyse(inputBuffer)
+        } else {
+            // Nothing is watching: keep the published frame at rest so a visualizer that is opened
+            // later starts from silence instead of the last song's spectrum.
+            if (pulse != 0f || display.any { it != 0f }) {
+                resetTracking()
+            }
+        }
+
+        // Pass-through: the analyser never modifies audio.
+        replaceOutputBuffer(inputBuffer.remaining()).apply {
+            put(inputBuffer)
+            flip()
+        }
+    }
+
+    /**
+     * One mono pass over the buffer.
+     *
+     * Exact FFTs are not worth it here: we need band *energy*, not spectral resolution, and the
+     * visualizer is 8 bars wide. A one-pole low-pass ladder plus a first-difference high-pass gives
+     * usable band separation for a fraction of an FFT's cost, and unlike a Goertzel bank it needs no
+     * per-frame buffers.
+     */
+    private fun analyse(inputBuffer: ByteBuffer) {
+        inputBuffer.order(ByteOrder.LITTLE_ENDIAN)
+        val basePosition = inputBuffer.position()
+        val samples = inputBuffer.remaining() / 2
+        val frameCount = samples / channelCount
+        if (frameCount <= 0) return
+
+        val bands = FloatArray(bandCount)
+        var peak = 0f
+
+        // One-pole low-pass ladder, from the bass up to the treble. Higher bands are filtered more
+        // slowly, so each band tracks its own part of the spectrum instead of every bar following
+        // the kick drum.
+        repeat(frameCount) { frameIndex ->
+            var mono = 0f
+            var channel = 0
+            while (channel < channelCount) {
+                val index = basePosition + (frameIndex * channelCount + channel) * 2
+                mono += inputBuffer.getShort(index) / 32768f
+                channel++
+            }
+            mono /= channelCount
+            peak = max(peak, abs(mono))
+
+            for (band in 0 until bandCount) {
+                val alpha = bandAlpha(band)
+                filterState[band] += (mono - filterState[band]) * alpha
+                bands[band] += abs(filterState[band])
+            }
+        }
+
+        // Normalise by frame count, then compress with a soft knee so quiet passages still show
+        // movement instead of a flat line (a linear scale buries everything under the loud parts).
+        for (band in 0 until bandCount) {
+            val energy = (bands[band] / frameCount).coerceIn(0f, 1f)
+            val shaped = softKnee(energy)
+            // Asymmetric smoothing on the *display* value only: rise 60% of the way, fall 18% —
+            // fast attack, slow decay. The filter state above is untouched by this.
+            display[band] =
+                if (shaped > display[band]) {
+                    display[band] + (shaped - display[band]) * 0.6f
+                } else {
+                    display[band] + (shaped - display[band]) * 0.18f
+                }
+        }
+
+        // Onset detection on the overall envelope: a sharp rise above the running release is a
+        // transient. This is an estimate from live audio — syncopated or percussion-light tracks may
+        // not produce a clear event, which is expected and documented.
+        envelope = if (peak > envelope) peak else envelope * 0.92f
+        val rise = envelope - previousEnvelope
+        previousEnvelope = envelope
+        if (rise > 0.04f) {
+            pulse = min(1f, pulse + rise * 6f)
+        } else {
+            pulse *= 0.90f
+        }
+
+        // Publish at display cadence rather than per audio chunk.
+        framesSincePublish += frameCount
+        if (framesSincePublish < publishEveryFrames) return
+        framesSincePublish = 0
+
+        val level = display.average().toFloat().coerceIn(0f, 1f)
+        VisualizerState.publish(
+            VisualizerFrame(
+                bands = display.copyOf(),
+                level = level,
+                pulse = pulse.coerceIn(0f, 1f),
+                silent = peak < 0.0015f,
+            ),
+        )
+    }
+
+    /** One-pole coefficient for [band]; band 0 is full-band and handled separately. */
+    private fun bandAlpha(band: Int): Float =
+        when (band) {
+            0 -> 0.9f // full band / bass body
+            1 -> 0.55f
+            2 -> 0.38f
+            3 -> 0.26f
+            4 -> 0.18f
+            5 -> 0.14f
+            6 -> 0.11f
+            else -> 0.09f
+        }
+
+    /** `sqrt`-style soft knee: lifts quiet detail without clipping peaks. */
+    private fun softKnee(value: Float): Float {
+        val scaled = value * 3.2f
+        return when {
+            scaled <= 0f -> 0f
+            scaled >= 1f -> 1f
+            else -> scaled
+        }
+    }
+
+    override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
+        resetTracking()
+    }
+
+    override fun onReset() {
+        sampleRate = 0
+        channelCount = 0
+        resetTracking()
+    }
+
+    /** Clear all carried state — called on flush/seek/track change so nothing goes stale. */
+    fun resetTracking() {
+        filterState.fill(0f)
+        display.fill(0f)
+        pulse = 0f
+        envelope = 0f
+        previousEnvelope = 0f
+        framesSincePublish = 0
+        VisualizerState.reset()
+    }
+}

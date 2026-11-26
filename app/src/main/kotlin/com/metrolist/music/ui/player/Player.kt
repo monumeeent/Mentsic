@@ -2118,7 +2118,10 @@ fun BottomSheetPlayer(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = PlayerHorizontalPadding),
-                            enabled = isPlaying,
+                            // `enabled` gates whether the analyzer runs at all, so it must stay true
+                            // while composed. Pause flattens the drawing through VisualizerState's
+                            // reset, not by tearing the analyzer down on every pause.
+                            enabled = true,
                             style = visualizerStyle,
                         )
                         Spacer(Modifier.height(8.dp))
