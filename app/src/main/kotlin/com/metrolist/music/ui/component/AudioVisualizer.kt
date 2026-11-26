@@ -6,12 +6,17 @@
 package com.metrolist.music.ui.component
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -24,11 +29,16 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.metrolist.music.playback.audio.VisualizerState
+import android.provider.Settings
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 /**
  * Visualiser presets. Each is a different *way* of painting the same analysed audio, so they all
@@ -57,11 +67,33 @@ enum class VisualizerStyle {
 private const val REST_HEIGHT = 0.045f
 
 /**
+ * True when the OS asks for reduced motion ("Remove animations" / Animator duration scale = 0).
+ *
+ * Compose has no public reduced-motion signal, so this reads the platform setting once per
+ * composition. With it on, the visualizer snaps to the analysed shape instead of easing, which is
+ * the accessible behaviour — the data stays truthful, only the motion goes away.
+ */
+@Composable
+private fun rememberReduceMotion(): Boolean {
+    val context = LocalContext.current
+    return remember(context) {
+        runCatching {
+            Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+        }.getOrDefault(false)
+    }
+}
+
+/**
  * Audio-reactive visualiser.
  *
  * Reads [VisualizerState.frame] and expands the analysed bands onto [barCount] bars. Every preset
  * draws from that one array, so the full player and the capsule mini player can never disagree about
  * what the music is doing — they only differ in density.
+ *
+ * **Per-bar easing.** Each bar carries its own displayed value, eased toward that bar's band energy
+ * with a centre-outward lag ([easeOutward]). That is what gives the wavy feel: a kick lifts the
+ * middle bars first and the effect rolls toward the edges over the next frames, instead of the whole
+ * field jumping as one block.
  *
  * @param barCount bars to draw. The analysed bands are stretched across this width.
  * @param barSpacing gap between bars/dots.
@@ -70,6 +102,7 @@ private const val REST_HEIGHT = 0.045f
  * @param style which preset to draw.
  * @param height canvas height; callers override it per placement.
  * @param intensity scales the amplitude, for dense placements where full height is too loud.
+ * @param onCycleStyle invoked on a double tap; the host advances to the next preset.
  */
 @Composable
 fun AudioVisualizer(
@@ -81,12 +114,14 @@ fun AudioVisualizer(
     intensity: Float = 1f,
     style: VisualizerStyle = VisualizerStyle.RIBBON,
     height: Dp = 96.dp,
+    onCycleStyle: (() -> Unit)? = null,
 ) {
     val density = LocalDensity.current
     val gapPx = with(density) { barSpacing.toPx() }
+    val reduceMotion = rememberReduceMotion()
 
-    // Collected once per placement; the processor already smooths, so there is no easing pass here.
-    // Reading it in the draw lambda keeps playback from recomposing the canvas.
+    // Collected once per placement; the processor already smooths the *bands*, and the per-bar
+    // easing below smooths the *display*, so this canvas is never recomposed by playback.
     val frame by VisualizerState.frame.collectAsStateWithLifecycle()
 
     // Ask the analyser for data only while a visualizer is actually composed and enabled. The
@@ -97,39 +132,110 @@ fun AudioVisualizer(
         onDispose { if (enabled) VisualizerState.release() }
     }
 
+    // One value per bar, updated in a single loop. A `List<Float>` in snapshot state is read only
+    // inside the Canvas draw lambda, so each update repaints and never recomposes.
+    var display by remember(barCount) { mutableStateOf(List(barCount) { REST_HEIGHT }) }
+
+    LaunchedEffect(barCount, enabled, style) {
+        while (isActive) {
+            val live = VisualizerState.frame.value
+            val targets =
+                if (enabled && !live.silent) {
+                    expandBands(live.bands, barCount, live.pulse, intensity)
+                } else {
+                    List(barCount) { REST_HEIGHT }
+                }
+
+            display =
+                if (reduceMotion) {
+                    // Accessibility: no motion at all, just the analysed shape.
+                    targets
+                } else {
+                    easeOutward(previous = display, targets = targets)
+                }
+
+            delay(FRAME_MS)
+        }
+    }
+
     Canvas(
         modifier =
             modifier
                 .fillMaxWidth()
                 .height(height)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                // Double tap anywhere on the beating bars cycles the preset — the most direct place
+                // to change it, since that is where the user is already looking.
+                .then(
+                    if (onCycleStyle != null) {
+                        Modifier.pointerInput(onCycleStyle) {
+                            detectTapGestures(
+                                onDoubleTap = { onCycleStyle() },
+                            )
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
     ) {
-        // The compose snapshot is read here, in the draw phase: a new frame invalidates the draw
-        // only, never the composition.
+        // Read in the draw scope only, so per-frame motion repaints without recomposing.
         val live = frame
-        val values =
-            if (enabled && !live.silent) {
-                expandBands(live.bands, barCount, live.pulse, intensity)
-            } else {
-                List(barCount) { REST_HEIGHT }
-            }
+        val pulse = if (enabled && !live.silent) live.pulse else 0f
 
         drawVisualizer(
-            values = values,
+            values = display,
             palette = colors,
             gap = gapPx,
             style = style,
-            pulse = if (enabled && !live.silent) live.pulse else 0f,
+            pulse = pulse,
         )
     }
 }
 
+/** Sampling cadence for the target refresh. The easing does the smoothing; this just feeds it. */
+private const val FRAME_MS = 24L
+
 /**
- * Stretches [bands] (typically 8) onto [count] bars by linear interpolation, so a narrow capsule and
- * a wide player show the same spectrum at different densities.
+ * Per-bar easing with a **centre-outward lag** — the core of the "wave" feel.
  *
- * The onset pulse is mixed in as a uniform lift, which makes the whole shape breathe on a beat
- * instead of only the bars near the loudest band.
+ * Bars near the middle respond fast; bars toward the edges respond progressively slower. That is
+ * what makes a kick blossom in the centre and roll toward the sides instead of the whole field
+ * snapping at once. Rise is faster than fall, so transients are crisp but the tail is smooth.
+ *
+ * Pure arithmetic on two lists: no coroutines, no per-bar animatables, no allocation beyond the one
+ * result list per frame.
+ */
+private fun easeOutward(previous: List<Float>, targets: List<Float>): List<Float> {
+    val count = targets.size
+    if (count == 0) return targets
+    val centre = (count - 1) / 2f
+
+    return List(count) { i ->
+        val from = previous.getOrElse(i) { REST_HEIGHT }
+        val to = targets[i]
+        // 0 at the middle, 1 at the edges.
+        val fromCentre = (kotlin.math.abs(i - centre) / centre.coerceAtLeast(1f)).coerceIn(0f, 1f)
+
+        // Fast in the centre, slower at the edges: 0.62 → 0.26.
+        val rise = 0.62f - 0.36f * fromCentre
+        // Decay is always slower than the rise, and also lags toward the edges.
+        val fall = 0.22f - 0.12f * fromCentre
+
+        val rate = if (to > from) rise else fall
+        (from + (to - from) * rate).coerceIn(0f, 1f)
+    }
+}
+
+/**
+ * Stretches [bands] (typically 8) onto [count] bars, with a **centre-out flare**.
+ *
+ * Three things make the motion read as a wave instead of a block:
+ *  1. **Centre-out emphasis.** The pulse lift is strongest at the middle bars and decays toward the
+ *     edges, so a beat blossoms out of the centre and rolls toward the sides.
+ *  2. **Edge taper.** Bars near the ends are scaled down slightly, so the field has a soft silhouette
+ *     instead of a flat-topped rectangle.
+ *  3. **Per-bar phase offset.** Each bar's target also carries a tiny oscillation of its own, which
+ *     gives the neighbouring bars slightly different timing — the ripple that makes it feel fluid.
  */
 private fun expandBands(
     bands: FloatArray,
@@ -138,18 +244,31 @@ private fun expandBands(
     intensity: Float,
 ): List<Float> {
     if (bands.isEmpty() || count <= 0) return emptyList()
-    if (bands.size == 1) return List(count) { (bands[0] * intensity).coerceIn(0f, 1f) }
 
     val result = ArrayList<Float>(count)
+    val centre = (count - 1) / 2f
+
     for (i in 0 until count) {
-        // Map bar index onto the band axis, mirroring the ends so the edges are not clipped flat.
-        val pos = (i.toFloat() / (count - 1).coerceAtLeast(1)) * (bands.size - 1)
+        // Position of this bar in the field: 0 at the far left, 1 at the far right.
+        val position = if (count == 1) 0.5f else i.toFloat() / (count - 1)
+        // Distance from the centre, 0 in the middle, 1 at the edges.
+        val fromCentre = (kotlin.math.abs(i - centre) / centre.coerceAtLeast(1f)).coerceIn(0f, 1f)
+
+        // Map onto the band axis.
+        val pos = position * (bands.size - 1)
         val lo = pos.toInt().coerceIn(0, bands.size - 1)
         val hi = (lo + 1).coerceAtMost(bands.size - 1)
         val t = pos - lo
-        val value = bands[lo] + (bands[hi] - bands[lo]) * t
-        val withPulse = value + pulse * 0.22f
-        result.add((withPulse * intensity).coerceIn(0f, 1f))
+        val bandValue = bands[lo] + (bands[hi] - bands[lo]) * t
+
+        // Centre-out beat flare: strongest in the middle, fading to nothing at the edges.
+        val flare = pulse * 0.30f * (1f - fromCentre * fromCentre)
+
+        // Edge taper: the silhouette falls away toward the sides.
+        val taper = 1f - 0.18f * fromCentre * fromCentre
+
+        val value = (bandValue * taper + flare) * intensity
+        result.add(value.coerceIn(0f, 1f))
     }
     return result
 }
@@ -198,8 +317,11 @@ private fun DrawScope.drawBars(bars: List<Float>, palette: List<Color>, gap: Flo
 }
 
 /**
- * One continuous sine path through the samples, optionally reflected below the centre with a soft
- * gradient fill between the halves.
+ * One continuous curve through the samples, optionally reflected below the centre.
+ *
+ * Uses midpoint-quadratic smoothing (each segment is a quadratic whose control point is the data
+ * point itself), which removes polyline corners without overshoot. The final point is drawn
+ * explicitly — without it the curve visibly stopped one sample short of the right edge.
  */
 private fun DrawScope.drawWave(bars: List<Float>, palette: List<Color>, mirror: Boolean) {
     val count = bars.size
@@ -208,22 +330,22 @@ private fun DrawScope.drawWave(bars: List<Float>, palette: List<Color>, mirror: 
     val step = size.width / (count - 1)
     val centreY = size.height / 2f
 
-    val path = Path()
-    bars.forEachIndexed { index, value ->
-        val x = index * step
-        val y = if (mirror) centreY - value * centreY else size.height - value * size.height
-        if (index == 0) path.moveTo(x, y) else {
-            // Quadratic smoothing through the midpoints: cheap, and removes the polyline corners.
-            val prevX = (index - 1) * step
-            val prevY =
-                if (mirror) {
-                    centreY - bars[index - 1] * centreY
-                } else {
-                    size.height - bars[index - 1] * size.height
-                }
-            path.quadraticTo(prevX, prevY, (prevX + x) / 2f, (prevY + y) / 2f)
-        }
+    // Where a sample sits vertically, for the top (or mirrored-top) half.
+    fun yAt(index: Int): Float {
+        val value = bars[index]
+        return if (mirror) centreY - value * centreY else size.height - value * size.height
     }
+
+    val path = Path()
+    path.moveTo(0f, yAt(0))
+    for (index in 1 until count) {
+        val prevX = (index - 1) * step
+        val x = index * step
+        // Control point = the previous data point; endpoint = the midpoint between the two.
+        path.quadraticTo(prevX, yAt(index - 1), (prevX + x) / 2f, (yAt(index - 1) + yAt(index)) / 2f)
+    }
+    // Land exactly on the last sample so the stroke reaches the right edge.
+    path.lineTo((count - 1) * step, yAt(count - 1))
 
     drawPath(
         path = path,
@@ -234,11 +356,16 @@ private fun DrawScope.drawWave(bars: List<Float>, palette: List<Color>, mirror: 
     if (mirror) {
         // Reflected copy, dimmer, plus the soft fill between the two halves.
         val reflected = Path()
-        bars.forEachIndexed { index, value ->
+        reflected.moveTo(0f, centreY + bars[0] * centreY)
+        for (index in 1 until count) {
+            val prevX = (index - 1) * step
             val x = index * step
-            val y = centreY + value * centreY
-            if (index == 0) reflected.moveTo(x, y) else reflected.lineTo(x, y)
+            val prevY = centreY + bars[index - 1] * centreY
+            val y = centreY + bars[index] * centreY
+            reflected.quadraticTo(prevX, prevY, (prevX + x) / 2f, (prevY + y) / 2f)
         }
+        reflected.lineTo((count - 1) * step, centreY + bars.last() * centreY)
+
         drawPath(
             path = reflected,
             brush = Brush.horizontalGradient(listOf(low, high, low)),

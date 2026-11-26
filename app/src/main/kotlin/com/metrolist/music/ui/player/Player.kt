@@ -233,10 +233,20 @@ fun BottomSheetPlayer(
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val (enableAudioVisualizer, onEnableAudioVisualizerChange) = rememberPreference(EnableAudioVisualizerKey, false)
     // Preset for the visualizer; unknown values fall back to RIBBON rather than crashing.
-    val (visualizerStyleName) = rememberPreference(AudioVisualizerStyleKey, VisualizerStyle.RIBBON.name)
+    val (visualizerStyleName, onVisualizerStyleChange) =
+        rememberPreference(AudioVisualizerStyleKey, VisualizerStyle.RIBBON.name)
     val visualizerStyle =
         remember(visualizerStyleName) {
             runCatching { VisualizerStyle.valueOf(visualizerStyleName) }.getOrDefault(VisualizerStyle.RIBBON)
+        }
+    // Double-tap on the bars cycles the preset, mirroring the row in Appearance settings.
+    val cycleVisualizerStyle: () -> Unit =
+        remember(visualizerStyleName) {
+            {
+                val next =
+                    VisualizerStyle.entries[(visualizerStyle.ordinal + 1) % VisualizerStyle.entries.size]
+                onVisualizerStyleChange(next.name)
+            }
         }
 
     var showInlineLyrics by rememberSaveable {
@@ -2123,6 +2133,10 @@ fun BottomSheetPlayer(
                             // reset, not by tearing the analyzer down on every pause.
                             enabled = true,
                             style = visualizerStyle,
+                            // Double-tapping the bars cycles to the next preset — the visualizer is
+                            // where the user is already looking, so it is the natural place to
+                            // change it.
+                            onCycleStyle = cycleVisualizerStyle,
                         )
                         Spacer(Modifier.height(8.dp))
                     }

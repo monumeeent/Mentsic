@@ -50,17 +50,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
+import com.metrolist.music.LocalDatabase
+import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.constants.MiniPlayerHeight
 import com.metrolist.music.playback.audio.VisualizerFrame
 import com.metrolist.music.playback.audio.VisualizerState
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.joinToArtistString
+import kotlinx.coroutines.flow.flowOf
 
 /** Grid step of the whole design. Everything in the capsule is a multiple of this. */
 private val Pixel = 4.dp
@@ -92,6 +98,23 @@ fun CapsuleMiniPlayer(
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle(initialValue = false)
     val playbackState by playerConnection.playbackState.collectAsStateWithLifecycle(initialValue = Player.STATE_IDLE)
     val frame by VisualizerState.frame.collectAsStateWithLifecycle()
+
+    // Like and download state, read exactly the way the stacked mini player does, so the two designs
+    // can never disagree about whether the current song is saved.
+    val database = LocalDatabase.current
+    val downloadUtil = LocalDownloadUtil.current
+    val songId = mediaMetadata?.id
+    // `database.song()` is a Flow<Song?>; a null id has no row, so substitute an empty flow rather
+    // than collecting a query that can never return.
+    val librarySongFlow =
+        remember(songId) {
+            if (songId == null) flowOf<Song?>(null) else database.song(songId)
+        }
+    val librarySong by librarySongFlow.collectAsStateWithLifecycle(initialValue = null)
+    val isLiked = librarySong?.song?.liked == true
+    // Downloaded state comes straight off the song row, which the download worker keeps in sync — no
+    // separate list query, so it costs nothing here.
+    val isDownloaded = librarySong?.song?.isDownloaded == true
 
     val interactionSource = remember { MutableInteractionSource() }
     val ended = playbackState == Player.STATE_ENDED
@@ -173,17 +196,24 @@ fun CapsuleMiniPlayer(
 
                 Spacer(Modifier.width(Spacing.small))
 
+                // Fixed 56dp slot: the spectrum is decorative, so it is the element that gives up
+                // width when the text needs it.
                 PixelSpectrum(
                     frame = frame,
                     active = isPlaying && !ended,
-                    modifier = Modifier.width(Pixel * SpectrumColumns * 2 + Pixel * 3).height(32.dp),
+                    modifier = Modifier.width(56.dp).height(30.dp),
                 )
 
                 Spacer(Modifier.width(Pixel))
 
-                // Transport glyph, drawn as a pixel arrow rather than a Material icon so the right
-                // edge of the capsule stays on-grid.
-                PixelTransport(
+                // Control cluster, all hand-drawn pixel sprites: heart, play/pause, download.
+                PixelHeart(
+                    songId = mediaMetadata?.id,
+                    liked = isLiked,
+                    onClick = { playerConnection.service.toggleLike() },
+                )
+
+                PixelPlayPause(
                     playing = isPlaying && !ended,
                     ended = ended,
                     onClick = {
@@ -193,6 +223,15 @@ fun CapsuleMiniPlayer(
                         } else {
                             playerConnection.togglePlayPause()
                         }
+                    },
+                )
+
+                PixelDownload(
+                    downloaded = isDownloaded,
+                    onClick = {
+                        // The MediaMetadata overload needs no `Song` row, so this works even for a
+                        // track that has never been opened before.
+                        mediaMetadata?.let { metadata -> downloadUtil.download(metadata) }
                     },
                 )
             }
@@ -364,35 +403,211 @@ private fun PixelSpectrum(
     }
 }
 
-/** Stepped play/pause/replay glyph, built from squares so it stays on the pixel grid. */
+/**
+ * A pixel sprite: rows of `#`/`.` characters, one character per cell.
+ *
+ * Sprites are declared as text so the shapes stay readable in source and can be edited cell by
+ * cell, instead of being spelled out as coordinate pairs where a single wrong `to` is invisible.
+ */
+private typealias Sprite = List<String>
+
+private val SpritePause: Sprite =
+    listOf(
+        "#..#",
+        "#..#",
+        "#..#",
+        "#..#",
+    )
+
+private val SpritePlay: Sprite =
+    listOf(
+        "#...",
+        "##..",
+        "###.",
+        "####",
+        "###.",
+        "##..",
+        "#...",
+    )
+
+private val SpriteReplay: Sprite =
+    listOf(
+        ".###",
+        "#...",
+        "#...",
+        "#..#",
+        ".##.",
+    )
+
+/** Filled heart: the classic 8×7 sprite silhouette. */
+private val SpriteHeartFilled: Sprite =
+    listOf(
+        ".##..##.",
+        "########",
+        "########",
+        "########",
+        ".######.",
+        "..####..",
+        "...##...",
+    )
+
+/** Outline heart: same silhouette, cells knocked out so it reads as "not liked yet". */
+private val SpriteHeartOutline: Sprite =
+    listOf(
+        ".##..##.",
+        "#..#..#.",
+        "#......#",
+        "#......#",
+        ".#....#.",
+        "..#..#..",
+        "...##...",
+    )
+
+/** Down arrow into a tray: filled when the track is on disk. */
+private val SpriteDownloadFilled: Sprite =
+    listOf(
+        "...#...",
+        "...#...",
+        "...#...",
+        ".#####.",
+        "..###..",
+        "...#...",
+        "#.....#",
+        ".#####.",
+    )
+
+/** Same arrow, hollow tray: not downloaded. */
+private val SpriteDownloadOutline: Sprite =
+    listOf(
+        "...#...",
+        "...#...",
+        "...###.",
+        ".#####.",
+        "..###..",
+        "...#...",
+        "#.....#",
+        "#.....#",
+    )
+
+/**
+ * Renders a [Sprite] into a square canvas, preserving the grid.
+ *
+ * Cells are drawn at 82% of the step so adjacent pixels keep a hairline gap — the gap is what makes
+ * a small sprite read as pixels rather than as a solid blob.
+ */
 @Composable
-private fun PixelTransport(
+private fun PixelSprite(
+    sprite: Sprite,
+    color: Color,
+    size: Dp,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier.size(size)) {
+        val columns = sprite.maxOfOrNull { it.length }?.coerceAtLeast(1) ?: 1
+        val rows = sprite.size.coerceAtLeast(1)
+        val cell = minOf(size.width / columns, size.height / rows)
+        val originX = (size.width - cell * columns) / 2f
+        val originY = (size.height - cell * rows) / 2f
+
+        sprite.forEachIndexed { y, row ->
+            row.forEachIndexed { x, ch ->
+                if (ch != '.' && !ch.isWhitespace()) {
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(originX + x * cell, originY + y * cell),
+                        size = Size(cell * 0.82f, cell * 0.82f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Shared target for the three control sprites: 36dp hit area, 16dp artwork. */
+@Composable
+private fun PixelControl(
+    onClick: () -> Unit,
+    contentDescription: String?,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(36.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                .clickable(onClick = onClick)
+                .semantics { if (contentDescription != null) this.contentDescription = contentDescription },
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
+/** Pixel heart: filled `error` when liked, outlined `onSurfaceVariant` when not. */
+@Composable
+private fun PixelHeart(
+    songId: String?,
+    liked: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    PixelControl(
+        onClick = { if (songId != null) onClick() },
+        contentDescription = if (liked) "Remove from favourites" else "Add to favourites",
+    ) {
+        PixelSprite(
+            sprite = if (liked) SpriteHeartFilled else SpriteHeartOutline,
+            color = if (liked) scheme.error else scheme.onSurfaceVariant.copy(alpha = 0.85f),
+            size = 16.dp,
+        )
+    }
+}
+
+/** Pixel play/pause/replay, matching the capsule's stepped language. */
+@Composable
+private fun PixelPlayPause(
     playing: Boolean,
     ended: Boolean,
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-
-    Box(
-        modifier = Modifier.size(28.dp).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+    PixelControl(
+        onClick = onClick,
+        contentDescription = if (playing) "Pause" else "Play",
     ) {
-        Canvas(modifier = Modifier.size(16.dp)) {
-            val cell = size.width / 4f
-            val cells: List<Pair<Int, Int>> =
+        PixelSprite(
+            sprite =
                 when {
-                    ended ->
-                        listOf(2 to 0, 1 to 0, 0 to 0, 0 to 1, 0 to 2, 1 to 2, 2 to 2)
-                    playing -> listOf(0 to 0, 0 to 1, 0 to 2, 0 to 3, 2 to 0, 2 to 1, 2 to 2, 2 to 3)
-                    else -> listOf(0 to 0, 0 to 1, 0 to 2, 0 to 3, 1 to 1, 1 to 2, 2 to 1, 2 to 2)
-                }
-            cells.forEach { (x, y) ->
-                drawRect(
-                    color = scheme.onSurface,
-                    topLeft = Offset(x * cell, y * cell),
-                    size = Size(cell * 0.8f, cell * 0.8f),
-                )
-            }
-        }
+                    ended -> SpriteReplay
+                    playing -> SpritePause
+                    else -> SpritePlay
+                },
+            color = scheme.onSurface,
+            size = 16.dp,
+        )
+    }
+}
+
+/**
+ * Pixel download icon.
+ *
+ * Shows the downloaded state but only starts a download: removing a download is a destructive action
+ * that belongs in the song menu, not on a miniature control.
+ */
+@Composable
+private fun PixelDownload(
+    downloaded: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    PixelControl(
+        onClick = { if (!downloaded) onClick() },
+        contentDescription = if (downloaded) "Downloaded" else "Download",
+    ) {
+        PixelSprite(
+            sprite = if (downloaded) SpriteDownloadFilled else SpriteDownloadOutline,
+            color = if (downloaded) scheme.primary else scheme.onSurfaceVariant.copy(alpha = 0.85f),
+            size = 16.dp,
+        )
     }
 }
