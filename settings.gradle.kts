@@ -36,6 +36,22 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
 
+        // `com.github.promeg:tinypinyin` is NOT on Maven Central (verified: 404) and is not on
+        // JitPack under that casing either. A mirror is the only source, so it has to be listed.
+        //
+        // Scoped to exactly the groups that need it. That is the important part: an unscoped mirror
+        // was previously first in this list and returned 502 for paths it does not proxy, which
+        // disabled the repository for the rest of the build and failed every subsequent artifact.
+        // Scoping keeps it from ever being consulted for anything else, and because it is last,
+        // Google and Central answer first for everything they carry.
+        maven("https://maven.aliyun.com/repository/public") {
+            content {
+                // Only tinypinyin is missing from Central; its `org.ahocorasick` dependency IS on
+                // Central, so it is deliberately not listed here.
+                includeGroup("com.github.promeg")
+            }
+        }
+
         exclusiveContent {
             forRepository {
                 if (useMavenLocalInnerTubeX) mavenLocal() else maven("https://jitpack.io")

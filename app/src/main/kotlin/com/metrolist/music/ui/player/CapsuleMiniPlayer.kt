@@ -62,11 +62,12 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.constants.MiniPlayerHeight
+import com.metrolist.music.db.entities.Song
 import com.metrolist.music.playback.audio.VisualizerFrame
 import com.metrolist.music.playback.audio.VisualizerState
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.joinToArtistString
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.Flow
 
 /** Grid step of the whole design. Everything in the capsule is a multiple of this. */
 private val Pixel = 4.dp
@@ -104,12 +105,10 @@ fun CapsuleMiniPlayer(
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
     val songId = mediaMetadata?.id
-    // `database.song()` is a Flow<Song?>; a null id has no row, so substitute an empty flow rather
-    // than collecting a query that can never return.
-    val librarySongFlow =
-        remember(songId) {
-            if (songId == null) flowOf<Song?>(null) else database.song(songId)
-        }
+    // `database.song()` accepts a nullable id and returns Flow<Song?>, so no special-casing is
+    // needed for the "nothing playing" state — the query simply yields null.
+    val librarySongFlow: Flow<Song?> =
+        remember(songId) { database.song(songId) }
     val librarySong by librarySongFlow.collectAsStateWithLifecycle(initialValue = null)
     val isLiked = librarySong?.song?.liked == true
     // Downloaded state comes straight off the song row, which the download worker keeps in sync — no
@@ -505,9 +504,13 @@ private fun PixelSprite(
     Canvas(modifier = modifier.size(size)) {
         val columns = sprite.maxOfOrNull { it.length }?.coerceAtLeast(1) ?: 1
         val rows = sprite.size.coerceAtLeast(1)
-        val cell = minOf(size.width / columns, size.height / rows)
-        val originX = (size.width - cell * columns) / 2f
-        val originY = (size.height - cell * rows) / 2f
+        // `this.size` is DrawScope's pixel size; the bare `size` identifier is the Dp parameter from
+        // the outer scope, which shadows it and would try to call `Dp.width` as a function.
+        val canvasWidth = this.size.width
+        val canvasHeight = this.size.height
+        val cell = minOf(canvasWidth / columns, canvasHeight / rows)
+        val originX = (canvasWidth - cell * columns) / 2f
+        val originY = (canvasHeight - cell * rows) / 2f
 
         sprite.forEachIndexed { y, row ->
             row.forEachIndexed { x, ch ->
