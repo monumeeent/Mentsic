@@ -84,7 +84,9 @@ import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.ui.theme.IconSizes
 import com.metrolist.music.R
+import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ListItemHeight
+import com.metrolist.music.constants.ListenTogetherEnabledKey
 import com.metrolist.music.constants.VarispeedKey
 import com.metrolist.music.listentogether.ConnectionState
 import com.metrolist.music.listentogether.ListenTogetherEvent
@@ -163,6 +165,15 @@ fun PlayerMenu(
     val listenTogetherManager = LocalListenTogetherManager.current
     val listenTogetherRoleState = listenTogetherManager?.role?.collectAsStateWithLifecycle(initialValue = com.metrolist.music.listentogether.RoomRole.NONE)
     val isListenTogetherGuest = listenTogetherRoleState?.value == com.metrolist.music.listentogether.RoomRole.GUEST
+    // Listen Together is a hidden surface: the entry point here and its dialog must be absent for
+    // users who never revealed the feature (Developer Mode off, no "#LTmonu" unlock). Being inside a
+    // room still shows the group, so a guest who joined via a code cannot get stuck with no way to
+    // leave it.
+    val (listenTogetherEnabled) = rememberPreference(ListenTogetherEnabledKey, defaultValue = false)
+    val (developerMode) = rememberPreference(DeveloperModeKey, defaultValue = false)
+    val showListenTogetherSection =
+        developerMode || listenTogetherEnabled || isListenTogetherGuest ||
+            listenTogetherManager?.isInRoom == true
     val pendingSuggestions by listenTogetherManager?.pendingSuggestions?.collectAsStateWithLifecycle(initialValue = emptyList())
         ?: remember { mutableStateOf(emptyList()) }
 
@@ -184,11 +195,13 @@ fun PlayerMenu(
         },
     )
 
-    ListenTogetherDialog(
-        visible = showListenTogetherDialog,
-        mediaMetadata = mediaMetadata,
-        onDismiss = { showListenTogetherDialog = false },
-    )
+    if (showListenTogetherSection) {
+        ListenTogetherDialog(
+            visible = showListenTogetherDialog,
+            mediaMetadata = mediaMetadata,
+            onDismiss = { showListenTogetherDialog = false },
+        )
+    }
 
     var showSelectArtistDialog by rememberSaveable {
         mutableStateOf(false)
@@ -591,6 +604,13 @@ fun PlayerMenu(
 
         item { Spacer(modifier = Modifier.height(12.dp)) }
 
+        // ── Listen Together group ────────────────────────────────────────────────
+        // REDESIGN AREA — this block sits between the Download group and the Details group of the
+        // player's "More" sheet (full player → three dots). It is scheduled for a redesign; until
+        // then it only appears when the feature was explicitly revealed (typing "#LTmonu" in search)
+        // or when the user is already inside a room. With no listen-together state at all the block and
+        // its spacer are skipped, so no empty gap is left between Download and Details.
+        if (showListenTogetherSection) {
         item {
             Material3MenuGroup(
                 items =
@@ -651,8 +671,10 @@ fun PlayerMenu(
         }
 
         item { Spacer(modifier = Modifier.height(12.dp)) }
+    }
 
-        item {
+    // ── Details group ────────────────────────────────────────────────────────
+    item {
             Material3MenuGroup(
                 items =
                     buildList {

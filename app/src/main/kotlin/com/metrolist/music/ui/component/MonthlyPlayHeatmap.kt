@@ -314,26 +314,16 @@ fun CurrentWeekHeatmap(
 
         Spacer(Modifier.height(Spacing.small))
 
+        // Weekday captions sit **above** the cells, like a calendar column header. Below the cells the
+        // letter was crammed into the leftover height of the fixed-height Personal Space card and got
+        // clipped at the card's bottom edge; on top it shares the row with the cells' own width, stays
+        // inside the card, and still aligns 1:1 with each date.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
         ) {
             days.forEach { date ->
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    HeatmapCell(
-                        date = date,
-                        stats = dailyStats[date.toString()],
-                        peakPlays = peakPlays,
-                        isSelected = false,
-                        isToday = date == today,
-                        isFuture = date.isAfter(today),
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {},
-                    )
-                    Spacer(Modifier.height(Spacing.tiny))
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     Text(
                         text = date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                         style = MaterialTheme.typography.labelSmall,
@@ -344,8 +334,29 @@ fun CurrentWeekHeatmap(
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             },
                         maxLines = 1,
+                        softWrap = false,
                     )
                 }
+            }
+        }
+
+        Spacer(Modifier.height(Spacing.tiny))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
+        ) {
+            days.forEach { date ->
+                HeatmapCell(
+                    date = date,
+                    stats = dailyStats[date.toString()],
+                    peakPlays = peakPlays,
+                    isSelected = false,
+                    isToday = date == today,
+                    isFuture = date.isAfter(today),
+                    modifier = Modifier.weight(1f),
+                    onClick = {},
+                )
             }
         }
     }

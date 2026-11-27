@@ -43,10 +43,12 @@ val PlayerVisualizerHeight = 96.dp
 /**
  * Visualizer height while the inline lyrics pane is open.
  *
- * Shorter than [PlayerVisualizerHeight]: the lyrics need the vertical budget, and a slim strip of bars
- * under the controls still shows the music moving without competing with the text.
+ * Equal to [PlayerVisualizerHeight] rather than shorter: the bars were noticeably squashed in lyrics
+ * mode, which made the visualizer read as "less" than in the normal player. The reclaimed space is
+ * taken from the lyrics pane itself (see `InlineLyricsView`), so the field keeps its normal presence
+ * while the text still has the rest of the screen.
  */
-val LyricsVisualizerHeight = 40.dp
+val LyricsVisualizerHeight = PlayerVisualizerHeight
 
 val NavigationBarAnimationSpec = spring<Dp>(
     dampingRatio = Spring.DampingRatioNoBouncy,

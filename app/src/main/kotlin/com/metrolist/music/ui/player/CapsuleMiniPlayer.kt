@@ -19,7 +19,13 @@
 package com.metrolist.music.ui.player
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,26 +35,42 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.contentDescription
@@ -58,12 +80,31 @@ import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalDownloadUtil
+import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
+import com.metrolist.music.R
+import com.metrolist.music.constants.MiniPlayerBackgroundStyle
+import com.metrolist.music.constants.MiniPlayerBackgroundStyleKey
 import com.metrolist.music.constants.MiniPlayerHeight
+import com.metrolist.music.constants.SwipeSensitivityKey
+import com.metrolist.music.constants.SwipeThumbnailKey
 import com.metrolist.music.db.entities.Song
+import com.metrolist.music.ui.theme.PlayerColorExtractor
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.joinToArtistString
+import com.metrolist.music.utils.rememberEnumPreference
+import com.metrolist.music.utils.rememberPreference
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.palette.graphics.Palette
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 /** Grid step of the whole design. Everything in the capsule is a multiple of this. */
 private val Pixel = 4.dp
@@ -107,6 +148,63 @@ fun CapsuleMiniPlayer(
     val interactionSource = remember { MutableInteractionSource() }
     val ended = playbackState == Player.STATE_ENDED
 
+    // ── Swipe to change song ────────────────────────────────────────────────────────────────────────
+    // Same gesture, thresholds and preferences as the two stock mini players: one shared sensitivity
+    // slider, one shared "show swipe artwork" switch, and no swiping for Listen Together guests (the
+    // host owns the queue, so a local skip would be silently overridden).
+    val swipeSensitivity by rememberPreference(SwipeSensitivityKey, 0.73f)
+    val swipeThumbnailPref by rememberPreference(SwipeThumbnailKey, true)
+    val listenTogetherManager = LocalListenTogetherManager.current
+    val isListenTogetherGuest = listenTogetherManager?.let { it.isInRoom && !it.isHost } ?: false
+    val swipeEnabled = swipeThumbnailPref && !isListenTogetherGuest
+
+    val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle(initialValue = false)
+    val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle(initialValue = false)
+
+    val layoutDirection = LocalLayoutDirection.current
+    val haptic = LocalHapticFeedback.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Drag offset of the capsule. The whole plate slides sideways; releasing it either skips a track or
+    // springs back to centre.
+    val offsetXAnimatable = remember { Animatable(0f) }
+    var dragStartTime by remember { mutableLongStateOf(0L) }
+    var totalDragDistance by remember { mutableFloatStateOf(0f) }
+    val animationSpec = remember {
+        spring<Float>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
+    }
+    val autoSwipeThreshold = remember(swipeSensitivity) {
+        (600 / (1f + kotlin.math.exp(-(-11.44748 * swipeSensitivity + 9.04945)))).roundToInt()
+    }
+
+    // ── Background style ─────────────────────────────────────────────────────────────────────────────
+    // Honours the same Appearance preference as the other mini players. The pixel frame stays on top in
+    // every style, so the capsule never stops looking like hardware; only the fill behind it changes.
+    val miniPlayerBackground by rememberEnumPreference(
+        MiniPlayerBackgroundStyleKey,
+        defaultValue = MiniPlayerBackgroundStyle.DEFAULT,
+    )
+    val thumbnailUrl = mediaMetadata?.thumbnailUrl
+    var gradientColors by remember { mutableStateOf<List<Color>>(emptyList()) }
+    val context = LocalContext.current
+    LaunchedEffect(thumbnailUrl, miniPlayerBackground) {
+        // Only the gradient style needs an extracted palette; every other style is a flat fill.
+        gradientColors = emptyList()
+        if (miniPlayerBackground == MiniPlayerBackgroundStyle.GRADIENT && thumbnailUrl != null) {
+            gradientColors = rememberGradientColors(context, thumbnailUrl)
+        }
+    }
+
+    // Fill drawn inside the pixel frame for the current style.
+    val panelFill =
+        when (miniPlayerBackground) {
+            MiniPlayerBackgroundStyle.DEFAULT -> scheme.surfaceContainerHigh
+            MiniPlayerBackgroundStyle.TRANSPARENT -> scheme.surfaceContainerHigh.copy(alpha = 0.45f)
+            MiniPlayerBackgroundStyle.BLUR -> scheme.surfaceContainerHigh
+            MiniPlayerBackgroundStyle.GRADIENT -> scheme.surfaceContainerHigh
+            MiniPlayerBackgroundStyle.PURE_BLACK -> Color.Black
+        }
+
     Box(
         modifier = modifier.fillMaxWidth().height(MiniPlayerHeight),
         contentAlignment = Alignment.Center,
@@ -117,16 +215,110 @@ fun CapsuleMiniPlayer(
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.medium)
                     .height(56.dp)
+                    .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
+                    // while a swipe is in progress, tapping the plate must not open the
+                    // player (the finger is dragging, not tapping), so the click is disabled during
+                    // the drag and restored on release.
                     .clickable(
                         interactionSource = interactionSource,
                         indication = null,
+                        enabled = offsetXAnimatable.value.absoluteValue < 8f,
                         onClick = onClick,
+                    )
+                    .then(
+                        if (swipeEnabled) {
+                            Modifier.pointerInput(Unit) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = {
+                                        dragStartTime = System.currentTimeMillis()
+                                        totalDragDistance = 0f
+                                    },
+                                    onDragCancel = {
+                                        coroutineScope.launch { offsetXAnimatable.animateTo(0f, animationSpec) }
+                                    },
+                                    onHorizontalDrag = { _, dragAmount ->
+                                        val adjusted =
+                                            if (layoutDirection == LayoutDirection.Rtl) -dragAmount else dragAmount
+                                        val canGoPrev = playerConnection.player.previousMediaItemIndex != -1
+                                        val canGoNext = playerConnection.player.nextMediaItemIndex != -1
+                                        val tryingRight = adjusted > 0
+                                        val tryingLeft = adjusted < 0
+                                        val allow = (tryingLeft && canGoNext) || (tryingRight && canGoPrev)
+                                        // Dragging back toward centre is always allowed, even at the end
+                                        // of the queue, so an overshoot can be undone.
+                                        val returning =
+                                            (tryingRight && !canGoPrev && offsetXAnimatable.value < 0) ||
+                                                (tryingLeft && !canGoNext && offsetXAnimatable.value > 0)
+                                        if (allow || returning) {
+                                            totalDragDistance += adjusted.absoluteValue
+                                            coroutineScope.launch {
+                                                offsetXAnimatable.snapTo(offsetXAnimatable.value + adjusted)
+                                            }
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        val dragDuration = System.currentTimeMillis() - dragStartTime
+                                        val velocity = if (dragDuration > 0) totalDragDistance / dragDuration else 0f
+                                        val currentOffset = offsetXAnimatable.value
+                                        val minDistanceThreshold = 50f
+                                        val velocityThreshold = (swipeSensitivity * -8.25f) + 8.5f
+                                        val shouldChangeSong =
+                                            (currentOffset.absoluteValue > minDistanceThreshold && velocity > velocityThreshold) ||
+                                                (currentOffset.absoluteValue > autoSwipeThreshold)
+
+                                        if (shouldChangeSong) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            if (currentOffset > 0 && canSkipPrevious) {
+                                                playerConnection.player.seekToPreviousMediaItem()
+                                            } else if (currentOffset <= 0 && canSkipNext) {
+                                                playerConnection.player.seekToNext()
+                                            }
+                                        }
+                                        coroutineScope.launch { offsetXAnimatable.animateTo(0f, animationSpec) }
+                                    },
+                                )
+                            }
+                        } else {
+                            Modifier
+                        },
                     ),
         ) {
-            // Pixel frame: chamfered corners + 1px scanline, painted behind the content.
+            // Style layer, painted *under* the frame so the chamfer and scanline always stay crisp.
+            when (miniPlayerBackground) {
+                MiniPlayerBackgroundStyle.BLUR -> {
+                    if (thumbnailUrl != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        AsyncImage(
+                            model = thumbnailUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize().blur(40.dp),
+                        )
+                        Box(Modifier.fillMaxSize().background(scheme.surfaceContainerHighest.copy(alpha = 0.35f)))
+                    }
+                }
+
+                MiniPlayerBackgroundStyle.GRADIENT -> {
+                    val colors =
+                        if (gradientColors.isNotEmpty()) {
+                            gradientColors
+                        } else {
+                            listOf(scheme.surfaceContainerHigh, scheme.surfaceContainer)
+                        }
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(Brush.horizontalGradient(colors))
+                            .background(scheme.surfaceContainerLowest.copy(alpha = 0.15f)),
+                    )
+                }
+
+                else -> Unit
+            }
+
+            // Pixel frame: chamfered corners + 1px scanline, painted over the style layer.
             PixelPanel(
                 modifier = Modifier.fillMaxSize(),
-                fill = scheme.surfaceContainerHigh,
+                fill = panelFill,
                 outline = scheme.primary.copy(alpha = 0.55f),
                 scanline = scheme.primary.copy(alpha = 0.10f),
             )
@@ -212,6 +404,29 @@ fun CapsuleMiniPlayer(
                         mediaMetadata?.let { metadata -> downloadUtil.download(metadata) }
                     },
                 )
+            }
+
+            // Swipe affordance: the skip sprite fades in on the side the plate is being pushed toward,
+            // brightening as the drag approaches the threshold — the same feedback the stock mini
+            // player gives, drawn in the capsule's own pixel language.
+            if (swipeEnabled && offsetXAnimatable.value.absoluteValue > 24f) {
+                val progressAlpha =
+                    (offsetXAnimatable.value.absoluteValue / autoSwipeThreshold).coerceIn(0f, 1f)
+                Box(
+                    modifier =
+                        Modifier
+                            .align(
+                                if (offsetXAnimatable.value > 0f) Alignment.CenterStart else Alignment.CenterEnd,
+                            ).padding(horizontal = Spacing.medium)
+                            .size(20.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PixelSprite(
+                        sprite = if (offsetXAnimatable.value > 0f) SpriteSkipPrevious else SpriteSkipNext,
+                        color = scheme.onSurface.copy(alpha = progressAlpha),
+                        size = 14.dp,
+                    )
+                }
             }
         }
     }
@@ -367,6 +582,26 @@ private val SpriteReplay: Sprite =
         "#...",
         "#..#",
         ".##.",
+    )
+
+/** Right-pointing chevron pair: "next track" while swiping left. */
+private val SpriteSkipNext: Sprite =
+    listOf(
+        "#..#.",
+        "##.##",
+        "#..#.",
+        "##.##",
+        "#..#.",
+    )
+
+/** Mirror of [SpriteSkipNext]: "previous track" while swiping right. */
+private val SpriteSkipPrevious: Sprite =
+    listOf(
+        ".#..#",
+        "##.##",
+        ".#..#",
+        "##.##",
+        ".#..#",
     )
 
 /** Filled heart: the classic 8×7 sprite silhouette. */
@@ -545,3 +780,39 @@ private fun PixelDownload(
         )
     }
 }
+
+/**
+ * Cover-art gradient for the capsule's GRADIENT background style.
+ *
+ * Deliberately a plain suspend function rather than a composable `LaunchedEffect` body: the capsule
+ * only calls it from one place, and pulling the palette inside the composable would drag the Coil
+ * request and the Palette builder into the composition lambda (and recompose on every colour change).
+ *
+ * The extraction is the *same* routine the stock mini player uses, so switching between designs with
+ * the gradient style selected produces the same colours instead of a second, slightly different ramp.
+ * Any failure (offline, decode error) yields an empty list and the caller falls back to surface tones.
+ */
+private suspend fun rememberGradientColors(context: android.content.Context, thumbnailUrl: String): List<Color> =
+    withContext(Dispatchers.IO) {
+        runCatching {
+            val request =
+                ImageRequest.Builder(context)
+                    .data(thumbnailUrl)
+                    .size(100, 100)
+                    .allowHardware(false)
+                    .build()
+            val bitmap = context.imageLoader.execute(request).image?.toBitmap() ?: return@runCatching emptyList()
+            val palette =
+                withContext(Dispatchers.Default) {
+                    Palette.from(bitmap)
+                        .maximumColorCount(8)
+                        .resizeBitmapArea(100 * 100)
+                        .generate()
+                }
+            PlayerColorExtractor.extractGradientColors(
+                palette = palette,
+                fallbackColor = 0xFF000000.toInt(),
+                darkColor = Color.Black,
+            )
+        }.getOrDefault(emptyList())
+    }

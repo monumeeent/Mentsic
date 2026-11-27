@@ -108,10 +108,10 @@ private fun rememberReduceMotion(): Boolean {
  * draws from that one array, so the full player and the capsule mini player can never disagree about
  * what the music is doing — they only differ in density.
  *
- * **Per-bar easing.** Each bar carries its own displayed value, eased toward that bar's band energy
- * with a centre-outward lag ([easeOutward]). That is what gives the wavy feel: a kick lifts the
- * middle bars first and the effect rolls toward the edges over the next frames, instead of the whole
- * field jumping as one block.
+ * **Per-bar rhythm.** Each bar carries its own displayed value and its own responsiveness: a fixed
+ * per-index attack/release personality, a slow oscillator that continuously detunes that bar, and a
+ * short damping window after a sudden jump (see [nextDisplay]). The field therefore breathes — every
+ * bar keeps its own time — instead of the whole row moving as one tilted block.
  *
  * @param barCount bars to draw. The analysed bands are stretched across this width.
  * @param barSpacing gap between bars/dots.
@@ -154,11 +154,20 @@ fun AudioVisualizer(
     // inside the Canvas draw lambda, so each update repaints and never recomposes.
     var display by remember(barCount) { mutableStateOf(List(barCount) { REST_HEIGHT }) }
 
+    // How long each bar has been holding its current target, in seconds. Bars that got a fresh target
+    // while their neighbours are still catching up are what makes the field breathe instead of leaning:
+    // see [nextDisplay]. Plain array, allocated once per bar count, because nothing draws it.
+    val barAge = remember(barCount) { FloatArray(barCount) }
+
     LaunchedEffect(barCount, enabled, style) {
+        // Fresh bars start from the resting line, not from the tail of the previous layout.
+        barAge.fill(3f)
+        var elapsed = 0f
         while (isActive) {
             val live = VisualizerState.frame.value
+            val silent = !enabled || live.silent
             val targets =
-                if (enabled && !live.silent) {
+                if (!silent) {
                     expandBands(
                         bands = live.bands,
                         count = barCount,
@@ -174,9 +183,17 @@ fun AudioVisualizer(
                     // Accessibility: no motion at all, just the analysed shape.
                     targets
                 } else {
-                    easeOutward(previous = display, targets = targets)
+                    nextDisplay(
+                        previous = display,
+                        targets = targets,
+                        ages = barAge,
+                        level = if (silent) 0f else live.level.coerceIn(0f, 1f),
+                        silent = silent,
+                        elapsed = elapsed,
+                    )
                 }
 
+            elapsed += FRAME_MS / 1000f
             delay(FRAME_MS)
         }
     }
@@ -218,53 +235,101 @@ fun AudioVisualizer(
     }
 }
 
-/** Sampling cadence for the target refresh. The easing does the smoothing; this just feeds it. */
-private const val FRAME_MS = 24L
+/**
+ * Sampling cadence for the target refresh. The easing does the smoothing; this just feeds it.
+ *
+ * 33 ms ≈ 30 fps. The visualiser only needs to *feel* live, and half the sampling rate halves the
+ * arithmetic and keeps the bars evenly spaced in time, which matters for the rhythm below.
+ */
+private const val FRAME_MS = 33L
 
 /**
- * Per-bar easing with a **centre-outward lag** — the core of the "wave" feel.
+ * Per-bar motion: every bar reacts on its own clock, so the field breathes instead of leaning.
  *
- * Bars near the middle respond fast; bars toward the edges respond progressively slower. That is
- * what makes a kick blossom in the centre and roll toward the sides instead of the whole field
- * snapping at once. Rise is faster than fall, so transients are crisp but the tail is smooth.
+ * The old version gave every bar the same rise/fall *shape*, only offset by distance from the centre.
+ * A bar 40 px from the left and the bar 40 px from the right therefore moved in exact lockstep, which
+ * is why the whole row looked like one tilted curtain sliding sideways rather than a spectrum.
  *
- * Pure arithmetic on two lists: no coroutines, no per-bar animatables, no allocation beyond the one
- * result list per frame.
+ * Three independent sources of variation replace that, and all three are smooth in time — no bar
+ * ever holds a frozen value while it waits for a "slot", which would read as stutter:
+ *  1. **Per-bar rate.** Each bar owns its attack/release coefficients, derived from its index. Equal
+ *     inputs still rise at visibly different speeds, so neighbouring bars separate from each other.
+ *  2. **Per-bar phase.** A slow oscillator per bar continuously modulates that bar's responsiveness.
+ *     Two bars reading the *same* band therefore trade height against each other instead of moving
+ *     as twins — the eye-soothing ``breathing'' of the row.
+ *  3. **Age damping.** A bar that has just jumped to a much higher target is damped for a few frames
+ *     while it settles, so a kick rolls through the field rather than snapping all of it at once.
+ *
+ * Rise is still faster than fall (crisp attacks, smooth tails), the modulation never inverts the
+ * response, and everything is clamped to [REST_HEIGHT]..1, so no bar can overshoot or sink through
+ * the resting line. Pure arithmetic: one array of ages, one list out.
  */
-private fun easeOutward(previous: List<Float>, targets: List<Float>): List<Float> {
+private fun nextDisplay(
+    previous: List<Float>,
+    targets: List<Float>,
+    ages: FloatArray,
+    level: Float,
+    silent: Boolean,
+    elapsed: Float,
+): List<Float> {
     val count = targets.size
     if (count == 0) return targets
-    val centre = (count - 1) / 2f
 
-    return List(count) { i ->
+    // Silence: no new targets, only a gentle return to the resting line, so pausing fades out
+    // instead of freezing or dropping like a stone.
+    if (silent) {
+        ages.fill(0f)
+        return List(count) { i ->
+            val from = previous.getOrElse(i) { REST_HEIGHT }
+            (from + (REST_HEIGHT - from) * 0.14f).coerceIn(0f, 1f)
+        }
+    }
+
+    // Loudness trims how much of the per-bar variation applies: quiet passages keep their variation
+    // (that is where it reads best), loud ones converge slightly so peaks still look coherent.
+    val variation = 1f - 0.25f * level.coerceIn(0f, 1f)
+
+    val result = ArrayList<Float>(count)
+    for (i in 0 until count) {
         val from = previous.getOrElse(i) { REST_HEIGHT }
         val to = targets[i]
-        // 0 at the middle, 1 at the edges.
-        val fromCentre = (kotlin.math.abs(i - centre) / centre.coerceAtLeast(1f)).coerceIn(0f, 1f)
 
-        // Fast in the centre, slower at the edges: 0.62 → 0.26.
-        val rise = 0.62f - 0.36f * fromCentre
-        // Decay is always slower than the rise, and also lags toward the edges.
-        val fall = 0.22f - 0.12f * fromCentre
+        // 1. Personality: a fixed per-bar coefficient in 0.45..1. An incommensurable step (1.7 rad)
+        //    keeps adjacent bars from sharing a personality, so no two neighbours move in unison.
+        val personality = 0.45f + 0.55f * kotlin.math.abs(kotlin.math.sin(i * 1.7f))
 
+        // 2. Slow per-bar oscillator (~0.4..1.4 rad/s): modulates responsiveness, not the target. It
+        //    never goes negative, so a bar can be lazy but never stops or reverses.
+        val phaseOffset = (i * 0.618034f) % 1f
+        val oscillator = 0.55f + 0.45f * kotlin.math.sin(elapsed * 0.9f + phaseOffset * 6.2832f)
+
+        // 3. Age damping: a bar that gained a lot of height in one frame is held back briefly, which
+        //    is what staggers a kick across the field instead of moving every bar at once.
+        val jump = (to - from).coerceAtLeast(0f)
+        val damping = if (jump > 0.12f) 0.35f else 1f
+        ages[i] = if (jump > 0.12f) 0f else (ages[i] + FRAME_MS / 1000f).coerceAtMost(1f)
+        val settling = (ages[i] / 0.12f).coerceIn(0.55f, 1f)
+
+        val rise = (0.26f + 0.30f * personality) * variation * oscillator * damping * settling
+        val fall = (0.09f + 0.13f * personality) * variation * (0.7f + 0.3f * oscillator)
         val rate = if (to > from) rise else fall
-        (from + (to - from) * rate).coerceIn(0f, 1f)
+
+        // Targets are already inside [0,1]; the clamp guards against float drift and keeps every bar
+        // at or above the resting line.
+        result.add((from + (to - from) * rate).coerceIn(REST_HEIGHT, 1f))
     }
+    return result
 }
 
 /**
- * Stretches [bands] (typically 8) onto [count] bars, with a **centre-out flare**.
+ * Stretches [bands] (typically 8) onto [count] bars.
  *
- * Three things make the motion read as a wave instead of a block:
- *  1. **Centre-out emphasis.** The pulse lift is strongest at the middle bars and decays toward the
- *     edges, so a beat blossoms out of the centre and rolls toward the sides.
- *  2. **Edge taper.** Bars near the ends are scaled down slightly, so the field has a soft silhouette
- *     instead of a flat-topped rectangle.
- *  3. **Per-bar phase offset.** Each bar's target also carries a tiny oscillation of its own, which
- *     gives the neighbouring bars slightly different timing — the ripple that makes it feel fluid.
+ * Only band interpolation and a *symmetric* silhouette shaping live here. The old centre-out flare and
+ * the edge taper were both asymmetric or centre-biased, which reinforced the "tilted curtain" look;
+ * they are gone, and all timing/character now comes from [nextDisplay].
  *
- * Output is scaled by [FIELD_GAIN] so ordinary music never occupies the full height, and the beat
- * flare is scaled by each band's own energy so soft passages stay shallow.
+ * Output is scaled by [FIELD_GAIN] so ordinary music never occupies the full height, and the beat lift
+ * is scaled by each band's own energy so soft passages stay shallow.
  */
 private fun expandBands(
     bands: FloatArray,
@@ -275,13 +340,10 @@ private fun expandBands(
     if (bands.isEmpty() || count <= 0) return emptyList()
 
     val result = ArrayList<Float>(count)
-    val centre = (count - 1) / 2f
 
     for (i in 0 until count) {
         // Position of this bar in the field: 0 at the far left, 1 at the far right.
         val position = if (count == 1) 0.5f else i.toFloat() / (count - 1)
-        // Distance from the centre, 0 in the middle, 1 at the edges.
-        val fromCentre = (kotlin.math.abs(i - centre) / centre.coerceAtLeast(1f)).coerceIn(0f, 1f)
 
         // Map onto the band axis.
         val pos = position * (bands.size - 1)
@@ -290,15 +352,11 @@ private fun expandBands(
         val t = pos - lo
         val bandValue = bands[lo] + (bands[hi] - bands[lo]) * t
 
-        // Centre-out beat flare: strongest in the middle, fading to nothing at the edges. It is
-        // scaled by the band's own energy, so a transient on a quiet passage lifts a *short* bar —
-        // only loud music can push the field to the top.
-        val flare = pulse * PULSE_LIFT * bandValue * (1f - fromCentre * fromCentre)
+        // Onset lift, scaled by the bar's own band so silence adds nothing. Constant across the row —
+        // the *timing* of the lift is what varies between bars, not its size.
+        val flare = pulse * PULSE_LIFT * bandValue
 
-        // Edge taper: the silhouette falls away toward the sides.
-        val taper = 1f - 0.18f * fromCentre * fromCentre
-
-        val value = (bandValue * taper + flare) * intensity * FIELD_GAIN
+        val value = (bandValue + flare) * intensity * FIELD_GAIN
         result.add(value.coerceIn(0f, 1f))
     }
     return result

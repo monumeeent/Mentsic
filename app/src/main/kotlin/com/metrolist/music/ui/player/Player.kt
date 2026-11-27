@@ -186,6 +186,7 @@ import com.metrolist.music.ui.menu.PlayerMenu
 import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.theme.PlayerColorExtractor
 import com.metrolist.music.ui.theme.PlayerSliderColors
+import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.utils.ShowMediaInfo
 import com.metrolist.music.ui.utils.ShowOffsetDialog
 import com.metrolist.music.utils.dataStore
@@ -2287,6 +2288,9 @@ fun InlineLyricsView(
         modifier =
             Modifier
                 .fillMaxSize()
+                // The visualizer keeps its normal height in lyrics mode, so the pane gives the space
+                // back from its own top and bottom hairlines instead of from the bars.
+                .padding(vertical = Spacing.tiny)
                 .clip(RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center,
     ) {
@@ -2308,7 +2312,11 @@ fun InlineLyricsView(
                 val lyricsContent: @Composable () -> Unit = {
                     Lyrics(
                         sliderPositionProvider = positionProvider,
-                        modifier = Modifier.padding(horizontal = 24.dp),
+                        // No horizontal inset around the text: the lyrics pane is the tallest element in
+                        // lyrics mode, and the visualizer below it keeps its full height. Trimming the
+                        // side gutter gives the narrow-screen text its width back without costing any
+                        // vertical space; the top/bottom trim lives on the container instead.
+                        modifier = Modifier,
                         showLyrics = showLyrics,
                     )
                 }
