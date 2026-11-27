@@ -51,14 +51,15 @@ dependencyResolutionManagement {
             }
         }
 
-        // JitPack hosts the GitHub-hosted deps (ucrop, tinypinyin, …). Scoping it to com.github.*
-        // stops Google and Central being asked for those coordinates on every build, and stops
-        // JitPack being asked for anything else.
-        maven("https://jitpack.io") {
-            content {
-                includeGroupByRegex("com\\.github\\..*")
-            }
-        }
+        // JitPack hosts the GitHub-hosted deps (ucrop, tinypinyin, …).
+        //
+        // Deliberately NOT scoped with a `content { includeGroupByRegex }` filter. Gradle matches
+        // content filters against a normalised (lowercased) group, while JitPack paths are
+        // case-sensitive: `com.github.promeG` exists, `com.github.promeg` does not. A filter that
+        // looks correct then causes JitPack to be asked for the wrong-cased path and the artifact
+        // reads as missing. Letting JitPack answer for everything is harmless — it returns 404 for
+        // coordinates it does not host, and it is last in the list.
+        maven("https://jitpack.io")
     }
 }
 
