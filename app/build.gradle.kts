@@ -239,6 +239,35 @@ ksp {
 configurations.configureEach {
     resolutionStrategy {
         force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.21")
+
+        // JitPack publishes `com.github.promeG:tinypinyin:2.0.3` (capital G) but that POM declares
+        // its child as `com.github.promeg.tinypinyin` (lowercase). JitPack paths are case-sensitive
+        // and the lowercase coordinate exists on no repository, so the dependency graph references a
+        // module that cannot be fetched:
+        //
+        //   Could not find com.github.promeg:tinypinyin:2.0.3.
+        //   Required by: project ':app' > com.github.promeG:tinypinyin:2.0.3
+        //                   > com.github.promeG.tinypinyin:tinypinyin-android-asset-lexicons:2.0.3
+        //
+        // No repository change can fix this — the wrong casing is inside JitPack's own POM. Rewrite
+        // the dependency onto the group that actually exists.
+        //
+        // Both casings of the *root* group and the child group are handled: the error reports the
+        // missing module as `com.github.promeg:tinypinyin`, while the child appears as
+        // `com.github.promeg.tinypinyin:tinypinyin-android-asset-lexicons`.
+        eachDependency {
+            val group = requested.group
+            if (group.equals("com.github.promeg", ignoreCase = true)) {
+                // Root group, only ever correct as `promeG`.
+                if (group != "com.github.promeG") {
+                    useTarget("com.github.promeG:${requested.name}:${requested.version}")
+                }
+            } else if (group.equals("com.github.promeg.tinypinyin", ignoreCase = true)) {
+                if (group != "com.github.promeG.tinypinyin") {
+                    useTarget("com.github.promeG.tinypinyin:${requested.name}:${requested.version}")
+                }
+            }
+        }
     }
 }
 
