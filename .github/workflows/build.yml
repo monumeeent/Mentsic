@@ -16,9 +16,13 @@ on:
 # Every extra concurrent run is another full set of dependency downloads, and Maven Central rate
 # limits per IP: a burst of overlapping builds is the usual trigger for HTTP 429, which Gradle then
 # reports as "60 more failures" because it disables the repository after the first error.
+#
+# Only cancels on `push`. Cancelling a build mid-download leaves a partial entry in the Gradle cache
+# that the next run can restore, which surfaces as "plugin/artifact was not found" for artifacts that
+# demonstrably exist.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   build:

@@ -6,12 +6,18 @@ pluginManagement {
     repositories {
         mavenLocal()
         google()
-        // Mirror before Maven Central, for the same 429 reason as the dependency repositories below.
-        // The Portal and Central stay in the list as the authority.
-        maven("https://maven.aliyun.com/repository/gradle-plugin")
-        maven("https://maven.aliyun.com/repository/public")
+        // Plugin resolution order is the OPPOSITE of dependency resolution (see the block below).
+        //
+        // Marker plugins such as `org.jetbrains.kotlin.plugin.serialization` are published to the
+        // Gradle Plugin Portal, and the Portal is what knows how to redirect a marker id to its
+        // implementation artifact. Asking a Maven mirror first adds a failing lookup per plugin and,
+        // when the mirror answers oddly, makes Gradle report "plugin was not found" for a plugin
+        // that exists on every repository. So: authoritative sources first, mirrors as the last
+        // resort for an outage.
         gradlePluginPortal()
         mavenCentral()
+        maven("https://maven.aliyun.com/repository/gradle-plugin")
+        maven("https://maven.aliyun.com/repository/public")
     }
 }
 
