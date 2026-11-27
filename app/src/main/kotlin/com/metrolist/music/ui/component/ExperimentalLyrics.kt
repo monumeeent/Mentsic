@@ -133,8 +133,8 @@ import kotlin.math.roundToInt
 private const val LYRICS_ANCHOR_RATIO = 0.35f
 private val LYRICS_ITEM_FALLBACK_HEIGHT_DP = 68.dp
 private val LYRICS_ITEM_GAP_DP = 16.dp
-private val LYRICS_FADE_TOP_DP = 130.dp
-private val LYRICS_FADE_BOTTOM_DP = 160.dp
+private val LYRICS_FADE_TOP_DP = 72.dp
+private val LYRICS_FADE_BOTTOM_DP = 88.dp
 private const val LYRICS_STAGGER_DELAY_PER_DISTANCE = 20
 private const val LYRICS_STAGGER_DELAY_MAX_MS = 200
 private const val LYRICS_PREVIEW_TIME = 8000L
@@ -493,7 +493,7 @@ fun ExperimentalLyrics(
 
     BoxWithConstraints(
         contentAlignment = Alignment.TopCenter,
-        modifier = modifier.fillMaxSize().padding(bottom = 12.dp)
+        modifier = modifier.fillMaxSize().padding(bottom = 4.dp)
     ) {
         val maxHeightPx = constraints.maxHeight.toFloat()
         val anchorY = maxHeightPx * LYRICS_ANCHOR_RATIO

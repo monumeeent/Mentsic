@@ -8,8 +8,6 @@
  *
  *  - **Pixel frame.** The capsule is drawn on a grid, with the corners *cut out* (a chamfered
  *    octagon) instead of rounded, and a 1px inner scanline. It reads as hardware, not as a card.
- *  - **Pixel spectrum.** A column of quantised blocks that steps up and down with the analysed
- *    audio (from [VisualizerState], i.e. the real decoded signal), not a smooth curve.
  *  - **Pixel typography.** Title is uppercased and wide-tracked; the artist line is dimmed and
  *    tracked, so the pair reads like a two-line LCD.
  *  - **Pixel art.** The album art is inset into a square with corner pixels knocked out, so even
@@ -63,8 +61,6 @@ import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.constants.MiniPlayerHeight
 import com.metrolist.music.db.entities.Song
-import com.metrolist.music.playback.audio.VisualizerFrame
-import com.metrolist.music.playback.audio.VisualizerState
 import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.utils.joinToArtistString
 import kotlinx.coroutines.flow.Flow
@@ -72,17 +68,11 @@ import kotlinx.coroutines.flow.Flow
 /** Grid step of the whole design. Everything in the capsule is a multiple of this. */
 private val Pixel = 4.dp
 
-/** Columns of the pixel spectrum. 8 matches the analyser's band count exactly — one column per band. */
-private const val SpectrumColumns = 8
-
-/** Height of the spectrum in *block* rows; the drawing quantises amplitude to these steps. */
-private const val SpectrumRows = 5
-
 /**
  * Pixel capsule mini player.
  *
- * @param progressState shared progress source. Unused for drawing here — the spectrum carries the
- *   "is it moving" signal — but kept in the signature so both designs stay swappable.
+ * @param progressState kept in the signature so both mini-player designs stay swappable; the capsule
+ *   draws its own pixel frame instead of a progress arc.
  */
 @Composable
 fun CapsuleMiniPlayer(
@@ -98,7 +88,6 @@ fun CapsuleMiniPlayer(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle(initialValue = null)
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle(initialValue = false)
     val playbackState by playerConnection.playbackState.collectAsStateWithLifecycle(initialValue = Player.STATE_IDLE)
-    val frame by VisualizerState.frame.collectAsStateWithLifecycle()
 
     // Like and download state, read exactly the way the stacked mini player does, so the two designs
     // can never disagree about whether the current song is saved.
@@ -194,16 +183,6 @@ fun CapsuleMiniPlayer(
                 }
 
                 Spacer(Modifier.width(Spacing.small))
-
-                // Fixed 56dp slot: the spectrum is decorative, so it is the element that gives up
-                // width when the text needs it.
-                PixelSpectrum(
-                    frame = frame,
-                    active = isPlaying && !ended,
-                    modifier = Modifier.width(56.dp).height(30.dp),
-                )
-
-                Spacer(Modifier.width(Pixel))
 
                 // Control cluster, all hand-drawn pixel sprites: heart, play/pause, download.
                 PixelHeart(
@@ -349,54 +328,6 @@ private fun PixelArt(
                         size = Size(step, step),
                     )
                 }
-            }
-        }
-    }
-}
-
-/**
- * Quantised spectrum: one column per analyser band, each a stack of [SpectrumRows] blocks.
- *
- * Quantising is deliberate — a smooth curve would fight the pixel language, and an LCD-style step
- * meter is what makes a handful of blocks read as a level. Blocks light bottom-up, tinted from
- * `primary` to `tertiary` by row so the stack has its own little gradient.
- */
-@Composable
-private fun PixelSpectrum(
-    frame: VisualizerFrame,
-    active: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val scheme = MaterialTheme.colorScheme
-
-    Canvas(modifier = modifier) {
-        val gap = Pixel.toPx() * 0.5f
-        val colW = (size.width - gap * (SpectrumColumns - 1)) / SpectrumColumns
-        val rowH = (size.height - gap * (SpectrumRows - 1)) / SpectrumRows
-
-        for (col in 0 until SpectrumColumns) {
-            val band = frame.bands.getOrNull(col) ?: 0f
-            // Beat pulse lifts the whole column, so the meter visibly jumps on a transient.
-            val energy = if (active) (band + frame.pulse * 0.30f).coerceIn(0f, 1f) else 0f
-            val litRows = if (energy <= 0.001f) 0 else ((energy * SpectrumRows) + 0.35f).toInt().coerceIn(1, SpectrumRows)
-
-            val x = col * (colW + gap)
-            for (row in 0 until SpectrumRows) {
-                // Row 0 is the bottom of the stack.
-                val y = size.height - (row + 1) * rowH - row * gap
-                val lit = row < litRows
-                val t = row.toFloat() / (SpectrumRows - 1).coerceAtLeast(1)
-                val color =
-                    if (lit) {
-                        androidx.compose.ui.graphics.lerp(scheme.primary, scheme.tertiary, t)
-                    } else {
-                        scheme.onSurfaceVariant.copy(alpha = 0.10f)
-                    }
-                drawRect(
-                    color = color.copy(alpha = if (lit) 0.65f + 0.35f * t else 1f),
-                    topLeft = Offset(x, y),
-                    size = Size(colW, rowH),
-                )
             }
         }
     }

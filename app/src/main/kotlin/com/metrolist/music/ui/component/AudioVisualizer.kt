@@ -67,6 +67,24 @@ enum class VisualizerStyle {
 private const val REST_HEIGHT = 0.045f
 
 /**
+ * Overall height budget for the analysed bands.
+ *
+ * The analyser publishes 0..1, but a bar at full canvas height for ordinary music is what made soft
+ * tracks look like a hard beat. 0.85 leaves a visible ceiling: only a genuine peak reaches the top of
+ * the field, and the default intensity stays readable without every preset looking saturated.
+ */
+private const val FIELD_GAIN = 0.85f
+
+/**
+ * Onset lift added on top of the bands, before [FIELD_GAIN].
+ *
+ * It was 0.30 — a flat +0.30 on every bar for a whole beat, which is why a quiet song jumped as
+ * high as a loud one. This lift is multiplied by the bar's own band energy, so it stays a relative
+ * bump: silence adds nothing, a quiet band peeks up slightly, a loud one punches.
+ */
+private const val PULSE_LIFT = 0.16f
+
+/**
  * True when the OS asks for reduced motion ("Remove animations" / Animator duration scale = 0).
  *
  * Compose has no public reduced-motion signal, so this reads the platform setting once per
@@ -141,7 +159,12 @@ fun AudioVisualizer(
             val live = VisualizerState.frame.value
             val targets =
                 if (enabled && !live.silent) {
-                    expandBands(live.bands, barCount, live.pulse, intensity)
+                    expandBands(
+                        bands = live.bands,
+                        count = barCount,
+                        pulse = live.pulse,
+                        intensity = intensity,
+                    )
                 } else {
                     List(barCount) { REST_HEIGHT }
                 }
@@ -181,6 +204,8 @@ fun AudioVisualizer(
         // Read in the draw scope only, so per-frame motion repaints without recomposing.
         val live = frame
         val pulse = if (enabled && !live.silent) live.pulse else 0f
+        // Peak brightness follows the frame's loudness, so a quiet song blooms less than a loud one.
+        val bloom = if (enabled && !live.silent) 0.35f + 0.65f * live.level.coerceIn(0f, 1f) else 0f
 
         drawVisualizer(
             values = display,
@@ -188,6 +213,7 @@ fun AudioVisualizer(
             gap = gapPx,
             style = style,
             pulse = pulse,
+            bloom = bloom,
         )
     }
 }
@@ -236,6 +262,9 @@ private fun easeOutward(previous: List<Float>, targets: List<Float>): List<Float
  *     instead of a flat-topped rectangle.
  *  3. **Per-bar phase offset.** Each bar's target also carries a tiny oscillation of its own, which
  *     gives the neighbouring bars slightly different timing — the ripple that makes it feel fluid.
+ *
+ * Output is scaled by [FIELD_GAIN] so ordinary music never occupies the full height, and the beat
+ * flare is scaled by each band's own energy so soft passages stay shallow.
  */
 private fun expandBands(
     bands: FloatArray,
@@ -261,13 +290,15 @@ private fun expandBands(
         val t = pos - lo
         val bandValue = bands[lo] + (bands[hi] - bands[lo]) * t
 
-        // Centre-out beat flare: strongest in the middle, fading to nothing at the edges.
-        val flare = pulse * 0.30f * (1f - fromCentre * fromCentre)
+        // Centre-out beat flare: strongest in the middle, fading to nothing at the edges. It is
+        // scaled by the band's own energy, so a transient on a quiet passage lifts a *short* bar —
+        // only loud music can push the field to the top.
+        val flare = pulse * PULSE_LIFT * bandValue * (1f - fromCentre * fromCentre)
 
         // Edge taper: the silhouette falls away toward the sides.
         val taper = 1f - 0.18f * fromCentre * fromCentre
 
-        val value = (bandValue * taper + flare) * intensity
+        val value = (bandValue * taper + flare) * intensity * FIELD_GAIN
         result.add(value.coerceIn(0f, 1f))
     }
     return result
@@ -280,9 +311,10 @@ private fun DrawScope.drawVisualizer(
     gap: Float,
     style: VisualizerStyle,
     pulse: Float = 0f,
+    bloom: Float = 0f,
 ) {
     when (style) {
-        VisualizerStyle.RIBBON -> drawMirroredRibbon(bars = values, palette = palette, gap = gap, pulse = pulse)
+        VisualizerStyle.RIBBON -> drawMirroredRibbon(bars = values, palette = palette, gap = gap, pulse = pulse, bloom = bloom)
         VisualizerStyle.BARS -> drawBars(bars = values, palette = palette, gap = gap)
         VisualizerStyle.WAVE -> drawWave(bars = values, palette = palette, mirror = false)
         VisualizerStyle.MIRROR_WAVE -> drawWave(bars = values, palette = palette, mirror = true)
@@ -420,6 +452,7 @@ private fun DrawScope.drawMirroredRibbon(
     palette: List<Color>,
     gap: Float,
     pulse: Float = 0f,
+    bloom: Float = 0f,
 ) {
     val count = bars.size
     if (count == 0) return
@@ -455,14 +488,14 @@ private fun DrawScope.drawMirroredRibbon(
     }
 
     // Beat bloom: instead of a highlight sweeping on a 4.2s timer, the field brightens on a real
-    // transient. Uniform across the width, so it reads as the whole shape reacting at once.
+    // transient. Scaled by the frame's level so a soft track does not flash like a club track.
     if (pulse > 0.01f) {
         drawRect(
             brush =
                 Brush.verticalGradient(
                     listOf(
                         Color.Transparent,
-                        high.copy(alpha = 0.20f * pulse),
+                        high.copy(alpha = 0.20f * pulse * bloom),
                         Color.Transparent,
                     ),
                 ),

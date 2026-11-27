@@ -156,7 +156,6 @@ import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.ThemePaletteStyleKey
 import com.metrolist.music.constants.AvatarPresetKey
 import com.metrolist.music.constants.AvatarShapeKey
-import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
 import com.metrolist.music.constants.LauncherIconVariantKey
@@ -837,9 +836,10 @@ class MainActivity : FragmentActivity() {
                 val (forceBottomNav) = rememberPreference(ForceBottomNavBarKey, defaultValue = false)
                 val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
                 // Developer-only alternate navigation bar (floating expandable dock).
+                // Floating dock: a user-facing navigation style now, not a developer experiment. The
+                // preference alone decides; it no longer requires developer mode to take effect.
                 val (devFloatingDockPref) = rememberPreference(DevFloatingDockKey, defaultValue = false)
-                val (devModeForDock) = rememberPreference(DeveloperModeKey, defaultValue = false)
-                val useFloatingDock = devFloatingDockPref && devModeForDock
+                val useFloatingDock = devFloatingDockPref
                 val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
                 val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.HOME.name)
                 val defaultOpenTab = remember(defaultOpenTabInt) {

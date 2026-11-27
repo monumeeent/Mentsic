@@ -152,6 +152,8 @@ import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerButtonsStyle
 import com.metrolist.music.constants.PlayerButtonsStyleKey
 import com.metrolist.music.constants.PlayerHorizontalPadding
+import com.metrolist.music.constants.PlayerVisualizerHeight
+import com.metrolist.music.constants.LyricsVisualizerHeight
 import com.metrolist.music.constants.QueuePeekHeight
 import com.metrolist.music.constants.SleepTimerDefaultKey
 import com.metrolist.music.constants.SleepTimerFadeOutKey
@@ -2053,7 +2055,7 @@ fun BottomSheetPlayer(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier =
                             Modifier
-                                .weight(if (showInlineLyrics) 0.65f else 1f, false)
+                                .weight(if (showInlineLyrics) 0.46f else 1f, false)
                                 .animateContentSize()
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                     ) {
@@ -2083,7 +2085,9 @@ fun BottomSheetPlayer(
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.weight(1f),
+                        // Lyrics mode reclaims space for the text: the artwork (or the lyrics pane)
+                        // grows and the transport controls below take only what they need.
+                        modifier = Modifier.weight(if (showInlineLyrics) 0.82f else 1f, false),
                     ) {
                         // Remember lambdas to prevent unnecessary recomposition
                         val currentSliderPosition by rememberUpdatedState(sliderPosition)
@@ -2115,8 +2119,10 @@ fun BottomSheetPlayer(
                         controlsContent(it)
                     }
 
-                    // Audio visualizer - shown when enabled and not in fullscreen or lyrics mode
-                    if (enableAudioVisualizer && !isFullScreen && !showInlineLyrics) {
+                    // Audio visualizer — shown when enabled and not fullscreen. It stays visible in
+                    // lyrics mode too: the bars sit under the controls, so the song's motion is still
+                    // there while reading along.
+                    if (enableAudioVisualizer && !isFullScreen) {
                         val visualizerColors = listOf(
                             // Low → high ramp: quiet bars sit near the secondary accent, peaks bloom
                             // into the primary, so the colour itself encodes amplitude.
@@ -2133,6 +2139,8 @@ fun BottomSheetPlayer(
                             // reset, not by tearing the analyzer down on every pause.
                             enabled = true,
                             style = visualizerStyle,
+                            // Lyrics mode gives the text most of the height, so the bars sit lower.
+                            height = if (showInlineLyrics) LyricsVisualizerHeight else PlayerVisualizerHeight,
                             // Double-tapping the bars cycles to the next preset — the visualizer is
                             // where the user is already looking, so it is the natural place to
                             // change it.
@@ -2141,7 +2149,7 @@ fun BottomSheetPlayer(
                         Spacer(Modifier.height(8.dp))
                     }
 
-                    Spacer(Modifier.height(30.dp))
+                    Spacer(Modifier.height(if (showInlineLyrics) 12.dp else 30.dp))
                 }
             }
         }

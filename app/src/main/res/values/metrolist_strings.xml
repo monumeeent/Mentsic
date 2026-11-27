@@ -150,8 +150,9 @@
     <string name="force_bottom_navbar">Force bottom navigation bar</string>
     <string name="slim_navbar">Slim bottom navigation bar</string>
     <string name="floating_dock_navbar">Floating dock navigation bar</string>
-    <string name="floating_dock_navbar_desc">Notched bar whose top edge dips under the active tab, with the icon floating in a tinted orb above it. Only applies while developer mode is on.</string>
+    <string name="floating_dock_navbar_desc">Notched bar whose top edge dips under the active tab, with the icon floating in a tinted orb above it.</string>
     <string name="floating_dock_geometry">Floating dock geometry</string>
+    <string name="floating_dock_orb">Orb</string>
     <string name="dock_body_height">Bar height</string>
     <string name="dock_notch_width">Notch width</string>
     <string name="dock_notch_depth">Notch depth</string>
@@ -165,7 +166,7 @@
     <string name="visualizer_dots">Dots \u2014 swelling circles, lightest to render</string>
     <string name="visualizer_mirror_wave">Mirrored wave \u2014 a line reflected with a soft fill</string>
     <string name="mini_player_capsule">Capsule mini player</string>
-    <string name="mini_player_capsule_desc">A narrow floating capsule with the album art, one line of text, and a live waveform in place of a progress bar.</string>
+    <string name="mini_player_capsule_desc">A pixel capsule with the album art, a two-line LCD readout, a slim level metre and hand-drawn pixel controls.</string>
     <string name="auto_playlists">Auto playlists</string>
     <string name="show_liked_playlist">Show Liked playlist</string>
     <string name="show_downloaded_playlist">Show Downloaded playlist</string>

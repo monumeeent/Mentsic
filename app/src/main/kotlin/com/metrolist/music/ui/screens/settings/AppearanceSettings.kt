@@ -71,6 +71,7 @@ import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
+import com.metrolist.music.constants.DevFloatingDockKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
@@ -88,6 +89,7 @@ import com.metrolist.music.constants.LyricsTextPositionKey
 import com.metrolist.music.constants.LyricsTextSizeKey
 import com.metrolist.music.constants.MiniPlayerBackgroundStyle
 import com.metrolist.music.constants.MiniPlayerBackgroundStyleKey
+import com.metrolist.music.constants.MiniPlayerCapsuleKey
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerButtonsStyle
@@ -330,6 +332,12 @@ fun AppearanceSettings(
     val (slimNav, onSlimNavChange) =
         rememberPreference(
             SlimNavBarKey,
+            defaultValue = false,
+        )
+    // Floating notched navigation bar — user-facing, replaces the stock/slim bar when on.
+    val (floatingDock, onFloatingDockChange) =
+        rememberPreference(
+            DevFloatingDockKey,
             defaultValue = false,
         )
 
@@ -1258,6 +1266,11 @@ fun AppearanceSettings(
                 defaultValue = false,
             )
 
+        // Third mini-player layout. User-facing, so it lives in this group rather than behind
+        // developer mode; it takes precedence over the new/legacy rows below when switched on.
+        val (capsuleMiniPlayer, onCapsuleMiniPlayerChange) =
+            rememberPreference(MiniPlayerCapsuleKey, defaultValue = false)
+
         Material3SettingsGroup(
             title = stringResource(id = R.string.mini_player),
             items =
@@ -1288,12 +1301,36 @@ fun AppearanceSettings(
                     )
                     add(
                         Material3SettingsItem(
+                            icon = painterResource(R.drawable.queue_music),
+                            title = { Text(stringResource(R.string.mini_player_capsule)) },
+                            description = { Text(stringResource(R.string.mini_player_capsule_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = capsuleMiniPlayer,
+                                    onCheckedChange = onCapsuleMiniPlayerChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter =
+                                                painterResource(
+                                                    id = if (capsuleMiniPlayer) R.drawable.check else R.drawable.close,
+                                                ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onCapsuleMiniPlayerChange(!capsuleMiniPlayer) },
+                        ),
+                    )
+                    add(
+                        Material3SettingsItem(
                             icon = painterResource(R.drawable.gradient),
                             title = {
                                 Text(
                                     text = stringResource(R.string.mini_player_background_style),
                                     color =
-                                        if (!useNewMiniPlayerDesign) {
+                                        if (!useNewMiniPlayerDesign || capsuleMiniPlayer) {
                                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                                         } else {
                                             MaterialTheme.colorScheme.onSurface
@@ -1303,7 +1340,7 @@ fun AppearanceSettings(
                             description = {
                                 Text(
                                     text =
-                                        if (!useNewMiniPlayerDesign) {
+                                        if (!useNewMiniPlayerDesign || capsuleMiniPlayer) {
                                             stringResource(R.string.mini_player_background_not_available)
                                         } else {
                                             when (miniPlayerBackground) {
@@ -1315,14 +1352,16 @@ fun AppearanceSettings(
                                             }
                                         },
                                     color =
-                                        if (!useNewMiniPlayerDesign) {
+                                        if (!useNewMiniPlayerDesign || capsuleMiniPlayer) {
                                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                                         } else {
                                             MaterialTheme.colorScheme.onSurfaceVariant
                                         },
                                 )
                             },
-                            onClick = { if (useNewMiniPlayerDesign) showMiniPlayerBackgroundDialog = true },
+                            onClick = {
+                                if (useNewMiniPlayerDesign && !capsuleMiniPlayer) showMiniPlayerBackgroundDialog = true
+                            },
                         ),
                     )
                 },
@@ -1888,6 +1927,30 @@ fun AppearanceSettings(
                             )
                         },
                         onClick = { onSlimNavChange(!slimNav) },
+                    ),
+                    // Floating notched dock: a user-facing alternative to the stock bar. It replaces
+                    // both the regular and the slim bar, so it sits right after them.
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.nav_bar),
+                        title = { Text(stringResource(R.string.floating_dock_navbar)) },
+                        description = { Text(stringResource(R.string.floating_dock_navbar_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = floatingDock,
+                                onCheckedChange = onFloatingDockChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter =
+                                            painterResource(
+                                                id = if (floatingDock) R.drawable.check else R.drawable.close,
+                                            ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                },
+                            )
+                        },
+                        onClick = { onFloatingDockChange(!floatingDock) },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.group_outlined),

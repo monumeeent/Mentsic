@@ -6,7 +6,7 @@
  *
  * One dark body whose top edge dips into a concave notch under the active tab, with the active icon
  * floating in a tinted orb inside that cradle. Inactive icons sit flat on the bar. It replaces the
- * stock Material 3 bar when the developer turns `DevFloatingDockKey` on.
+ * stock Material 3 bar when `DevFloatingDockKey` is on — a user-facing style, not a developer gate.
  *
  * Three layers, back to front — this split is what keeps the motion cheap and seam-free:
  *
@@ -75,10 +75,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.metrolist.music.constants.DockBodyHeightKey
-import com.metrolist.music.constants.DockCornerRadiusKey
-import com.metrolist.music.constants.DockNotchDepthKey
-import com.metrolist.music.constants.DockNotchWidthKey
 import com.metrolist.music.constants.DockOrbLiftKey
 import com.metrolist.music.constants.DockOrbSizeKey
 import com.metrolist.music.ui.screens.Screens
@@ -91,33 +87,35 @@ import kotlin.math.roundToInt
 /**
  * Every tunable of the notched bar, as immutable data.
  *
- * Defaults are **golden-ratio derived** from [bodyHeight] = 65dp (φ ≈ 1.618):
- *  - notch mouth   120dp ≈ 65 × φ² / 1.42  — wide enough that the orb never pinches the curve;
- *  - notch depth    36dp ≈ 65 × 0.5539 (1/φ)   — the cradle is exactly as deep as the orb sinks;
- *  - orb size       54dp ≈ 65 × 0.83  (φ/2 ≈ 0.809) — the orb dominates but never fills the notch;
- *  - orb lift       12dp ≈ 65 / φ²/2  — a third of the orb stays above the bar top;
- *  - corner radius   0dp — square body, so the notch is the only curve on screen.
+ * The frame is fixed by design:
+ *  - bar height      48dp — one comfortable nav target, no wasted air;
+ *  - notch mouth    180dp — wide enough that the orb never pinches the curve;
+ *  - notch depth     48dp — the cradle is exactly as deep as the bar;
+ *  - corner radius    8dp — a soft, deliberate round on a non-pill bar.
  *
- * The live instance comes from [rememberFloatingNotchSpec], which overlays the developer settings,
- * so notch, orb travel, touch geometry and the height MainActivity reserves all follow one value.
+ * Only the orb (size, lift) is overlaid from settings — see [rememberFloatingNotchSpec].
+ *
+ * The live instance comes from [rememberFloatingNotchSpec], which overlays the two orb preferences
+ * (size, lift) onto the fixed frame, so orb travel, touch geometry and the height MainActivity
+ * reserves all follow one value.
  */
 data class FloatingNotchSpec(
     /** Height of the visible body (excludes [floatInset]). */
-    val bodyHeight: Dp = 65.dp,
+    val bodyHeight: Dp = 48.dp,
     /** Gap below the body, so the bar reads as hovering rather than docked. */
     val floatInset: Dp = 8.dp,
     /** Horizontal margin from the screen edges. */
     val sideMargin: Dp = Spacing.medium,
     /** Corner radius of the body; 0 = square body. Clamped to bodyHeight / 2 when drawing. */
-    val cornerRadius: Dp = 0.dp,
+    val cornerRadius: Dp = 8.dp,
     /** Width of the notch mouth (the span the curve covers). */
-    val notchWidth: Dp = 120.dp,
+    val notchWidth: Dp = 180.dp,
     /** How far the curve dips below the body's top edge. */
-    val notchDepth: Dp = 36.dp,
+    val notchDepth: Dp = 48.dp,
     /** Diameter of the floating orb. */
     val orbSize: Dp = 54.dp,
     /** How far the orb's centre sits above the bar's top edge (positive = lifted). */
-    val orbLift: Dp = 12.dp,
+    val orbLift: Dp = 36.dp,
     /** Icon size, inside the orb and on the bar. */
     val iconSize: Dp = 22.dp,
     /** Notch + orb travel time, used when [useSpring] is false. */
@@ -138,7 +136,7 @@ data class FloatingNotchSpec(
      * How far the orb's top edge rises above the bar container's own top (0 when it does not).
      *
      * The orb is vertically centred on the notch and then raised by [orbLift]. When the cradle is
-     * shallower than the orb (the default: 36dp notch vs a 54dp orb) the badge necessarily pokes
+     * shallower than the orb (the default: 48dp notch vs a 54dp orb) the badge necessarily pokes
      * above the body, and the reserved height has to account for it — otherwise the mini-player and
      * list content would be drawn over the protruding half of the orb.
      */
@@ -150,12 +148,18 @@ data class FloatingNotchSpec(
         get() = floatInset + notchDepth / 2f - orbLift - orbSize / 2f + orbProtrusion
 
     companion object {
+        /**
+         * The one and only frame. Bar height (48), notch width (180), notch depth (48) and the corner
+         * radius (8) are design constants, not user preferences: MainActivity reserves space from this
+         * same object, so the drawn bar and the reserved inset can never disagree. Only the orb (size
+         * and lift) is overlaid from settings in [rememberFloatingNotchSpec].
+         */
         val Default = FloatingNotchSpec()
     }
 }
 
 /**
- * The live spec: [FloatingNotchSpec.Default] overlaid with the developer's saved geometry.
+ * The live spec: [FloatingNotchSpec.Default] overlaid with the saved orb preferences.
  *
  * Reading the preferences here (rather than in a global object) means the settings screen and the
  * bar can never disagree, and values survive a process restart. MainActivity calls this too, so the
@@ -163,21 +167,13 @@ data class FloatingNotchSpec(
  */
 @Composable
 fun rememberFloatingNotchSpec(): FloatingNotchSpec {
-    val (bodyHeight) = rememberPreference(DockBodyHeightKey, FloatingNotchSpec.Default.bodyHeight.value)
-    val (notchWidth) = rememberPreference(DockNotchWidthKey, FloatingNotchSpec.Default.notchWidth.value)
-    val (notchDepth) = rememberPreference(DockNotchDepthKey, FloatingNotchSpec.Default.notchDepth.value)
     val (orbSize) = rememberPreference(DockOrbSizeKey, FloatingNotchSpec.Default.orbSize.value)
     val (orbLift) = rememberPreference(DockOrbLiftKey, FloatingNotchSpec.Default.orbLift.value)
-    val (cornerRadius) = rememberPreference(DockCornerRadiusKey, FloatingNotchSpec.Default.cornerRadius.value)
 
-    return remember(bodyHeight, notchWidth, notchDepth, orbSize, orbLift, cornerRadius) {
+    return remember(orbSize, orbLift) {
         FloatingNotchSpec.Default.copy(
-            bodyHeight = bodyHeight.dp,
-            notchWidth = notchWidth.dp,
-            notchDepth = notchDepth.dp,
             orbSize = orbSize.dp,
             orbLift = orbLift.dp,
-            cornerRadius = cornerRadius.dp,
         )
     }
 }

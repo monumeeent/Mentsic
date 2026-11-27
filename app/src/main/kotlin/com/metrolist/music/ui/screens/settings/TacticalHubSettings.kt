@@ -36,10 +36,6 @@ import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.DevFloatingDockKey
 import com.metrolist.music.constants.MiniPlayerCapsuleKey
-import com.metrolist.music.constants.DockBodyHeightKey
-import com.metrolist.music.constants.DockCornerRadiusKey
-import com.metrolist.music.constants.DockNotchDepthKey
-import com.metrolist.music.constants.DockNotchWidthKey
 import com.metrolist.music.constants.DockOrbLiftKey
 import com.metrolist.music.constants.DockOrbSizeKey
 import com.metrolist.music.constants.HubModeEnabledKey
@@ -78,7 +74,7 @@ fun TacticalHubSettings(navController: NavController) {
     // Developer-only alternate navigation bar (floating dock). Read by MainActivity.
     val (floatingDock, onFloatingDockChange) =
         rememberPreference(DevFloatingDockKey, defaultValue = false)
-    // Developer-only third mini player (capsule). Read by MiniPlayer.
+    // Third mini player (pixel capsule). User-facing style; read by MiniPlayer.
     val (capsuleMiniPlayer, onCapsuleMiniPlayerChange) =
         rememberPreference(MiniPlayerCapsuleKey, defaultValue = false)
 
@@ -167,12 +163,12 @@ fun TacticalHubSettings(navController: NavController) {
                             ),
                         )
                     }
-                    // Navigation surface: the stock bar or the floating dock experiment.
+                    // Navigation surface: the stock bar or the floating dock. User-facing now — the
+                    // toggle works with developer mode off, so the row carries no DEV wash.
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.nav_bar),
                             title = { Text(stringResource(R.string.floating_dock_navbar)) },
-                            isDeveloperOnly = true,
                             description = { Text(stringResource(R.string.floating_dock_navbar_desc)) },
                             trailingContent = {
                                 Switch(
@@ -193,12 +189,11 @@ fun TacticalHubSettings(navController: NavController) {
                             onClick = { onFloatingDockChange(!floatingDock) },
                         ),
                     )
-                    // Third mini-player layout.
+                    // Third mini-player layout. User-facing: available with developer mode off.
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.queue_music),
                             title = { Text(stringResource(R.string.mini_player_capsule)) },
-                            isDeveloperOnly = true,
                             description = { Text(stringResource(R.string.mini_player_capsule_desc)) },
                             trailingContent = {
                                 Switch(
@@ -224,40 +219,17 @@ fun TacticalHubSettings(navController: NavController) {
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        // Developer-only geometry for the floating notched bar. Every slider writes the value the bar
-        // and MainActivity's reserved space both read, so tuning here is immediately visible: leave
-        // the screen and the dock has already changed.
+        // Geometry for the floating notched bar. The frame (height, notch width/depth, corner radius)
+        // is fixed in FloatingNotchSpec and shown below read-only; only the orb — size and lift — is
+        // an actual, user-visible preference.
         if (floatingDock) {
-            val (dockBodyHeight, onDockBodyHeight) = rememberPreference(DockBodyHeightKey, 65f)
-            val (dockNotchWidth, onDockNotchWidth) = rememberPreference(DockNotchWidthKey, 120f)
-            val (dockNotchDepth, onDockNotchDepth) = rememberPreference(DockNotchDepthKey, 36f)
             val (dockOrbSize, onDockOrbSize) = rememberPreference(DockOrbSizeKey, 54f)
-            val (dockOrbLift, onDockOrbLift) = rememberPreference(DockOrbLiftKey, 12f)
-            val (dockCorner, onDockCorner) = rememberPreference(DockCornerRadiusKey, 0f)
+            val (dockOrbLift, onDockOrbLift) = rememberPreference(DockOrbLiftKey, 36f)
 
             Material3SettingsGroup(
-                title = stringResource(R.string.floating_dock_geometry),
-                isDeveloperGroup = true,
+                title = stringResource(R.string.floating_dock_orb),
                 items =
                     listOf(
-                        dockSlider(
-                            title = stringResource(R.string.dock_body_height),
-                            value = dockBodyHeight,
-                            onChange = onDockBodyHeight,
-                            range = 48f..96f,
-                        ),
-                        dockSlider(
-                            title = stringResource(R.string.dock_notch_width),
-                            value = dockNotchWidth,
-                            onChange = onDockNotchWidth,
-                            range = 64f..160f,
-                        ),
-                        dockSlider(
-                            title = stringResource(R.string.dock_notch_depth),
-                            value = dockNotchDepth,
-                            onChange = onDockNotchDepth,
-                            range = 0f..48f,
-                        ),
                         dockSlider(
                             title = stringResource(R.string.dock_orb_size),
                             value = dockOrbSize,
@@ -268,14 +240,22 @@ fun TacticalHubSettings(navController: NavController) {
                             title = stringResource(R.string.dock_orb_lift),
                             value = dockOrbLift,
                             onChange = onDockOrbLift,
-                            range = -12f..28f,
+                            range = 0f..36f,
                         ),
-                        dockSlider(
-                            title = stringResource(R.string.dock_corner_radius),
-                            value = dockCorner,
-                            onChange = onDockCorner,
-                            range = 0f..40f,
-                        ),
+                    ),
+            )
+
+            Spacer(modifier = Modifier.height(27.dp))
+
+            // Reference readout of the fixed frame: discoverable, but not a control.
+            Material3SettingsGroup(
+                title = stringResource(R.string.floating_dock_geometry),
+                items =
+                    listOf(
+                        fixedGeometryItem(stringResource(R.string.dock_body_height), "48 dp"),
+                        fixedGeometryItem(stringResource(R.string.dock_notch_width), "180 dp"),
+                        fixedGeometryItem(stringResource(R.string.dock_notch_depth), "48 dp"),
+                        fixedGeometryItem(stringResource(R.string.dock_corner_radius), "8 dp"),
                     ),
             )
 
@@ -444,8 +424,8 @@ private fun gridSizeItem(
 )
 
 /**
- * One dp slider for the floating dock geometry. The live value is printed beside the title in dp so
- * the tuning is precise instead of "a bit more than last time".
+ * One dp slider for the floating dock orb. The live value is printed beside the title in dp so the
+ * tuning is precise instead of "a bit more than last time".
  */
 @Composable
 private fun dockSlider(
@@ -462,6 +442,29 @@ private fun dockSlider(
             valueRange = range,
             // One stop per 1dp step, so a slider release lands on a whole dp.
             steps = (range.endInclusive - range.start).roundToInt() - 1,
+        )
+    },
+    onClick = {},
+)
+
+/**
+ * Read-only row for a fixed dock constant (bar height, notch size, corner radius).
+ *
+ * These are no longer preferences: the bar and the space MainActivity reserves for it both come
+ * from the same `FloatingNotchSpec`, so a value changed here could only ever disagree with the
+ * drawing. The row still shows the number, so the geometry is documented where users look for it.
+ */
+@Composable
+private fun fixedGeometryItem(
+    title: String,
+    value: String,
+) = Material3SettingsItem(
+    title = { Text(title) },
+    trailingContent = {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     },
     onClick = {},

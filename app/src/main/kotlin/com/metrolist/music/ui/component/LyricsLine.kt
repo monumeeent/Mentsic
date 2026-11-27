@@ -155,8 +155,8 @@ internal fun LyricsLine(
         .padding(
             start = when (lyricsTextPosition) { LyricsPosition.LEFT, LyricsPosition.RIGHT -> 11.dp; LyricsPosition.CENTER -> 24.dp },
             end = when (lyricsTextPosition) { LyricsPosition.LEFT, LyricsPosition.RIGHT -> 11.dp; LyricsPosition.CENTER -> 24.dp },
-            top = if (item.isBackground) 0.dp else 12.dp,
-            bottom = if (item.isBackground) 2.dp else 12.dp // simplified gap logic
+            top = if (item.isBackground) 0.dp else 8.dp,
+            bottom = if (item.isBackground) 2.dp else 8.dp // simplified gap logic
         )
 
     val agentAlignment = when {

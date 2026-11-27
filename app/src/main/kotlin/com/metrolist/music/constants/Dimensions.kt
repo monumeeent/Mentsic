@@ -37,6 +37,17 @@ val ThumbnailCornerRadius = 3.dp
 
 val PlayerHorizontalPadding = 32.dp
 
+/** Visualizer height in the full player. */
+val PlayerVisualizerHeight = 96.dp
+
+/**
+ * Visualizer height while the inline lyrics pane is open.
+ *
+ * Shorter than [PlayerVisualizerHeight]: the lyrics need the vertical budget, and a slim strip of bars
+ * under the controls still shows the music moving without competing with the text.
+ */
+val LyricsVisualizerHeight = 40.dp
+
 val NavigationBarAnimationSpec = spring<Dp>(
     dampingRatio = Spring.DampingRatioNoBouncy,
     stiffness = Spring.StiffnessMediumLow

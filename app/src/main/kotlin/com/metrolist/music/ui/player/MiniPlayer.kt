@@ -152,7 +152,8 @@ fun MiniPlayer(
     onClick: () -> Unit = {},
 ) {
     val useNewMiniPlayerDesign by rememberPreference(UseNewMiniPlayerDesignKey, true)
-    // Developer-gated third design; wins over the two stock layouts when enabled.
+    // Third design (pixel capsule). User-facing: it wins over the two stock layouts when enabled, and
+    // it no longer requires developer mode — the preference alone decides.
     val useCapsuleDesign by rememberPreference(MiniPlayerCapsuleKey, false)
 
     // Create stable progress state - doesn't cause recomposition on position changes

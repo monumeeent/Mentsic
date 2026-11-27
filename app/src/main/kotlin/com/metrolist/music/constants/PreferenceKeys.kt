@@ -146,14 +146,11 @@ val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 // Developer-only alternate navigation bar: a floating, expandable dock instead of the stock bar.
 val DevFloatingDockKey = booleanPreferencesKey("devFloatingDock")
 
-// Geometry of the floating notched bar, in dp. Floats so the sliders can move in 1dp steps; the
-// bar reads them through `rememberFloatingNotchSpec()`, which is also what MainActivity reserves.
-val DockBodyHeightKey = floatPreferencesKey("dockBodyHeight")
-val DockNotchWidthKey = floatPreferencesKey("dockNotchWidth")
-val DockNotchDepthKey = floatPreferencesKey("dockNotchDepth")
+// Orb geometry of the floating notched bar, in dp. Floats so the sliders can move in 1dp steps; the
+// bar reads them through `rememberFloatingNotchSpec()`. The rest of the frame (bar height, notch
+// width/depth, corner radius) is fixed in `FloatingNotchSpec` and is intentionally not persisted.
 val DockOrbSizeKey = floatPreferencesKey("dockOrbSize")
 val DockOrbLiftKey = floatPreferencesKey("dockOrbLift")
-val DockCornerRadiusKey = floatPreferencesKey("dockCornerRadius")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
 val SliderStyleKey = stringPreferencesKey("sliderStyle")
 val SquigglySliderKey = booleanPreferencesKey("squigglySlider")
@@ -162,8 +159,8 @@ val SwipeToRemoveSongKey = booleanPreferencesKey("SwipeToRemoveSong")
 val UseNewPlayerDesignKey = booleanPreferencesKey("useNewPlayerDesign")
 val UseNewMiniPlayerDesignKey = booleanPreferencesKey("useNewMiniPlayerDesign")
 
-// Third mini-player design: a compact "capsule" bar with a live waveform instead of the
-// thumbnail-and-controls row. Developer-gated, off by default.
+// Third mini-player design: the pixel capsule (album art, LCD-style title/artist, slim level metre
+// and sprite controls). User-facing, off by default.
 val MiniPlayerCapsuleKey = booleanPreferencesKey("miniPlayerCapsule")
 val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val CropAlbumArtKey = booleanPreferencesKey("cropAlbumArt")
