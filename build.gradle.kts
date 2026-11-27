@@ -7,10 +7,11 @@ plugins {
 buildscript {
     repositories {
         google()
-        // Mirror before Central: see settings.gradle.kts for why (HTTP 429 disables a repository for
-        // the remainder of the build).
-        maven { setUrl("https://maven.aliyun.com/repository/public") }
+        // No mirror here. A mirror that returns 502 for a path it does not proxy takes the whole
+        // build down with it ("There are 61 more failures with identical causes"), and a mirror is
+        // not faster than Central for a handful of classpath artifacts. Authoritative sources only.
         mavenCentral()
+        gradlePluginPortal()
         maven { setUrl("https://jitpack.io") }
     }
     dependencies {

@@ -5,19 +5,15 @@ val useMavenLocalInnerTubeX = providers.gradleProperty("useMavenLocalInnerTubeX"
 pluginManagement {
     repositories {
         mavenLocal()
-        google()
-        // Plugin resolution order is the OPPOSITE of dependency resolution (see the block below).
+        // Authoritative sources only — see the note in dependencyResolutionManagement for why no
+        // third-party mirror is listed.
         //
-        // Marker plugins such as `org.jetbrains.kotlin.plugin.serialization` are published to the
-        // Gradle Plugin Portal, and the Portal is what knows how to redirect a marker id to its
-        // implementation artifact. Asking a Maven mirror first adds a failing lookup per plugin and,
-        // when the mirror answers oddly, makes Gradle report "plugin was not found" for a plugin
-        // that exists on every repository. So: authoritative sources first, mirrors as the last
-        // resort for an outage.
+        // The Plugin Portal must come before a generic Maven repo: marker plugins such as
+        // `org.jetbrains.kotlin.plugin.serialization` resolve through a marker POM that the Portal
+        // knows how to map onto its implementation artifact.
+        google()
         gradlePluginPortal()
         mavenCentral()
-        maven("https://maven.aliyun.com/repository/gradle-plugin")
-        maven("https://maven.aliyun.com/repository/public")
     }
 }
 
@@ -25,18 +21,19 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
     repositories {
-        // Order matters. Maven Central answers a burst of parallel module requests with HTTP 429
-        // (Too Many Requests), and Gradle then disables that repository for the *rest of the build* —
-        // turning one 429 into sixty-odd "could not resolve" failures.
+        // Authoritative repositories only. No third-party mirror.
         //
-        // So: Google first (AndroidX/media3 live only there and it is not rate limited this way),
-        // then a Maven Central mirror, then Central itself as the authority, then JitPack. Gradle
-        // tries repositories in order and stops at the first hit, so the mirror absorbs the burst
-        // and Central is only reached for artifacts the mirror lacks.
+        // A mirror was tried here to dodge Maven Central's HTTP 429, and it made things strictly
+        // worse: `maven.aliyun.com/repository/public` returns **502 Bad Gateway** for paths it does
+        // not proxy (verified against the KSP plugin marker), and because Gradle disables a
+        // repository after an error, one 502 became "61 more failures with identical causes".
+        //
+        // A mirror can only ever be a latency optimisation; it must never be the first place Gradle
+        // looks, because its failure modes (502, HTML error pages, empty 200s) are indistinguishable
+        // from "artifact does not exist". Google and Central are the sources of truth for everything
+        // this project uses, and the retry/back-off settings in gradle.properties handle the 429
+        // case by waiting it out instead of routing around it.
         google()
-
-        maven("https://maven.aliyun.com/repository/public")
-
         mavenCentral()
 
         exclusiveContent {
@@ -54,8 +51,9 @@ dependencyResolutionManagement {
             }
         }
 
-        // JitPack hosts the GitHub-hosted deps (ucrop, tinypinyin, …). Those must never be asked of
-        // the mirrors, which would answer 404 and slow every build down.
+        // JitPack hosts the GitHub-hosted deps (ucrop, tinypinyin, …). Scoping it to com.github.*
+        // stops Google and Central being asked for those coordinates on every build, and stops
+        // JitPack being asked for anything else.
         maven("https://jitpack.io") {
             content {
                 includeGroupByRegex("com\\.github\\..*")
