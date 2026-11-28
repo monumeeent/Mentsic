@@ -143,7 +143,8 @@ import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.NavBarStyle
 import com.metrolist.music.constants.NavBarStyleKey
-import com.metrolist.music.ui.component.GlassNavBarHeight
+import com.metrolist.music.ui.component.GradientNavBarHeight
+import com.metrolist.music.ui.component.AppleDockNavHeight
 import com.metrolist.music.ui.component.PillNavBarHeight
 import com.metrolist.music.constants.AppleDockNavKey
 import com.metrolist.music.constants.DevFloatingDockKey
@@ -941,7 +942,9 @@ class MainActivity : FragmentActivity() {
                 // Only the notched bar needs its live spec; the others reserve fixed heights.
                 val dockHeight = rememberFloatingNotchSpec().reservedHeight
                 // Each alternate surface reserves its own height; the stock bar keeps its constants.
-                val appleDockHeight = 68.dp + Spacing.small + 8.dp
+                // Each alternate surface reserves its own height. Apple dock = the stock NavigationBarHeight
+                // so switching styles does not move content; see AppleDockSpec.
+                val appleDockHeight = AppleDockNavHeight
 
                 val navPadding =
                     if (shouldShowNavigationBar && !showRail) {
@@ -949,7 +952,7 @@ class MainActivity : FragmentActivity() {
                             NavBarStyle.ORB -> dockHeight
                             NavBarStyle.APPLE -> appleDockHeight
                             NavBarStyle.PILL -> PillNavBarHeight
-                            NavBarStyle.GLASS -> GlassNavBarHeight
+                            NavBarStyle.GRADIENT -> GradientNavBarHeight
                             NavBarStyle.STANDARD -> if (slimNav) SlimNavBarHeight else NavigationBarHeight
                         }
                     } else {

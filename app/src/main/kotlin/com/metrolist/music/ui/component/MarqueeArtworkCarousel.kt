@@ -81,10 +81,24 @@ fun <T> MarqueeArtworkCarousel(
     onItemClick: (T) -> Unit,
     modifier: Modifier = Modifier,
     cardSize: Dp = 108.dp,
+    /** Pixels per frame the strip drifts. 0 keeps it still (drag still works). */
+    speed: Float = 1.6f,
+    /** Two rows alternate items; one row keeps the whole list in order. */
+    rows: Int = 2,
+    /** When false both rows drift the same way instead of mirroring each other. */
+    oppositeDirections: Boolean = true,
 ) {
     if (items.isEmpty()) return
-    val firstRow = remember(items) { items.filterIndexed { index, _ -> index % 2 == 0 } }
-    val secondRow = remember(items) { items.filterIndexed { index, _ -> index % 2 == 1 } }
+    // One row keeps the list in order (no interleaving), so the strip reads as a simple ribbon.
+    // Two rows alternate items so neither row is a run of the same album.
+    val firstRow =
+        remember(items, rows) {
+            if (rows <= 1) items else items.filterIndexed { index, _ -> index % 2 == 0 }
+        }
+    val secondRow =
+        remember(items, rows) {
+            if (rows <= 1) emptyList() else items.filterIndexed { index, _ -> index % 2 == 1 }
+        }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -96,6 +110,7 @@ fun <T> MarqueeArtworkCarousel(
                 thumbnailOf = thumbnailOf,
                 onItemClick = onItemClick,
                 cardSize = cardSize,
+                speed = speed,
                 direction = -1f,
             )
         }
@@ -105,7 +120,10 @@ fun <T> MarqueeArtworkCarousel(
                 thumbnailOf = thumbnailOf,
                 onItemClick = onItemClick,
                 cardSize = cardSize,
-                direction = 1f,
+                speed = speed,
+                // Mirroring is what makes the two rows read as a sandwich; turning it off gives a
+                // pair of parallel ribbons, which some prefer as calmer.
+                direction = if (oppositeDirections) 1f else -1f,
             )
         }
     }
@@ -125,6 +143,7 @@ private fun <T> MarqueeRow(
     thumbnailOf: (T) -> String?,
     onItemClick: (T) -> Unit,
     cardSize: Dp,
+    speed: Float,
     direction: Float,
 ) {
     val density = LocalDensity.current
@@ -136,11 +155,14 @@ private fun <T> MarqueeRow(
     var dragging by remember { mutableFloatStateOf(0f) }
 
     // Auto-drift: a few pixels per frame, wrapped modulo one full pass so the loop never ends.
-    LaunchedEffect(items.size, direction) {
+    // `speed <= 0` freezes the strip — the loop effect is a preference, not a requirement, so it must
+    // be possible to park the artwork without losing the drag gesture.
+    LaunchedEffect(items.size, direction, speed) {
+        if (speed <= 0f) return@LaunchedEffect
         while (true) {
             delay(16)
             if (dragging > 0.5f) continue
-            drift += 1.6f * direction
+            drift += speed * direction
             if (drift <= -totalPx) drift += totalPx
             if (drift >= totalPx) drift -= totalPx
         }

@@ -74,26 +74,39 @@ import com.metrolist.music.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
+/** Height the Apple-style dock reserves. Equals the stock bar height so switching styles is seamless. */
+val AppleDockNavHeight = 48.dp + Spacing.small
+
 /** Geometry of the dock. Kept in one object so the reserved height and the drawing cannot disagree. */
 private object AppleDockSpec {
-    val tileSize = 52.dp
-    val shelfHeight = 68.dp
-    val shelfCorner = 26.dp
+    /** Tile edge. Sized so the raised tile still fits inside [shelfHeight] without clipping. */
+    val tileSize = 44.dp
+
+    /**
+     * Shelf body height — the same 48dp as the stock bar, so switching styles does not shift the
+     * content above the navigation area. The dock used to be 68dp, which made the whole feed jump.
+     */
+    val shelfHeight = 48.dp
+
+    val shelfCorner = 22.dp
     val sideMargin = Spacing.medium
     val bottomGap = Spacing.small
-    val iconSize = 22.dp
+    val iconSize = 20.dp
 
-    /** Selected tile scale (the "raised" item). */
-    const val SelectedScale = 1.18f
+    /**
+     * Selected tile scale (the "raised" item). Kept low now that the shelf is shorter: the tile must
+     * stay inside the body, since any protrusion would break the reserved-height contract.
+     */
+    const val SelectedScale = 1.08f
 
     /** Neighbour tile scale — the gentle falloff that sells the magnification. */
-    const val NeighbourScale = 1.06f
+    const val NeighbourScale = 1.03f
 
     /** Label shown under the selected tile. */
     val labelGap = 2.dp
 
-    /** Total height MainActivity must reserve for the dock. */
-    val reservedHeight = shelfHeight + bottomGap + (tileSize * (SelectedScale - 1f))
+    /** Total height the dock reserves, identical to the stock bar so layouts do not shift. */
+    val reservedHeight = shelfHeight + bottomGap
 }
 
 /**
@@ -300,16 +313,20 @@ private fun DockTile(
             )
         }
 
-        // Selected label: a small caption under the raised tile, the way the dock names the hovered
-        // app. Only the active one is drawn, so the shelf never becomes a text wall.
+        // Selected label: a small caption tucked inside the bottom of the raised tile, the way the
+        // dock names the hovered app. It must live *inside* the tile now that the shelf is 48dp — a
+        // caption below the tile would fall off the body and break the reserved height.
         if (isSelected) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.82f,
+                ),
                 fontWeight = FontWeight.SemiBold,
-                color = scheme.primary,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                color = scheme.onPrimaryContainer,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp),
                 maxLines = 1,
+                softWrap = false,
             )
         }
     }

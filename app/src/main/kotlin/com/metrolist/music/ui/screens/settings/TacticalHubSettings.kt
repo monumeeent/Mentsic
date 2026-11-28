@@ -103,7 +103,7 @@ fun TacticalHubSettings(navController: NavController) {
                     NavBarStyle.ORB -> stringResource(R.string.nav_bar_style_orb)
                     NavBarStyle.APPLE -> stringResource(R.string.nav_bar_style_apple)
                     NavBarStyle.PILL -> stringResource(R.string.nav_bar_style_pill)
-                    NavBarStyle.GLASS -> stringResource(R.string.nav_bar_style_glass)
+                    NavBarStyle.GRADIENT -> stringResource(R.string.nav_bar_style_gradient)
                 }
             },
         )
@@ -212,7 +212,7 @@ fun TacticalHubSettings(navController: NavController) {
                                         NavBarStyle.ORB -> stringResource(R.string.floating_dock_navbar)
                                         NavBarStyle.APPLE -> stringResource(R.string.apple_dock_navbar)
                                         NavBarStyle.PILL -> stringResource(R.string.nav_bar_style_pill)
-                                        NavBarStyle.GLASS -> stringResource(R.string.nav_bar_style_glass)
+                                        NavBarStyle.GRADIENT -> stringResource(R.string.nav_bar_style_gradient)
                                     },
                                 )
                             },

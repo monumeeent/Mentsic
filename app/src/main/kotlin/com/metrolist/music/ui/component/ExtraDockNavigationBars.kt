@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Metrolist Project (C) 2026
  * Licensed under GPL-3.0 | See git history for contributors
  *
@@ -6,8 +6,8 @@
  * dock:
  *
  *  - [PillNavigationBar]  — a floating compact pill of icon wells; the active tab gets a tinted well.
- *  - [GlassNavigationBar] — a wide frosted bar with one highlight capsule that slides under the active
- *                           tab.
+ *  - [GradientButtonGroupNavigationBar] — a segmented rail whose active segment carries an animated
+ *    Mentsic gradient pill.
  *
  * Both follow the same rules as the other docks so they are interchangeable at every call site:
  * equal-width **stationary** touch targets, no emoji/colour literals (theme roles only), and a height
@@ -17,8 +17,13 @@
 package com.metrolist.music.ui.component
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -32,10 +37,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,8 +52,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -62,7 +65,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.metrolist.music.ui.screens.Screens
 import com.metrolist.music.ui.theme.Spacing
@@ -73,8 +75,8 @@ import kotlin.math.roundToInt
 /** Height the pill surface reserves, callers use it for `navPadding`. */
 val PillNavBarHeight = 72.dp
 
-/** Height the glass surface reserves. */
-val GlassNavBarHeight = 76.dp
+/** Height the gradient button group reserves. */
+val GradientNavBarHeight = 64.dp
 
 /** Resolved selected index for a dock; shared by all alternate surfaces. */
 private fun selectedDockIndex(
@@ -155,13 +157,25 @@ fun PillNavigationBar(
 }
 
 /**
- * Glass bar: one wide frosted body with a single highlight capsule that slides under the active tab.
+ * Mentsic gradient navigation bar.
  *
- * The capsule is positioned in the offset lambda from the animation value, so travelling between tabs
- * repaints one strip instead of recomposing the icon set.
+ * The reference is a "gradient button group": a rounded segmented control whose selected segment is
+ * filled with a moving multi-stop gradient while the rest stay flat ghosts on the same surface. This
+ * is the Mentsic-flavoured variant — same concept, built from theme roles so it turns gold in the
+ * Shining theme and stays black in OLED.
+ *
+ * Structure:
+ *  1. **Rail** — one rounded container, flat surface, hairline outline.
+ *  2. **Gradient pill** — the selected segment. Its fill is an animated horizontal gradient whose hue
+ *     offset drifts slowly, so the active tab shimmers instead of sitting static.
+ *  3. **Segments** — equal-width stationary touch targets; the selected one draws no well (the pill
+ *     behind it is the highlight).
+ *
+ * The animation is a single `rememberInfiniteTransition` float driving the gradient's start offset;
+ * it is read in the draw phase, so it never recomposes the icon row.
  */
 @Composable
-fun GlassNavigationBar(
+fun GradientButtonGroupNavigationBar(
     navigationItems: List<Screens>,
     currentRoute: String?,
     onItemClick: (Screens, Boolean) -> Unit,
@@ -171,75 +185,93 @@ fun GlassNavigationBar(
 ) {
     if (navigationItems.isEmpty()) return
     val scheme = MaterialTheme.colorScheme
-    val density = LocalDensity.current
-    val selectedIndex = remember(currentRoute, navigationItems) {
-        selectedDockIndex(navigationItems, currentRoute)
-    }
+    val selectedIndex =
+        remember(currentRoute, navigationItems) {
+            selectedDockIndex(navigationItems, currentRoute)
+        }
 
-    // Index-space animation driving the highlight; the pixel position is resolved at layout time.
+    // Slow, continuous drift of the gradient stops. Infinite rather than animated-on-change, because
+    // the point is ambient movement, not feedback.
+    val shimmer = rememberInfiniteTransition(label = "gradient-dock")
+    val shift by shimmer.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(5200, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "gradient-dock-shift",
+    )
+
+    // Slide between segments, in index space; the pixel position is resolved at layout time.
     val highlight by animateFloatAsState(
         targetValue = selectedIndex.toFloat(),
         animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
-        label = "glass-highlight",
+        label = "gradient-dock-highlight",
     )
 
     Box(
-        modifier = modifier.fillMaxWidth().height(GlassNavBarHeight),
+        modifier = modifier.fillMaxWidth().height(GradientNavBarHeight),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        Box(
+        BoxWithConstraints(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.small, vertical = Spacing.small)
-                    .height(60.dp),
+                    .height(48.dp),
         ) {
+            val slotWidthPx = constraints.maxWidth.toFloat() / navigationItems.size
+            val railCorner = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx(), 16.dp.toPx())
+
+            // 1. Rail.
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawRoundRect(
+                    color = scheme.surfaceContainer,
+                    cornerRadius = railCorner,
+                )
+                drawRoundRect(
+                    color = scheme.outlineVariant.copy(alpha = 0.35f),
+                    cornerRadius = railCorner,
+                    style = Stroke(width = 1.dp.toPx()),
+                )
+            }
+
+            // 2. Animated gradient pill under the active segment.
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val slotWidthPx = constraints.maxWidth.toFloat() / navigationItems.size
-
-                // Frosted body.
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val r = CornerRadius(20.dp.toPx(), 20.dp.toPx())
-                    drawRoundRect(
-                        brush =
-                            Brush.verticalGradient(
-                                listOf(
-                                    scheme.surfaceContainerHigh.copy(alpha = 0.96f),
-                                    scheme.surfaceContainer.copy(alpha = 0.90f),
-                                ),
-                            ),
-                        cornerRadius = r,
-                    )
-                    drawRoundRect(
-                        color = scheme.outlineVariant.copy(alpha = 0.30f),
-                        cornerRadius = r,
-                        style = Stroke(width = 1.dp.toPx()),
-                    )
-                }
-
-                // Sliding highlight capsule.
-                val capsuleWidth = with(density) { 64.dp.toPx() }
-                val capsuleHeight = with(density) { 44.dp.toPx() }
+                val pillWidth = with(LocalDensity.current) { 64.dp.toPx() }
+                val pillHeight = with(LocalDensity.current) { 38.dp.toPx() }
                 Box(
                     modifier =
                         Modifier
-                            .offset {
-                                IntOffset(
-                                    (slotWidthPx * (highlight + 0.5f) - capsuleWidth / 2f).roundToInt(),
-                                    ((constraints.maxHeight - capsuleHeight) / 2f).roundToInt(),
-                                )
-                            }
-                            .width(64.dp)
-                            .height(44.dp)
-                            .clip(RoundedCornerShape(percent = 50))
-                            .background(
-                                Brush.verticalGradient(
+                            .fillMaxSize()
+                            .drawBehind {
+                                val left = slotWidthPx * (highlight + 0.5f) - pillWidth / 2f
+                                val top = (size.height - pillHeight) / 2f
+                                val corner = androidx.compose.ui.geometry.CornerRadius(pillHeight / 2f)
+
+                                // The gradient's window slides with `shift`, so the colour travels
+                                // through the pill instead of the pill changing colour.
+                                val stops =
                                     listOf(
-                                        scheme.primaryContainer,
-                                        scheme.primaryContainer.copy(alpha = 0.70f),
-                                    ),
-                                ),
-                            ),
+                                        scheme.primary,
+                                        scheme.tertiary,
+                                        scheme.secondary,
+                                        scheme.primary,
+                                    )
+                                drawRoundRect(
+                                    brush =
+                                        Brush.horizontalGradient(
+                                            colors = stops,
+                                            startX = left - pillWidth * (0.2f + shift),
+                                            endX = left + pillWidth * (1.8f + shift),
+                                        ),
+                                    topLeft = androidx.compose.ui.geometry.Offset(left, top),
+                                    size = androidx.compose.ui.geometry.Size(pillWidth, pillHeight),
+                                    cornerRadius = corner,
+                                )
+                            },
                 )
 
                 Row(modifier = Modifier.fillMaxSize()) {
@@ -256,12 +288,12 @@ fun GlassNavigationBar(
                                     Screens.Home -> onHomeLongHold
                                     else -> null
                                 },
-                            wellSize = 44.dp,
-                            iconSize = 22.dp,
-                            // The capsule behind the tab already provides the highlight.
+                            wellSize = 38.dp,
+                            iconSize = 20.dp,
+                            // The gradient pill is the highlight; the tab adds no second well.
                             selectedWell = Color.Transparent,
                             unselectedWell = Color.Transparent,
-                            selectedTint = scheme.onPrimaryContainer,
+                            selectedTint = scheme.onPrimary,
                             unselectedTint = scheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f),
                         )

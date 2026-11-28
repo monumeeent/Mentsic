@@ -174,12 +174,28 @@ enum class NavBarStyle {
     /** Compact floating pill of icon-only buttons. */
     PILL,
 
-    /** Wide glass bar with a highlight capsule that slides under the active tab. */
-    GLASS,
+    /** Segmented rail whose active segment carries an animated Mentsic gradient pill. */
+    GRADIENT,
 }
 
 /** Personal Space cards get the tilt/perspective treatment. Toggled from the Tactical Hub settings. */
 val PersonalSpaceTiltKey = booleanPreferencesKey("personalSpaceTilt")
+
+// ── Keep Listening artwork marquee ────────────────────────────────────────
+/** Show the two-row drifting artwork strip above Keep Listening. */
+val MarqueeEnabledKey = booleanPreferencesKey("marqueeEnabled")
+
+/** Pixels per frame the strip drifts. 0 freezes it in place (drag still works). */
+val MarqueeSpeedKey = floatPreferencesKey("marqueeSpeed")
+
+/** Whether the two rows run in opposite directions (true) or the same direction (false). */
+val MarqueeOppositeKey = booleanPreferencesKey("marqueeOpposite")
+
+/** One row or two. One row is the calmer option and takes half the vertical space. */
+val MarqueeRowCountKey = intPreferencesKey("marqueeRowCount")
+
+/** Tile edge length in dp (84..140). */
+val MarqueeCardSizeKey = floatPreferencesKey("marqueeCardSize")
 
 /** Strength of the tilt, in degrees of max rotation at the card's edge. */
 val PersonalSpaceTiltFactorKey = floatPreferencesKey("personalSpaceTiltFactor")

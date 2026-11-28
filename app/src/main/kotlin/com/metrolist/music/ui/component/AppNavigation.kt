@@ -187,8 +187,8 @@ fun AppNavigationBar(
             return
         }
 
-        NavBarStyle.GLASS -> {
-            GlassNavigationBar(
+        NavBarStyle.GRADIENT -> {
+            GradientButtonGroupNavigationBar(
                 navigationItems = navigationItems,
                 currentRoute = currentRoute,
                 onItemClick = onItemClick,

@@ -113,6 +113,11 @@ import com.metrolist.music.constants.SlimNavBarKey
 import com.metrolist.music.constants.SquigglySliderKey
 import com.metrolist.music.constants.SwipeSensitivityKey
 import com.metrolist.music.constants.SwipeThumbnailKey
+import com.metrolist.music.constants.MarqueeCardSizeKey
+import com.metrolist.music.constants.MarqueeEnabledKey
+import com.metrolist.music.constants.MarqueeOppositeKey
+import com.metrolist.music.constants.MarqueeRowCountKey
+import com.metrolist.music.constants.MarqueeSpeedKey
 import com.metrolist.music.constants.VolumeBoostDbKey
 import com.metrolist.music.playback.audio.VolumeBoostState
 import com.metrolist.music.constants.SwipeToRemoveSongKey
@@ -1381,6 +1386,124 @@ fun AppearanceSettings(
                         onClick = {},
                     ),
                 ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        // Keep Listening artwork marquee. Ordinary user preferences — the strip is decorative, so
+        // everything about it (or none of it) is the user's call.
+        val (marqueeEnabled, onMarqueeEnabledChange) =
+            rememberPreference(MarqueeEnabledKey, defaultValue = true)
+        val (marqueeSpeed, onMarqueeSpeedChange) =
+            rememberPreference(MarqueeSpeedKey, defaultValue = 1.6f)
+        val (marqueeRows, onMarqueeRowsChange) =
+            rememberPreference(MarqueeRowCountKey, defaultValue = 2)
+        val (marqueeOpposite, onMarqueeOppositeChange) =
+            rememberPreference(MarqueeOppositeKey, defaultValue = true)
+        val (marqueeCardSize, onMarqueeCardSizeChange) =
+            rememberPreference(MarqueeCardSizeKey, defaultValue = 108f)
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.artwork_marquee),
+            items =
+                buildList {
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.queue_music),
+                            title = { Text(stringResource(R.string.artwork_marquee_enable)) },
+                            description = { Text(stringResource(R.string.artwork_marquee_enable_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = marqueeEnabled,
+                                    onCheckedChange = onMarqueeEnabledChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter =
+                                                painterResource(
+                                                    id = if (marqueeEnabled) R.drawable.check else R.drawable.close,
+                                                ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onMarqueeEnabledChange(!marqueeEnabled) },
+                        ),
+                    )
+                    if (marqueeEnabled) {
+                        add(
+                            Material3SettingsItem(
+                                title = { Text(stringResource(R.string.artwork_marquee_rows)) },
+                                description = { Text(stringResource(R.string.artwork_marquee_rows_desc, marqueeRows)) },
+                                trailingContent = {
+                                    TextButton(onClick = { onMarqueeRowsChange(if (marqueeRows >= 2) 1 else 2) }) {
+                                        Text(marqueeRows.toString())
+                                    }
+                                },
+                                onClick = { onMarqueeRowsChange(if (marqueeRows >= 2) 1 else 2) },
+                            ),
+                        )
+                        add(
+                            Material3SettingsItem(
+                                title = { Text(stringResource(R.string.artwork_marquee_speed)) },
+                                description = {
+                                    Column {
+                                        Text(stringResource(R.string.artwork_marquee_speed_desc, marqueeSpeed))
+                                        Slider(
+                                            value = marqueeSpeed,
+                                            onValueChange = onMarqueeSpeedChange,
+                                            // 0 = frozen; the top is fast enough to be playful.
+                                            valueRange = 0f..4f,
+                                            steps = 7,
+                                        )
+                                    }
+                                },
+                                onClick = {},
+                            ),
+                        )
+                        add(
+                            Material3SettingsItem(
+                                title = { Text(stringResource(R.string.artwork_marquee_tile_size)) },
+                                description = {
+                                    Column {
+                                        Text(stringResource(R.string.artwork_marquee_tile_size_desc, marqueeCardSize))
+                                        Slider(
+                                            value = marqueeCardSize,
+                                            onValueChange = onMarqueeCardSizeChange,
+                                            valueRange = 84f..140f,
+                                            steps = 13,
+                                        )
+                                    }
+                                },
+                                onClick = {},
+                            ),
+                        )
+                        add(
+                            Material3SettingsItem(
+                                title = { Text(stringResource(R.string.artwork_marquee_opposite)) },
+                                description = { Text(stringResource(R.string.artwork_marquee_opposite_desc)) },
+                                trailingContent = {
+                                    Switch(
+                                        checked = marqueeOpposite,
+                                        onCheckedChange = onMarqueeOppositeChange,
+                                        thumbContent = {
+                                            Icon(
+                                                painter =
+                                                    painterResource(
+                                                        id = if (marqueeOpposite) R.drawable.check else R.drawable.close,
+                                                    ),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(SwitchDefaults.IconSize),
+                                            )
+                                        },
+                                    )
+                                },
+                                onClick = { onMarqueeOppositeChange(!marqueeOpposite) },
+                            ),
+                        )
+                    }
+                },
         )
 
         Spacer(modifier = Modifier.height(27.dp))

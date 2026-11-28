@@ -178,6 +178,12 @@ fun AudioVisualizer(
     val sweepHead = remember { mutableFloatStateOf(0f) }
     val sweepStrength = remember { mutableFloatStateOf(0f) }
 
+    // Eased values the draw pass actually uses. The raw targets above jump once per frame (a new beat
+    // spawns, a head advances a bar), and painting those directly made the glow strobe. These are
+    // attacked/decayed here, in the sampler, so the wash *fades in* on a beat and *fades out* after it.
+    val washAlpha = remember { mutableFloatStateOf(0f) }
+    val washHeadEased = remember { mutableFloatStateOf(0f) }
+
     LaunchedEffect(barCount, enabled, style) {
         // Fresh bars start from the resting line, not from the tail of the previous layout.
         barAge.fill(3f)
@@ -233,6 +239,21 @@ fun AudioVisualizer(
                 val faded = sweepStrength.value * 0.86f
                 sweepStrength.value = if (faded < 0.01f) 0f else faded
             }
+
+            // Ease the painted values: fast attack so a hit blooms immediately, slower release so the
+            // glow lingers and dissolves. A head that jumps a bar is smoothed the same way, which is
+            // why the wash glides sideways instead of teleporting.
+            val targetAlpha = sweepStrength.value
+            washAlpha.value =
+                if (targetAlpha > washAlpha.value) {
+                    // ~90 ms attack.
+                    washAlpha.value + (targetAlpha - washAlpha.value) * 0.35f
+                } else {
+                    // ~250 ms release.
+                    washAlpha.value + (targetAlpha - washAlpha.value) * 0.14f
+                }
+            if (washAlpha.value < 0.004f) washAlpha.value = 0f
+            washHeadEased.value = washHeadEased.value + (sweepHead.value - washHeadEased.value) * 0.22f
 
             val targets =
                 if (!silent) {
@@ -296,8 +317,8 @@ fun AudioVisualizer(
 
         // The travelling beat's colour wash. Its head position and strength are read here (draw
         // phase) so the wash follows the rhythm without recomposing the visualizer.
-        val washHead = sweepHead.value
-        val washStrength = if (enabled) sweepStrength.value else 0f
+        val washHead = washHeadEased.value
+        val washStrength = if (enabled) washAlpha.value else 0f
 
         drawVisualizer(
             values = display,
@@ -553,7 +574,8 @@ private fun DrawScope.drawBeatWash(
                 colors =
                     listOf(
                         high.copy(alpha = 0.26f * strength),
-                        high.copy(alpha = 0.08f * strength),
+                        high.copy(alpha = 0.14f * strength),
+                        high.copy(alpha = 0.05f * strength),
                         Color.Transparent,
                     ),
                 center = centre,

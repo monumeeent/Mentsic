@@ -119,6 +119,11 @@ import com.metrolist.music.constants.HomeLayoutPresetKey
 import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.HubModeEnabledKey
+import com.metrolist.music.constants.MarqueeCardSizeKey
+import com.metrolist.music.constants.MarqueeEnabledKey
+import com.metrolist.music.constants.MarqueeOppositeKey
+import com.metrolist.music.constants.MarqueeRowCountKey
+import com.metrolist.music.constants.MarqueeSpeedKey
 import com.metrolist.music.constants.HomeShowDiscoveryKey
 import com.metrolist.music.constants.HomeShowPersonalSpaceKey
 import com.metrolist.music.constants.HomeShowShufflesKey
@@ -216,6 +221,15 @@ fun NewHomeScreen(
     val (sdRows) = rememberPreference(SpeedDialRowsKey, SPEED_DIAL_ROWS)
     val (shuffleCols) = rememberPreference(ShuffleColumnsKey, SHUFFLE_COLUMNS)
     val (shuffleRows) = rememberPreference(ShuffleRowsKey, SHUFFLE_ROWS)
+
+    // Keep Listening artwork marquee. All five knobs are ordinary user preferences, so the strip can
+    // be switched off entirely or tuned until it stops being distracting.
+    val (marqueeEnabled) = rememberPreference(MarqueeEnabledKey, defaultValue = true)
+    val (marqueeSpeed) = rememberPreference(MarqueeSpeedKey, defaultValue = 1.6f)
+    val (marqueeRowsInt) = rememberPreference(MarqueeRowCountKey, defaultValue = 2)
+    val marqueeRows = marqueeRowsInt.coerceIn(1, 2)
+    val (marqueeOpposite) = rememberPreference(MarqueeOppositeKey, defaultValue = true)
+    val (marqueeCardSize) = rememberPreference(MarqueeCardSizeKey, defaultValue = 108f)
 
     // Auto-generated mixes (Release Radar / Weekly Mix). The generator caches for a week, so this
     // first load is not repeated when the user switches tabs.
@@ -646,12 +660,23 @@ fun NewHomeScreen(
                             // directions as a visual lead-in, and each tile taps straight into its
                             // song. It sits above the row rather than replacing it, so the list view
                             // stays available for people who prefer to scan titles.
-                            MarqueeArtworkCarousel(
-                                items = songs.take(12),
-                                thumbnailOf = { it.thumbnailUrl },
-                                onItemClick = { playSong(it, playerConnection, mediaMetadata?.id) },
-                            )
-                            Spacer(Modifier.height(Spacing.small))
+                            //
+                            // Every aspect is user-controlled (Settings → Appearance → Artwork
+                            // marquee): on/off, speed, row count, opposite or parallel rows, tile
+                            // size. The switch exists because a continuously moving surface is not
+                            // everyone's idea of a home feed.
+                            if (marqueeEnabled) {
+                                MarqueeArtworkCarousel(
+                                    items = songs.take(12),
+                                    thumbnailOf = { it.thumbnailUrl },
+                                    onItemClick = { playSong(it, playerConnection, mediaMetadata?.id) },
+                                    speed = marqueeSpeed,
+                                    rows = marqueeRows,
+                                    oppositeDirections = marqueeOpposite,
+                                    cardSize = marqueeCardSize.dp,
+                                )
+                                Spacer(Modifier.height(Spacing.small))
+                            }
                             HomeSongRow(
                                 songs = songs,
                                 activeId = mediaMetadata?.id,
