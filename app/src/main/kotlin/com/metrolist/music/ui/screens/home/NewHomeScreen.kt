@@ -97,6 +97,7 @@ import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.CurrentWeekHeatmap
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.MonthlyPlayHeatmap
+import com.metrolist.music.ui.component.MarqueeArtworkCarousel
 import com.metrolist.music.ui.component.TiltCard
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.TacticalCollapsibleHeatmapHeader
@@ -551,7 +552,10 @@ fun NewHomeScreen(
                         item(key = "new_home_speed_dial") {
                             HomeSectionHeaderV2(title = stringResource(R.string.speed_dial))
                             HomeSpeedDialGrid(
-                                columns = sdColumns.coerceIn(2, 6),
+                                // The settings slider allows up to 8 columns; the old hard cap of 6
+                                // here silently ignored anything higher, which is why 7 and 8 never
+                                // took effect. The ceiling now matches the slider.
+                                columns = sdColumns.coerceIn(2, 8),
                                 rows = sdRows.coerceIn(1, 10),
                                 items = uiState.speedDialItems,
                                 activeId = mediaMetadata?.id,
@@ -638,6 +642,16 @@ fun NewHomeScreen(
                     activeKeepListening.takeIf { it.isNotEmpty() }?.let { songs ->
                         item(key = "new_home_keep_listening") {
                             HomeSectionHeaderV2(title = stringResource(R.string.keep_listening))
+                            // Two-row marquee of the same songs: the artwork drifts past in opposing
+                            // directions as a visual lead-in, and each tile taps straight into its
+                            // song. It sits above the row rather than replacing it, so the list view
+                            // stays available for people who prefer to scan titles.
+                            MarqueeArtworkCarousel(
+                                items = songs.take(12),
+                                thumbnailOf = { it.thumbnailUrl },
+                                onItemClick = { playSong(it, playerConnection, mediaMetadata?.id) },
+                            )
+                            Spacer(Modifier.height(Spacing.small))
                             HomeSongRow(
                                 songs = songs,
                                 activeId = mediaMetadata?.id,

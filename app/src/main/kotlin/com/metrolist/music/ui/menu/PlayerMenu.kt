@@ -88,6 +88,8 @@ import com.metrolist.music.constants.DeveloperModeKey
 import com.metrolist.music.constants.ListItemHeight
 import com.metrolist.music.constants.ListenTogetherEnabledKey
 import com.metrolist.music.constants.VarispeedKey
+import com.metrolist.music.constants.VolumeBoostDbKey
+import com.metrolist.music.playback.audio.VolumeBoostState
 import com.metrolist.music.listentogether.ConnectionState
 import com.metrolist.music.listentogether.ListenTogetherEvent
 import com.metrolist.music.models.MediaMetadata
@@ -108,6 +110,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.round
+import kotlin.math.roundToInt
 
 /**
  * Blueprint of the player "More" sheet (full player → three dots).
@@ -341,6 +344,14 @@ fun PlayerMenu(
                     modifier = Modifier.weight(1f),
                     accentColor = MaterialTheme.colorScheme.primary,
                 )
+            }
+
+            // In-app volume booster. Sits directly under the volume slider because that is where a
+            // user looks when the song is too quiet: the slider is already at 100%, this is the next
+            // step. The gain is digital and soft-limited, so it can make a quiet master louder
+            // without clipping.
+            if (!isCasting) {
+                VolumeBoostRow()
             }
         }
     }
@@ -2160,4 +2171,73 @@ fun ListenTogetherDialog(
             }
         }
     }
+}
+
+/**
+ * In-app volume booster row: a 0..+12 dB slider bound to [VolumeBoostState].
+ *
+ * The gain is applied inside the audio pipeline (see `VolumeBoostAudioProcessor`) and soft-limited, so
+ * pushing it to the top makes quiet material audible rather than distorted. 0 dB is a true bypass.
+ *
+ * The value is persisted on every change through [VolumeBoostDbKey], and the service restores it on
+ * start-up, so the boost survives a restart without the audio thread ever reading DataStore.
+ */
+@Composable
+private fun VolumeBoostRow() {
+    val (savedGain, onSavedGainChange) = rememberPreference(VolumeBoostDbKey, defaultValue = 0f)
+    // Mirror the saved value into the shared state whenever it changes (including first composition).
+    LaunchedEffect(savedGain) { VolumeBoostState.setGainDb(savedGain) }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(R.drawable.volume_up),
+                contentDescription = null,
+                modifier = Modifier.size(IconSizes.Medium),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = stringResource(R.string.volume_boost),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = if (savedGain <= 0.01f) stringResource(R.string.volume_boost_off) else "+${savedGain.roundToInt()} dB",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        VolumeBoostSlider(
+            value = savedGain,
+            onValueChange = { db ->
+                // Apply immediately so the change is audible while dragging, then persist.
+                VolumeBoostState.setGainDb(db)
+                onSavedGainChange(db)
+            },
+        )
+    }
+}
+
+/**
+ * Boost slider with a centre-anchored look and a warning tint near the ceiling.
+ *
+ * Kept separate from [VolumeBoostRow] so the settings screen can reuse the same control without the
+ * row chrome.
+ */
+@Composable
+fun VolumeBoostSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.material3.Slider(
+        value = value,
+        onValueChange = onValueChange,
+        valueRange = 0f..VolumeBoostState.MaxGainDb,
+        // 1 dB stops, so the printed value cannot disagree with the thumb position.
+        steps = (VolumeBoostState.MaxGainDb.toInt() - 1).coerceAtLeast(0),
+        modifier = modifier.fillMaxWidth(),
+    )
 }

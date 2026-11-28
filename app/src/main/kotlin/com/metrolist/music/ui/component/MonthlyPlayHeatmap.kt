@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -314,29 +315,34 @@ fun CurrentWeekHeatmap(
 
         Spacer(Modifier.height(Spacing.small))
 
-        // Weekday captions sit **above** the cells, like a calendar column header. Below the cells the
-        // letter was crammed into the leftover height of the fixed-height Personal Space card and got
-        // clipped at the card's bottom edge; on top it shares the row with the cells' own width, stays
-        // inside the card, and still aligns 1:1 with each date.
-        //
-        // The text is forced onto a single tight line: `labelSmall` carries a line box taller than the
-        // glyph itself, so with default line height the letters sat half in the gap and looked as if the
-        // cell below was overlapping them. Pinning lineHeight to the font size removes that air, and
-        // `heightIn` keeps the row a fixed 14dp whatever the user's font scale is doing to the grid.
-        val captionLineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.05f
+        // Weekday captions sit **above** the cells, like a calendar column header — never inside the
+        // cell. Three things keep them visually separate from the date blocks:
+        //   1. a fixed-height caption band (not a text line box that varies with font scale),
+        //   2. a real gap (Spacing.small) between the band and the cell row, so no edge can touch,
+        //   3. an explicit `includeFontPadding = false` + pinned lineHeight, which removes the extra
+        //      leading that used to push the glyph down into the gap.
+        val captionStyle =
+            MaterialTheme.typography.labelSmall.copy(
+                lineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.0f,
+                platformStyle =
+                    androidx.compose.ui.text.PlatformTextStyle(
+                        includeFontPadding = false,
+                        lineHeightStyleAlignment = androidx.compose.ui.text.style.LineHeightStyleAlignment.Top,
+                    ),
+            )
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
-            verticalAlignment = Alignment.Bottom,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             days.forEach { date ->
                 Box(
-                    modifier = Modifier.weight(1f).height(14.dp),
+                    modifier = Modifier.weight(1f).height(16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                        style = MaterialTheme.typography.labelSmall.copy(lineHeight = captionLineHeight),
+                        style = captionStyle,
                         color =
                             if (date == today) {
                                 MaterialTheme.colorScheme.primary
@@ -345,12 +351,15 @@ fun CurrentWeekHeatmap(
                             },
                         maxLines = 1,
                         softWrap = false,
-                        overflow = TextOverflow.Clip,
+                        overflow = TextOverflow.Visible,
                     )
                 }
             }
         }
 
+        // The gap between the weekday band and the date blocks. This is the separation that was
+        // missing: previously only `Spacing.tiny` (4dp) sat between a 14dp band and a cell that can be
+        // 46dp tall, which read as one merged block.
         Spacer(Modifier.height(Spacing.small))
 
         Row(

@@ -113,6 +113,8 @@ import com.metrolist.music.constants.SlimNavBarKey
 import com.metrolist.music.constants.SquigglySliderKey
 import com.metrolist.music.constants.SwipeSensitivityKey
 import com.metrolist.music.constants.SwipeThumbnailKey
+import com.metrolist.music.constants.VolumeBoostDbKey
+import com.metrolist.music.playback.audio.VolumeBoostState
 import com.metrolist.music.constants.SwipeToRemoveSongKey
 import com.metrolist.music.constants.SwipeToSongKey
 import com.metrolist.music.constants.UseNewPlayerDesignKey
@@ -1336,6 +1338,49 @@ fun AppearanceSettings(
                         ),
                     )
                 },
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        // In-app volume booster. A normal (non-developer) audio preference: it is the answer to
+        // "this track is too quiet", and it does not change the device's global volume.
+        val (volumeBoostDb, onVolumeBoostDbChange) =
+            rememberPreference(VolumeBoostDbKey, defaultValue = 0f)
+        Material3SettingsGroup(
+            title = stringResource(R.string.volume_boost),
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.volume_up),
+                        title = { Text(stringResource(R.string.volume_boost)) },
+                        description = {
+                            Column {
+                                Text(stringResource(R.string.volume_boost_desc))
+                                Slider(
+                                    value = volumeBoostDb,
+                                    onValueChange = { db ->
+                                        VolumeBoostState.setGainDb(db)
+                                        onVolumeBoostDbChange(db)
+                                    },
+                                    valueRange = 0f..VolumeBoostState.MaxGainDb,
+                                    // 1 dB stops.
+                                    steps = (VolumeBoostState.MaxGainDb.toInt() - 1).coerceAtLeast(0),
+                                )
+                                Text(
+                                    text =
+                                        if (volumeBoostDb <= 0.01f) {
+                                            stringResource(R.string.volume_boost_off)
+                                        } else {
+                                            "+${volumeBoostDb.roundToInt()} dB"
+                                        },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        },
+                        onClick = {},
+                    ),
+                ),
         )
 
         Spacer(modifier = Modifier.height(27.dp))

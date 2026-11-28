@@ -17,6 +17,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRailItemDefaults
+import com.metrolist.music.constants.NavBarStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -143,35 +144,62 @@ fun AppNavigationBar(
     onItemClick: (Screens, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     slimNav: Boolean = false,
-    // Developer experiment: swaps this bar for the floating expandable dock.
-    floatingDock: Boolean = false,
-    // Alternate surface: the Apple-style magnifying dock.
-    appleDock: Boolean = false,
+    // Which surface to draw. One enum instead of three independent booleans: only one bottom bar can
+    // ever be active, and the orb geometry applies to [NavBarStyle.ORB] alone.
+    navBarStyle: NavBarStyle = NavBarStyle.STANDARD,
     onSearchLongClick: (() -> Unit)? = null,
     onHomeLongHold: (() -> Unit)? = null,
 ) {
-    if (appleDock) {
-        AppleDockNavigationBar(
-            navigationItems = navigationItems,
-            currentRoute = currentRoute,
-            onItemClick = onItemClick,
-            modifier = modifier,
-            onSearchLongClick = onSearchLongClick,
-            onHomeLongHold = onHomeLongHold,
-        )
-        return
-    }
+    when (navBarStyle) {
+        NavBarStyle.ORB -> {
+            AppFloatingDockNavigationBar(
+                navigationItems = navigationItems,
+                currentRoute = currentRoute,
+                onItemClick = onItemClick,
+                modifier = modifier,
+                onSearchLongClick = onSearchLongClick,
+                onHomeLongHold = onHomeLongHold,
+            )
+            return
+        }
 
-    if (floatingDock) {
-        AppFloatingDockNavigationBar(
-            navigationItems = navigationItems,
-            currentRoute = currentRoute,
-            onItemClick = onItemClick,
-            modifier = modifier,
-            onSearchLongClick = onSearchLongClick,
-            onHomeLongHold = onHomeLongHold,
-        )
-        return
+        NavBarStyle.APPLE -> {
+            AppleDockNavigationBar(
+                navigationItems = navigationItems,
+                currentRoute = currentRoute,
+                onItemClick = onItemClick,
+                modifier = modifier,
+                onSearchLongClick = onSearchLongClick,
+                onHomeLongHold = onHomeLongHold,
+            )
+            return
+        }
+
+        NavBarStyle.PILL -> {
+            PillNavigationBar(
+                navigationItems = navigationItems,
+                currentRoute = currentRoute,
+                onItemClick = onItemClick,
+                modifier = modifier,
+                onSearchLongClick = onSearchLongClick,
+                onHomeLongHold = onHomeLongHold,
+            )
+            return
+        }
+
+        NavBarStyle.GLASS -> {
+            GlassNavigationBar(
+                navigationItems = navigationItems,
+                currentRoute = currentRoute,
+                onItemClick = onItemClick,
+                modifier = modifier,
+                onSearchLongClick = onSearchLongClick,
+                onHomeLongHold = onHomeLongHold,
+            )
+            return
+        }
+
+        NavBarStyle.STANDARD -> Unit // falls through to the stock bar below
     }
 
     val containerColor = MaterialTheme.colorScheme.surfaceContainer

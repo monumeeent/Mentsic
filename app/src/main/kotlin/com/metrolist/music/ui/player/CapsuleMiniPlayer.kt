@@ -196,12 +196,16 @@ fun CapsuleMiniPlayer(
     }
 
     // Fill drawn inside the pixel frame for the current style.
+    //
+    // BLUR and TRANSPARENT must stay *translucent*: the pixel frame is painted on top of the style
+    // layer, so an opaque fill here hid the blurred artwork completely — that is why Blur looked
+    // exactly like Default in the capsule while it worked in the standard player.
     val panelFill =
         when (miniPlayerBackground) {
             MiniPlayerBackgroundStyle.DEFAULT -> scheme.surfaceContainerHigh
-            MiniPlayerBackgroundStyle.TRANSPARENT -> scheme.surfaceContainerHigh.copy(alpha = 0.45f)
-            MiniPlayerBackgroundStyle.BLUR -> scheme.surfaceContainerHigh
-            MiniPlayerBackgroundStyle.GRADIENT -> scheme.surfaceContainerHigh
+            MiniPlayerBackgroundStyle.TRANSPARENT -> scheme.surfaceContainerHigh.copy(alpha = 0.28f)
+            MiniPlayerBackgroundStyle.BLUR -> scheme.surfaceContainerLowest.copy(alpha = 0.42f)
+            MiniPlayerBackgroundStyle.GRADIENT -> Color.Transparent
             MiniPlayerBackgroundStyle.PURE_BLACK -> Color.Black
         }
 
@@ -286,6 +290,9 @@ fun CapsuleMiniPlayer(
             // Style layer, painted *under* the frame so the chamfer and scanline always stay crisp.
             when (miniPlayerBackground) {
                 MiniPlayerBackgroundStyle.BLUR -> {
+                    // Blur needs the RenderEffect path (API 31+). Below that — or with no artwork —
+                    // draw a dimmed surface instead, so the style still differs from Default rather
+                    // than silently rendering nothing.
                     if (thumbnailUrl != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                         AsyncImage(
                             model = thumbnailUrl,
@@ -293,7 +300,14 @@ fun CapsuleMiniPlayer(
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize().blur(40.dp),
                         )
-                        Box(Modifier.fillMaxSize().background(scheme.surfaceContainerHighest.copy(alpha = 0.35f)))
+                        // A light veil keeps the LCD text legible over bright artwork.
+                        Box(Modifier.fillMaxSize().background(scheme.surfaceContainerLowest.copy(alpha = 0.30f)))
+                    } else {
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .background(scheme.surfaceContainerHighest.copy(alpha = 0.55f)),
+                        )
                     }
                 }
 

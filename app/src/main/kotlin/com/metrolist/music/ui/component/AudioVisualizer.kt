@@ -172,6 +172,12 @@ fun AudioVisualizer(
     // few times a second and retired as soon as they leave the field, so nothing grows unbounded.
     val sweeps = remember(barCount) { ArrayList<OnsetSweep>(8) }
 
+    // Position of the most recent beat's head, normalised 0..1 across the field, and its strength.
+    // Read only in the draw pass (see the gradient below), so it repaints the colour wash without
+    // recomposing anything.
+    val sweepHead = remember { mutableFloatStateOf(0f) }
+    val sweepStrength = remember { mutableFloatStateOf(0f) }
+
     LaunchedEffect(barCount, enabled, style) {
         // Fresh bars start from the resting line, not from the tail of the previous layout.
         barAge.fill(3f)
@@ -212,6 +218,21 @@ fun AudioVisualizer(
                 } else {
                     sweepContribution(sweeps, barCount, elapsed)
                 }
+
+            // Publish the brightest traveling beat for the colour wash. We take the newest sweep that
+            // is still alive: it is the one the eye is following, so the gradient rides the beat the
+            // user just heard rather than a pile of older ones.
+            val lead = sweeps.lastOrNull()
+            if (lead != null && !silent) {
+                val progress = ((elapsed - lead.bornAt) / SWEEP_SECONDS).coerceIn(0f, 1f)
+                val headBar = lead.origin + progress * barCount * lead.direction
+                sweepHead.floatValue = (headBar / barCount.coerceAtLeast(1)).coerceIn(0f, 1f)
+                sweepStrength.floatValue = (lead.strength * (1f - progress)).coerceIn(0f, 1f)
+            } else {
+                // Fade the wash out rather than snapping it off when the last beat retires.
+                sweepStrength.floatValue *= 0.86f
+                if (sweepStrength.floatValue < 0.01f) sweepStrength.floatValue = 0f
+            }
 
             val targets =
                 if (!silent) {
@@ -273,6 +294,11 @@ fun AudioVisualizer(
         // Peak brightness follows the frame's loudness, so a quiet song blooms less than a loud one.
         val bloom = if (enabled && !live.silent) 0.35f + 0.65f * live.level.coerceIn(0f, 1f) else 0f
 
+        // The travelling beat's colour wash. Its head position and strength are read here (draw
+        // phase) so the wash follows the rhythm without recomposing the visualizer.
+        val washHead = sweepHead.floatValue
+        val washStrength = if (enabled) sweepStrength.floatValue else 0f
+
         drawVisualizer(
             values = display,
             palette = colors,
@@ -280,6 +306,8 @@ fun AudioVisualizer(
             style = style,
             pulse = pulse,
             bloom = bloom,
+            washHead = washHead,
+            washStrength = washStrength,
         )
     }
 }
@@ -481,7 +509,16 @@ private fun DrawScope.drawVisualizer(
     style: VisualizerStyle,
     pulse: Float = 0f,
     bloom: Float = 0f,
+    washHead: Float = 0f,
+    washStrength: Float = 0f,
 ) {
+    // The travelling-beat colour wash is painted *under* the bars, so it reads as light spilling
+    // across the field behind the shapes rather than tinting them. Every preset gets it, which is what
+    // makes the gradient feel like part of the visualizer instead of a decoration on one style.
+    if (washStrength > 0.01f) {
+        drawBeatWash(palette = palette, head = washHead, strength = washStrength)
+    }
+
     when (style) {
         VisualizerStyle.RIBBON -> drawMirroredRibbon(bars = values, palette = palette, gap = gap, pulse = pulse, bloom = bloom)
         VisualizerStyle.BARS -> drawBars(bars = values, palette = palette, gap = gap)
@@ -489,6 +526,40 @@ private fun DrawScope.drawVisualizer(
         VisualizerStyle.MIRROR_WAVE -> drawWave(bars = values, palette = palette, mirror = true)
         VisualizerStyle.DOTS -> drawDots(bars = values, palette = palette, gap = gap)
     }
+}
+
+/**
+ * Gradient wash that rides the travelling beat.
+ *
+ * A radial bloom is centred on the sweep head ([head], 0..1 across the field) and tinted with the high
+ * end of the palette. As the beat walks, the glow walks with it — the "gradient vibe as the beat goes
+ * to one side". Opacity is [strength], which already decays over the beat's life, so the wash fades
+ * out instead of blinking off.
+ */
+private fun DrawScope.drawBeatWash(
+    palette: List<Color>,
+    head: Float,
+    strength: Float,
+) {
+    val high = palette.getOrNull(1) ?: palette.getOrNull(0) ?: Color.White.copy(alpha = 0.9f)
+    val centre = Offset(size.width * head, size.height / 2f)
+    // Radius scales with the field so the glow covers a similar area at any size, but is wide enough
+    // to read as a gradient rather than a spot.
+    val radius = maxOf(size.width * 0.45f, size.height * 1.1f)
+
+    drawRect(
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        high.copy(alpha = 0.26f * strength),
+                        high.copy(alpha = 0.08f * strength),
+                        Color.Transparent,
+                    ),
+                center = centre,
+                radius = radius,
+            ),
+    )
 }
 
 /** Colours low → high for a [0,1] amplitude. Shared by every preset so they stay palette-linked. */

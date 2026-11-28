@@ -177,6 +177,15 @@
     <string name="personal_space_tilt">Tilt Personal Space cards</string>
     <string name="personal_space_tilt_desc">The cards lean toward your finger and spring back flat, like a physical tile.</string>
     <string name="personal_space_tilt_strength">Tilt strength</string>
+    <string name="nav_bar_style">Navigation bar style</string>
+    <string name="nav_bar_style_standard">Standard — Material 3 bottom bar</string>
+    <string name="nav_bar_style_orb">Orb — notched bar with a floating orb</string>
+    <string name="nav_bar_style_apple">Dock — frosted shelf with magnifying tiles</string>
+    <string name="nav_bar_style_pill">Pill — compact floating icon pill</string>
+    <string name="nav_bar_style_glass">Glass — frosted bar with a sliding highlight</string>
+    <string name="volume_boost">Volume boost</string>
+    <string name="volume_boost_off">Off</string>
+    <string name="volume_boost_desc">Digital gain applied inside the app, with a soft limiter. Use for quiet masters; above ~6 dB loud tracks may sound denser.</string>
     <string name="auto_playlists">Auto playlists</string>
     <string name="show_liked_playlist">Show Liked playlist</string>
     <string name="show_downloaded_playlist">Show Downloaded playlist</string>

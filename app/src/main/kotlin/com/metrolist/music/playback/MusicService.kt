@@ -162,6 +162,7 @@ import com.metrolist.music.constants.ScrobbleDelaySecondsKey
 import com.metrolist.music.constants.ScrobbleMinSongDurationKey
 import com.metrolist.music.constants.ShowLyricsKey
 import com.metrolist.music.constants.ShuffleModeKey
+import com.metrolist.music.constants.VolumeBoostDbKey
 import com.metrolist.music.constants.ShufflePlaylistFirstKey
 import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
@@ -200,6 +201,8 @@ import com.metrolist.music.playback.alarm.MusicAlarmStore
 import com.metrolist.music.playback.audio.SilenceDetectorAudioProcessor
 import com.metrolist.music.playback.audio.VisualizerAudioProcessor
 import com.metrolist.music.playback.audio.VisualizerState
+import com.metrolist.music.playback.audio.VolumeBoostAudioProcessor
+import com.metrolist.music.playback.audio.VolumeBoostState
 import com.metrolist.music.playback.queues.EmptyQueue
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.Queue
@@ -779,6 +782,9 @@ class MusicService :
         } ?: com.metrolist.music.constants.AudioQuality.AUTO
         playerVolume = MutableStateFlow((startupPrefs!![PlayerVolumeKey] ?: 1f).coerceIn(0f, 1f))
 
+        // Restore the saved in-app volume boost before the first buffer is processed.
+        VolumeBoostState.setGainDb(startupPrefs!![VolumeBoostDbKey] ?: 0f)
+
         initializeCast()
 
         // Collecting this flow activates the internal map that updates lyricsProviders in LyricsHelper
@@ -1317,6 +1323,9 @@ class MusicService :
         // Analyses the decoded signal so the visualizer can follow the actual audio. Disabled by
         // default: it only runs while a visualizer is on screen and asking for data.
         val visualizerProcessor = VisualizerAudioProcessor()
+        // In-app volume booster: digital gain + soft limiter, inserted after the equalizer so its
+        // output is boosted, and before the visualizer so the meter shows what is actually heard.
+        val volumeBoostProcessor = VolumeBoostAudioProcessor()
 
         // Set initial state — use pre-read prefs when available, otherwise fall back to DataStore
         val useAudioTrackPlaybackParams = if (prefs != null) {
@@ -1346,6 +1355,7 @@ class MusicService :
                         eqProcessor,
                         silenceProcessor,
                         visualizerProcessor,
+                        volumeBoostProcessor,
                         useAudioTrackPlaybackParams,
                     ),
                 )
@@ -4077,6 +4087,7 @@ class MusicService :
         eqProcessor: CustomEqualizerAudioProcessor,
         silenceProcessor: SilenceDetectorAudioProcessor,
         visualizerProcessor: VisualizerAudioProcessor,
+        volumeBoostProcessor: VolumeBoostAudioProcessor,
         useAudioTrackPlaybackParams: Boolean,
     ) = object : DefaultRenderersFactory(this) {
         override fun buildAudioRenderers(
@@ -4137,6 +4148,9 @@ class MusicService :
                         normalizationProcessor,
                         eqProcessor,
                         silenceProcessor,
+                        // Gain runs after the EQ so the shape the user tuned is what gets louder /
+                        // quieter, not the raw signal.
+                        volumeBoostProcessor,
                         // Last in the chain, so it measures what actually reaches the sink.
                         visualizerProcessor,
                     ),

@@ -141,6 +141,10 @@ import com.metrolist.music.constants.AppLanguageKey
 import com.metrolist.music.constants.CheckForUpdatesKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DefaultOpenTabKey
+import com.metrolist.music.constants.NavBarStyle
+import com.metrolist.music.constants.NavBarStyleKey
+import com.metrolist.music.ui.component.GlassNavBarHeight
+import com.metrolist.music.ui.component.PillNavBarHeight
 import com.metrolist.music.constants.AppleDockNavKey
 import com.metrolist.music.constants.DevFloatingDockKey
 import com.metrolist.music.constants.DismissedKmpUpdateKey
@@ -836,15 +840,27 @@ class MainActivity : FragmentActivity() {
                 }
                 val (forceBottomNav) = rememberPreference(ForceBottomNavBarKey, defaultValue = false)
                 val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
-                // Developer-only alternate navigation bar (floating expandable dock).
-                // Floating dock: a user-facing navigation style now, not a developer experiment. The
-                // preference alone decides; it no longer requires developer mode to take effect.
-                val (devFloatingDockPref) = rememberPreference(DevFloatingDockKey, defaultValue = false)
-                // Apple-style magnifying dock. Mutually exclusive with the notched dock: the Apple dock
-                // wins when both are stored on, so the surface is always well defined.
-                val (appleDockPref) = rememberPreference(AppleDockNavKey, defaultValue = false)
-                val appleDockActive = appleDockPref
-                val useFloatingDock = devFloatingDockPref && !appleDockActive
+                // One navigation surface, chosen by a single preference. The legacy booleans are read
+                // only to migrate a user's last choice the first time this value is absent.
+                val (devFloatingDockLegacy) = rememberPreference(DevFloatingDockKey, defaultValue = false)
+                val (appleDockLegacy) = rememberPreference(AppleDockNavKey, defaultValue = false)
+                val (navBarStyleName) =
+                    rememberPreference(
+                        NavBarStyleKey,
+                        defaultValue =
+                            when {
+                                appleDockLegacy -> NavBarStyle.APPLE.name
+                                devFloatingDockLegacy -> NavBarStyle.ORB.name
+                                else -> NavBarStyle.STANDARD.name
+                            },
+                    )
+                val navBarStyle =
+                    remember(navBarStyleName) {
+                        runCatching { NavBarStyle.valueOf(navBarStyleName) }.getOrDefault(NavBarStyle.STANDARD)
+                    }
+                // `slimNav` only applies to the stock bar; the alternate surfaces have their own heights.
+                // The setter is exposed for the Tactical Hub deep-link below, which switches the
+                // surface from a settings row.
                 val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.HOME.name)
                 val defaultOpenTab = remember(defaultOpenTabInt) {
                     try {
@@ -922,21 +938,19 @@ class MainActivity : FragmentActivity() {
 
                 val showRail = !forceBottomNav && (isLandscape || isTablet) && !inSearchScreen
                 // The floating dock has no rail form; keep the rail for landscape/tablet.
-                val dockActive = useFloatingDock && !showRail
-                // Same live spec the bar draws with, so the space reserved here matches pixel for
-                // pixel even after the geometry is retuned in developer settings.
+                // Only the notched bar needs its live spec; the others reserve fixed heights.
                 val dockHeight = rememberFloatingNotchSpec().reservedHeight
-                // The Apple dock is taller than either stock bar (raised tile + label), so it reserves
-                // its own height rather than reusing the notched spec.
+                // Each alternate surface reserves its own height; the stock bar keeps its constants.
                 val appleDockHeight = 68.dp + Spacing.small + 8.dp
 
                 val navPadding =
                     if (shouldShowNavigationBar && !showRail) {
-                        when {
-                            appleDockActive -> appleDockHeight
-                            dockActive -> dockHeight
-                            slimNav -> SlimNavBarHeight
-                            else -> NavigationBarHeight
+                        when (navBarStyle) {
+                            NavBarStyle.ORB -> dockHeight
+                            NavBarStyle.APPLE -> appleDockHeight
+                            NavBarStyle.PILL -> PillNavBarHeight
+                            NavBarStyle.GLASS -> GlassNavBarHeight
+                            NavBarStyle.STANDARD -> if (slimNav) SlimNavBarHeight else NavigationBarHeight
                         }
                     } else {
                         0.dp
@@ -1305,8 +1319,7 @@ class MainActivity : FragmentActivity() {
                                         currentRoute = currentRoute,
                                         onItemClick = onNavItemClick,
                                         slimNav = slimNav,
-                                        floatingDock = dockActive,
-                                        appleDock = appleDockActive && !showRail,
+                                        navBarStyle = if (showRail) NavBarStyle.STANDARD else navBarStyle,
                                         onSearchLongClick = onSearchLongClick,
                                         onHomeLongHold = { showAccountDialog = true },
                                         modifier =

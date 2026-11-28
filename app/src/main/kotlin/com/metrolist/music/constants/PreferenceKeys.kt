@@ -136,6 +136,9 @@ enum class DensityScale(
     }
 }
 
+/** In-app volume boost, in dB (0 = off). Applied inside the audio pipeline, not the system volume. */
+val VolumeBoostDbKey = floatPreferencesKey("volumeBoostDb")
+
 val DefaultOpenTabKey = stringPreferencesKey("defaultOpenTab")
 val HubModeEnabledKey = booleanPreferencesKey("hubModeEnabled")
 val HubSelectedFilterKey = stringPreferencesKey("hubSelectedFilter")
@@ -148,6 +151,32 @@ val DevFloatingDockKey = booleanPreferencesKey("devFloatingDock")
 
 /** Apple-style dock: magnifying, rounded icon shelf used instead of the stock bottom bar. */
 val AppleDockNavKey = booleanPreferencesKey("appleDockNav")
+
+/**
+ * Which bottom navigation surface is active.
+ *
+ * Exactly one at a time — the old design had three independent booleans, so two docks could be stored
+ * as "on" simultaneously and the winner was decided by `if` order in MainActivity. A single enum makes
+ * the choice exclusive by construction.
+ */
+val NavBarStyleKey = stringPreferencesKey("navBarStyle")
+
+enum class NavBarStyle {
+    /** The stock Material 3 bottom bar. */
+    STANDARD,
+
+    /** The notched "orb" bar — the only design with orb size/lift geometry. */
+    ORB,
+
+    /** Frosted shelf of rounded, magnifying tiles. */
+    APPLE,
+
+    /** Compact floating pill of icon-only buttons. */
+    PILL,
+
+    /** Wide glass bar with a highlight capsule that slides under the active tab. */
+    GLASS,
+}
 
 /** Personal Space cards get the tilt/perspective treatment. Toggled from the Tactical Hub settings. */
 val PersonalSpaceTiltKey = booleanPreferencesKey("personalSpaceTilt")

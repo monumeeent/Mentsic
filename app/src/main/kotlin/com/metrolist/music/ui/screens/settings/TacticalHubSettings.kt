@@ -25,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,10 +37,8 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
-import com.metrolist.music.constants.DevFloatingDockKey
-import com.metrolist.music.constants.AppleDockNavKey
-import com.metrolist.music.constants.PersonalSpaceTiltFactorKey
-import com.metrolist.music.constants.PersonalSpaceTiltKey
+import com.metrolist.music.constants.NavBarStyle
+import com.metrolist.music.constants.NavBarStyleKey
 import com.metrolist.music.constants.DockOrbLiftKey
 import com.metrolist.music.constants.DockOrbSizeKey
 import com.metrolist.music.constants.HubModeEnabledKey
@@ -56,6 +57,9 @@ import androidx.compose.material3.IconButton
 import com.metrolist.music.ui.component.LongClickIconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
+import com.metrolist.music.constants.PersonalSpaceTiltFactorKey
+import com.metrolist.music.constants.PersonalSpaceTiltKey
+import com.metrolist.music.ui.component.EnumDialog
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.rememberPreference
 import kotlin.math.roundToInt
@@ -73,12 +77,37 @@ fun TacticalHubSettings(navController: NavController) {
     val (hubEnabled, onHubEnabledChange) = rememberPreference(HubModeEnabledKey, defaultValue = false)
     val (heatmapCollapsed, onHeatmapCollapsedChange) =
         rememberPreference(HubHeatmapCollapsedKey, defaultValue = true)
-    // Developer-only alternate navigation bar (floating dock). Read by MainActivity.
-    val (floatingDock, onFloatingDockChange) =
-        rememberPreference(DevFloatingDockKey, defaultValue = false)
-    // Apple-style magnifying dock: the other alternate bottom bar.
-    val (appleDock, onAppleDockChange) = rememberPreference(AppleDockNavKey, defaultValue = false)
-    // Personal Space tilt treatment and its strength.
+    // Navigation surface. One enum, so exactly one bottom bar is active at a time.
+    val (navBarStyleName, onNavBarStyleChange) =
+        rememberPreference(NavBarStyleKey, defaultValue = NavBarStyle.STANDARD.name)
+    val navBarStyle =
+        remember(navBarStyleName) {
+            runCatching { NavBarStyle.valueOf(navBarStyleName) }.getOrDefault(NavBarStyle.STANDARD)
+        }
+    var showNavBarStyleDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showNavBarStyleDialog) {
+        EnumDialog(
+            onDismiss = { showNavBarStyleDialog = false },
+            onSelect = {
+                onNavBarStyleChange(it.name)
+                showNavBarStyleDialog = false
+            },
+            title = stringResource(R.string.nav_bar_style),
+            current = navBarStyle,
+            values = NavBarStyle.entries,
+            valueText = {
+                when (it) {
+                    NavBarStyle.STANDARD -> stringResource(R.string.nav_bar_style_standard)
+                    NavBarStyle.ORB -> stringResource(R.string.nav_bar_style_orb)
+                    NavBarStyle.APPLE -> stringResource(R.string.nav_bar_style_apple)
+                    NavBarStyle.PILL -> stringResource(R.string.nav_bar_style_pill)
+                    NavBarStyle.GLASS -> stringResource(R.string.nav_bar_style_glass)
+                }
+            },
+        )
+    }
+    // Personal Space cards: tilt treatment and its strength.
     val (personalSpaceTilt, onPersonalSpaceTiltChange) =
         rememberPreference(PersonalSpaceTiltKey, defaultValue = true)
     val (personalSpaceTiltFactor, onPersonalSpaceTiltFactorChange) =
@@ -169,64 +198,24 @@ fun TacticalHubSettings(navController: NavController) {
                             ),
                         )
                     }
-                    // Navigation surface: the stock bar or the floating dock. User-facing now — the
-                    // toggle works with developer mode off, so the row carries no DEV wash.
+                    // Navigation surface: one choice out of five. A single enum preference means two
+                    // docks can never be active at once.
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.nav_bar),
-                            title = { Text(stringResource(R.string.floating_dock_navbar)) },
-                            description = { Text(stringResource(R.string.floating_dock_navbar_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = floatingDock,
-                                    onCheckedChange = onFloatingDockChange,
-                                    thumbContent = {
-                                        Icon(
-                                            painter =
-                                                painterResource(
-                                                    id = if (floatingDock) R.drawable.check else R.drawable.close,
-                                                ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                                        )
+                            title = { Text(stringResource(R.string.nav_bar_style)) },
+                            description = {
+                                Text(
+                                    when (navBarStyle) {
+                                        NavBarStyle.STANDARD -> stringResource(R.string.nav_bar_style_standard)
+                                        NavBarStyle.ORB -> stringResource(R.string.floating_dock_navbar)
+                                        NavBarStyle.APPLE -> stringResource(R.string.apple_dock_navbar)
+                                        NavBarStyle.PILL -> stringResource(R.string.nav_bar_style_pill)
+                                        NavBarStyle.GLASS -> stringResource(R.string.nav_bar_style_glass)
                                     },
                                 )
                             },
-                            onClick = { onFloatingDockChange(!floatingDock) },
-                        ),
-                    )
-                    // Apple-style magnifying dock. Mutually exclusive with the notched dock above:
-                    // only one alternate bottom bar can be the active surface.
-                    add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.nav_bar),
-                            title = { Text(stringResource(R.string.apple_dock_navbar)) },
-                            description = { Text(stringResource(R.string.apple_dock_navbar_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = appleDock,
-                                    onCheckedChange = { on ->
-                                        onAppleDockChange(on)
-                                        // Turning the Apple dock on turns the notched dock off.
-                                        if (on && floatingDock) onFloatingDockChange(false)
-                                    },
-                                    thumbContent = {
-                                        Icon(
-                                            painter =
-                                                painterResource(
-                                                    id = if (appleDock) R.drawable.check else R.drawable.close,
-                                                ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                                        )
-                                    },
-                                )
-                            },
-                            onClick = {
-                                val next = !appleDock
-                                onAppleDockChange(next)
-                                if (next && floatingDock) onFloatingDockChange(false)
-                            },
+                            onClick = { showNavBarStyleDialog = true },
                         ),
                     )
                     // Personal Space cards: tilt/perspective treatment while touched.
@@ -271,10 +260,9 @@ fun TacticalHubSettings(navController: NavController) {
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        // Geometry for the floating notched bar. The frame (height, notch width/depth, corner radius)
-        // is fixed in FloatingNotchSpec and shown below read-only; only the orb — size and lift — is
-        // an actual, user-visible preference.
-        if (floatingDock) {
+        // Geometry for the notched **orb** bar only. Every other surface has a fixed height and no
+        // orb, so showing these sliders for them would be misleading.
+        if (navBarStyle == NavBarStyle.ORB) {
             val (dockOrbSize, onDockOrbSize) = rememberPreference(DockOrbSizeKey, 54f)
             val (dockOrbLift, onDockOrbLift) = rememberPreference(DockOrbLiftKey, 36f)
 
