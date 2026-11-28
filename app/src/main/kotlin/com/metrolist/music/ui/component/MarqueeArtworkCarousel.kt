@@ -8,18 +8,16 @@
  * directions, each item a tilted 3D card with a blurred-in entrance, and a drag that can push the
  * strip around. This is the Compose equivalent:
  *
- *  - **Infinite loop by modular offset.** The strip is drawn from a tiling of [tiles] repeated
- *    [repeat] times; scrolling only moves the base offset, so the loop is seamless and there is no
- *    "reached the end" state.
- *  - **Opposite directions.** Row one drifts left, row two drifts right. Each has its own offset so
- *    the two never line up.
- *  - **Drag.** A horizontal drag adds to that row's offset with the same "throw" feel as the web
- *    version — release keeps the velocity, and friction settles it back to the base drift.
- *  - **Tilt.** Each card carries a fixed rotation that increases along the row, drawn in
- *    `graphicsLayer`, which is what gives the perspective "fan" of the original.
+ *  - **Infinite loop by modular offset.** The strip is laid out as a fixed run of tiles and the whole
+ *    run slides by `drift` pixels; the slot → item mapping folds the whole-tile part of that offset
+ *    back into the sequence, so the loop is seamless and there is no "reached the end" state.
+ *  - **Opposite directions.** Row one drifts left, row two drifts right, each with its own offset.
+ *  - **Drag.** A horizontal drag adds to the row's offset one-for-one and pauses the auto-drift.
+ *  - **Tilt.** Each card carries a fixed rotation that grows toward the edges of the run, drawn in
+ *    `graphicsLayer` — the perspective "fan" of the original.
  *
- * Nothing here is decorative-only: every tile is the user's actual song artwork and tapping it plays
- * that song, so the block is a usable surface rather than a hero banner.
+ * Every tile is the user's actual song artwork and tapping it plays that song, so the block is a
+ * usable surface rather than a decorative hero banner.
  */
 
 package com.metrolist.music.ui.component
@@ -32,13 +30,13 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -49,14 +47,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -64,12 +63,16 @@ import com.metrolist.music.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
+/** Inter-run gap between tiles, and the tile count of one full loop pass. */
+private const val Overscan = 2
+
 /**
  * Two-row marquee of tilted artwork cards.
  *
- * @param items the songs to show; split evenly across the two rows.
+ * @param items the songs to show; alternating items are split across the two rows so neither row is a
+ *   run of the same album.
+ * @param thumbnailOf artwork URL for an item.
  * @param onItemClick invoked with the tapped item.
- * @param modifier outer modifier.
  */
 @Composable
 fun <T> MarqueeArtworkCarousel(
@@ -77,10 +80,9 @@ fun <T> MarqueeArtworkCarousel(
     thumbnailOf: (T) -> String?,
     onItemClick: (T) -> Unit,
     modifier: Modifier = Modifier,
-    cardSize: androidx.compose.ui.unit.Dp = 108.dp,
+    cardSize: Dp = 108.dp,
 ) {
     if (items.isEmpty()) return
-    // Alternate items into two rows so neither row is a run of the same album.
     val firstRow = remember(items) { items.filterIndexed { index, _ -> index % 2 == 0 } }
     val secondRow = remember(items) { items.filterIndexed { index, _ -> index % 2 == 1 } }
 
@@ -88,73 +90,70 @@ fun <T> MarqueeArtworkCarousel(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-        MarqueRow(
-            items = firstRow,
-            thumbnailOf = thumbnailOf,
-            onItemClick = onItemClick,
-            cardSize = cardSize,
-            direction = -1f,
-        )
-        MarqueRow(
-            items = secondRow,
-            thumbnailOf = thumbnailOf,
-            onItemClick = onItemClick,
-            cardSize = cardSize,
-            direction = 1f,
-        )
+        if (firstRow.isNotEmpty()) {
+            MarqueeRow(
+                items = firstRow,
+                thumbnailOf = thumbnailOf,
+                onItemClick = onItemClick,
+                cardSize = cardSize,
+                direction = -1f,
+            )
+        }
+        if (secondRow.isNotEmpty()) {
+            MarqueeRow(
+                items = secondRow,
+                thumbnailOf = thumbnailOf,
+                onItemClick = onItemClick,
+                cardSize = cardSize,
+                direction = 1f,
+            )
+        }
     }
 }
 
 /**
  * One drifting row.
  *
- * The row is a `LazyRow` whose scroll position auto-advances; a drag simply pauses the auto-advance and
- * hands control to the finger, then resumes. That is the closest Compose equivalent of the web
- * marquee's drag-aware behaviour, and it keeps recycling the item composables instead of drawing an
- * ever-growing strip of bitmaps.
+ * A `Row` of `(items + overscan * 2) * 3` tiles is translated as a whole. Three spans guarantee the
+ * strip covers the screen twice over at any drift offset, so no gap can appear at either edge.
+ *
+ * @param direction -1 drifts left, +1 drifts right.
  */
 @Composable
-private fun <T> MarqueRow(
+private fun <T> MarqueeRow(
     items: List<T>,
     thumbnailOf: (T) -> String?,
     onItemClick: (T) -> Unit,
-    cardSize: androidx.compose.ui.unit.Dp,
+    cardSize: Dp,
     direction: Float,
 ) {
-    if (items.isEmpty()) return
     val density = LocalDensity.current
     val gapPx = with(density) { Spacing.small.toPx() }
-    val itemPx = with(density) { cardSize.toPx() } + gapPx
+    val stepPx = with(density) { cardSize.toPx() } + gapPx
+    val totalPx = (items.size * stepPx).coerceAtLeast(1f)
+
+    var drift by remember(items.size) { mutableFloatStateOf(0f) }
     var dragging by remember { mutableFloatStateOf(0f) }
 
-    // Auto-drift. The strip is drawn as `loopCount` tiles and the whole strip slides by `drift`
-    // pixels; the effect advances a few pixels per frame and wraps modulo one full pass, which is
-    // what makes the loop seamless in both directions.
-    var drift by remember { mutableFloatStateOf(0f) }
+    // Auto-drift: a few pixels per frame, wrapped modulo one full pass so the loop never ends.
     LaunchedEffect(items.size, direction) {
-        val total = (items.size * itemPx).coerceAtLeast(1f)
         while (true) {
             delay(16)
             if (dragging > 0.5f) continue
             drift += 1.6f * direction
-            if (drift <= -total) drift += total
-            if (drift >= total) drift -= total
+            if (drift <= -totalPx) drift += totalPx
+            if (drift >= totalPx) drift -= totalPx
         }
     }
-    // Tiles beyond the visible window so the wrap point is never on screen.
-    val overscan = 2
-    val loopCount = items.size + overscan * 2
 
-    val tileWidth = cardSize
-    val stepPx = itemPx
-    val totalPx = (items.size * stepPx).coerceAtLeast(1f)
+    val loopCount = items.size + Overscan * 2
+    val span = 3
 
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(cardSize + Spacing.small * 2)
-                .clip(RoundedCornerShape(0.dp))
                 .pointerInput(items.size, direction) {
                     detectHorizontalDragGestures(
                         onDragStart = { dragging = 1f },
@@ -176,97 +175,103 @@ private fun <T> MarqueRow(
                 },
         contentAlignment = Alignment.CenterStart,
     ) {
-        // `span` copies are enough to cover the widest phone twice over, so the strip never shows a
-        // gap at either edge however far it has drifted.
-        val span = 3
         Row(
             modifier =
-                Modifier.offset { IntOffset((drift - stepPx * overscan).roundToInt(), 0) },
+                Modifier.offset { IntOffset((drift - stepPx * Overscan).roundToInt(), 0) },
             horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         ) {
+            // `shift` moves whole tiles through the sequence; the fractional part stays in the offset
+            // above, so motion is continuous instead of stepping one card at a time.
+            val shift = kotlin.math.floor(drift / stepPx).toInt()
             repeat(loopCount * span) { slot ->
-                // Which real item this slot shows: whole-tile drift is folded into the sequence, the
-                // fractional part stays in the offset above, so motion looks continuous.
-                val shift = kotlin.math.floor(drift / stepPx).toInt()
-                val realIndex = (((slot - overscan + shift).mod(items.size)) + items.size) % items.size
-                val item = items[realIndex]
-            // Fixed per-index tilt: the fan effect of the original, largest at the edges of a short
-            // run and smallest in the middle.
-            val tilt = remember(realIndex, items.size) {
+                val realIndex = Math.floorMod(slot - Overscan + shift, items.size)
+                // Fixed per-index tilt: the fan effect of the original, largest at the edges. Plain
+                // arithmetic, so it needs no `remember` (this lambda is not a composable scope).
                 val centre = (items.size - 1) / 2f
-                ((realIndex - centre) / centre.coerceAtLeast(1f)) * 7f
-            }
-            // Staggered entrance: each card fades and unblurs in turn, like the reference's
-            // delay: 0.3 + 0.1 * index.
-            var entered by remember(realIndex) { mutableFloatStateOf(0f) }
-            LaunchedEffect(realIndex) {
-                delay(60L * realIndex)
-                entered = 1f
-            }
-            val appear by animateFloatAsState(
-                targetValue = entered,
-                animationSpec = tween(420),
-                label = "marquee-appear",
-            )
-
-            Box(
-                modifier =
-                    Modifier
-                        .width(cardSize)
-                        .aspectRatio(1f)
-                        .graphicsLayer {
-                            rotationY = tilt
-                            // A little depth so the row reads as a fan rather than a flat strip.
-                            rotationZ = tilt * 0.4f
-                            cameraDistance = 12f * density.density
-                            alpha = appear
-                        },
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                ) {
-                    AsyncImage(
-                        model = thumbnailOf(item),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .blur((1f - appear) * 8.dp),
-                    )
-                    // Bottom scrim so the rounded card edge stays visible over bright artwork.
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        androidx.compose.ui.graphics.Color.Transparent,
-                                        MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.25f),
-                                    ),
-                                ),
-                            ),
-                    )
-                }
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(12.dp))
-                            .then(
-                                Modifier.clickableNoIndication { onItemClick(item) },
-                            ),
+                val tilt = ((realIndex - centre) / centre.coerceAtLeast(1f)) * 7f
+                MarqueeCard(
+                    item = items[realIndex],
+                    thumbnailUrl = thumbnailOf(items[realIndex]),
+                    cardSize = cardSize,
+                    tilt = tilt,
+                    // Staggered entrance keyed on the *slot*, so a looping strip does not re-animate
+                    // every time an item wraps around.
+                    entranceDelayMillis = (slot % loopCount) * 60L,
+                    onItemClick = { onItemClick(items[realIndex]) },
                 )
             }
         }
     }
 }
 
-/** Clickable without the ripple; these cards are moving, so a ripple reads as a glitch. */
-private fun Modifier.clickableNoIndication(onClick: () -> Unit): Modifier =
-    this.then(Modifier.clickable(interactionSource = null, indication = null, onClick = onClick))
+/**
+ * One artwork tile: rounded card, image, bottom scrim and a tap target.
+ *
+ * The entrance is a blur + fade driven by an `animateFloatAsState` over a value set after
+ * [entranceDelayMillis] — the Compose form of the reference's staggered `filter: blur(...)` animation.
+ */
+@Composable
+private fun <T> MarqueeCard(
+    item: T,
+    thumbnailUrl: String?,
+    cardSize: Dp,
+    tilt: Float,
+    entranceDelayMillis: Long,
+    onItemClick: () -> Unit,
+) {
+    var entered by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(entranceDelayMillis) {
+        delay(entranceDelayMillis)
+        entered = 1f
+    }
+    val appear by animateFloatAsState(
+        targetValue = entered,
+        animationSpec = tween(420),
+        label = "marquee-appear",
+    )
+    // Perspective strength: 12× density is a close camera, strong enough to read as depth without
+    // warping the far edge of the card.
+    val cameraDistance = with(LocalDensity.current) { 12 * density }
+
+    Box(
+        modifier =
+            Modifier
+                .width(cardSize)
+                .aspectRatio(1f)
+                .graphicsLayer {
+                    rotationY = tilt
+                    // A little depth so the row reads as a fan rather than a flat strip.
+                    rotationZ = tilt * 0.4f
+                    this.cameraDistance = cameraDistance
+                    alpha = appear
+                }
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                // No ripple: these cards are moving, so an expanding surface reads as a glitch.
+                .clickable(
+                    interactionSource = null,
+                    indication = null,
+                    onClick = onItemClick,
+                ),
+    ) {
+        AsyncImage(
+            model = thumbnailUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize().blur((1f - appear) * 8.dp),
+        )
+        // Bottom scrim so the rounded edge stays visible over bright artwork.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.25f),
+                        ),
+                    ),
+                ),
+        )
+    }
+}

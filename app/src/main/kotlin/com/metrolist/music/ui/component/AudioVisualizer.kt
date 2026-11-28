@@ -9,11 +9,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -226,12 +226,12 @@ fun AudioVisualizer(
             if (lead != null && !silent) {
                 val progress = ((elapsed - lead.bornAt) / SWEEP_SECONDS).coerceIn(0f, 1f)
                 val headBar = lead.origin + progress * barCount * lead.direction
-                sweepHead.floatValue = (headBar / barCount.coerceAtLeast(1)).coerceIn(0f, 1f)
-                sweepStrength.floatValue = (lead.strength * (1f - progress)).coerceIn(0f, 1f)
+                sweepHead.value = (headBar / barCount.coerceAtLeast(1)).coerceIn(0f, 1f)
+                sweepStrength.value = (lead.strength * (1f - progress)).coerceIn(0f, 1f)
             } else {
                 // Fade the wash out rather than snapping it off when the last beat retires.
-                sweepStrength.floatValue *= 0.86f
-                if (sweepStrength.floatValue < 0.01f) sweepStrength.floatValue = 0f
+                val faded = sweepStrength.value * 0.86f
+                sweepStrength.value = if (faded < 0.01f) 0f else faded
             }
 
             val targets =
@@ -296,8 +296,8 @@ fun AudioVisualizer(
 
         // The travelling beat's colour wash. Its head position and strength are read here (draw
         // phase) so the wash follows the rhythm without recomposing the visualizer.
-        val washHead = sweepHead.floatValue
-        val washStrength = if (enabled) sweepStrength.floatValue else 0f
+        val washHead = sweepHead.value
+        val washStrength = if (enabled) sweepStrength.value else 0f
 
         drawVisualizer(
             values = display,

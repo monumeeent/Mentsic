@@ -12,7 +12,7 @@
 - Git Add : add the changed Files
 - Git Commit : Proper Short Message
 - Git Push : Just Push it 
-* Run The Git Command To Push to Workflow and Let The App Built. 
+* Run The Git Command To Push to Workflow and Let The App Be Built. 
 
 ## 3. Design System & UI Rules
 * Refer to `ui_rulebook.md` for all color tokens, typography scales, spacing rules, and reusable component patterns.

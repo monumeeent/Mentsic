@@ -316,19 +316,16 @@ fun CurrentWeekHeatmap(
         Spacer(Modifier.height(Spacing.small))
 
         // Weekday captions sit **above** the cells, like a calendar column header — never inside the
-        // cell. Three things keep them visually separate from the date blocks:
-        //   1. a fixed-height caption band (not a text line box that varies with font scale),
-        //   2. a real gap (Spacing.small) between the band and the cell row, so no edge can touch,
-        //   3. an explicit `includeFontPadding = false` + pinned lineHeight, which removes the extra
-        //      leading that used to push the glyph down into the gap.
+        // cell. Separation comes from layout, not from font metrics:
+        //   1. a fixed-height caption band, so the row can never grow into the cells,
+        //   2. a real gap (Spacing.small) between the band and the cell row,
+        //   3. a pinned lineHeight equal to the font size, which removes the extra leading that used to
+        //      push the glyph toward the cells.
+        // (`PlatformTextStyle` only exposes `includeFontPadding` in this Compose version, and there is
+        // no `LineHeightStyleAlignment` type to pass — the band does the same job with layout.)
         val captionStyle =
             MaterialTheme.typography.labelSmall.copy(
                 lineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.0f,
-                platformStyle =
-                    androidx.compose.ui.text.PlatformTextStyle(
-                        includeFontPadding = false,
-                        lineHeightStyleAlignment = androidx.compose.ui.text.style.LineHeightStyleAlignment.Top,
-                    ),
             )
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = 16.dp),
