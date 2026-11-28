@@ -35,7 +35,9 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.SessionMaxMinutesKey
 import com.metrolist.music.constants.HubHeatmapCollapsedKey
 import com.metrolist.music.constants.DevFloatingDockKey
-import com.metrolist.music.constants.MiniPlayerCapsuleKey
+import com.metrolist.music.constants.AppleDockNavKey
+import com.metrolist.music.constants.PersonalSpaceTiltFactorKey
+import com.metrolist.music.constants.PersonalSpaceTiltKey
 import com.metrolist.music.constants.DockOrbLiftKey
 import com.metrolist.music.constants.DockOrbSizeKey
 import com.metrolist.music.constants.HubModeEnabledKey
@@ -74,9 +76,13 @@ fun TacticalHubSettings(navController: NavController) {
     // Developer-only alternate navigation bar (floating dock). Read by MainActivity.
     val (floatingDock, onFloatingDockChange) =
         rememberPreference(DevFloatingDockKey, defaultValue = false)
-    // Third mini player (pixel capsule). User-facing style; read by MiniPlayer.
-    val (capsuleMiniPlayer, onCapsuleMiniPlayerChange) =
-        rememberPreference(MiniPlayerCapsuleKey, defaultValue = false)
+    // Apple-style magnifying dock: the other alternate bottom bar.
+    val (appleDock, onAppleDockChange) = rememberPreference(AppleDockNavKey, defaultValue = false)
+    // Personal Space tilt treatment and its strength.
+    val (personalSpaceTilt, onPersonalSpaceTiltChange) =
+        rememberPreference(PersonalSpaceTiltKey, defaultValue = true)
+    val (personalSpaceTiltFactor, onPersonalSpaceTiltFactorChange) =
+        rememberPreference(PersonalSpaceTiltFactorKey, defaultValue = 8f)
 
     Column(
         modifier =
@@ -189,21 +195,26 @@ fun TacticalHubSettings(navController: NavController) {
                             onClick = { onFloatingDockChange(!floatingDock) },
                         ),
                     )
-                    // Third mini-player layout. User-facing: available with developer mode off.
+                    // Apple-style magnifying dock. Mutually exclusive with the notched dock above:
+                    // only one alternate bottom bar can be the active surface.
                     add(
                         Material3SettingsItem(
-                            icon = painterResource(R.drawable.queue_music),
-                            title = { Text(stringResource(R.string.mini_player_capsule)) },
-                            description = { Text(stringResource(R.string.mini_player_capsule_desc)) },
+                            icon = painterResource(R.drawable.nav_bar),
+                            title = { Text(stringResource(R.string.apple_dock_navbar)) },
+                            description = { Text(stringResource(R.string.apple_dock_navbar_desc)) },
                             trailingContent = {
                                 Switch(
-                                    checked = capsuleMiniPlayer,
-                                    onCheckedChange = onCapsuleMiniPlayerChange,
+                                    checked = appleDock,
+                                    onCheckedChange = { on ->
+                                        onAppleDockChange(on)
+                                        // Turning the Apple dock on turns the notched dock off.
+                                        if (on && floatingDock) onFloatingDockChange(false)
+                                    },
                                     thumbContent = {
                                         Icon(
                                             painter =
                                                 painterResource(
-                                                    id = if (capsuleMiniPlayer) R.drawable.check else R.drawable.close,
+                                                    id = if (appleDock) R.drawable.check else R.drawable.close,
                                                 ),
                                             contentDescription = null,
                                             modifier = Modifier.size(SwitchDefaults.IconSize),
@@ -211,9 +222,50 @@ fun TacticalHubSettings(navController: NavController) {
                                     },
                                 )
                             },
-                            onClick = { onCapsuleMiniPlayerChange(!capsuleMiniPlayer) },
+                            onClick = {
+                                val next = !appleDock
+                                onAppleDockChange(next)
+                                if (next && floatingDock) onFloatingDockChange(false)
+                            },
                         ),
                     )
+                    // Personal Space cards: tilt/perspective treatment while touched.
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.grid_view),
+                            title = { Text(stringResource(R.string.personal_space_tilt)) },
+                            description = { Text(stringResource(R.string.personal_space_tilt_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = personalSpaceTilt,
+                                    onCheckedChange = onPersonalSpaceTiltChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter =
+                                                painterResource(
+                                                    id = if (personalSpaceTilt) R.drawable.check else R.drawable.close,
+                                                ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    },
+                                )
+                            },
+                            onClick = { onPersonalSpaceTiltChange(!personalSpaceTilt) },
+                        ),
+                    )
+                    if (personalSpaceTilt) {
+                        add(
+                            dockSlider(
+                                title = stringResource(R.string.personal_space_tilt_strength),
+                                value = personalSpaceTiltFactor,
+                                onChange = onPersonalSpaceTiltFactorChange,
+                                range = 2f..16f,
+                            ),
+                        )
+                    }
+                    // The mini-player style is chosen in Appearance → Mini player (a single row that
+                    // owns both STANDARD and CAPSULE), so this screen no longer duplicates the switch.
                 },
         )
 

@@ -141,6 +141,7 @@ import com.metrolist.music.constants.AppLanguageKey
 import com.metrolist.music.constants.CheckForUpdatesKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DefaultOpenTabKey
+import com.metrolist.music.constants.AppleDockNavKey
 import com.metrolist.music.constants.DevFloatingDockKey
 import com.metrolist.music.constants.DismissedKmpUpdateKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
@@ -181,7 +182,6 @@ import com.metrolist.music.constants.SlimNavBarHeight
 import com.metrolist.music.constants.SlimNavBarKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
 import com.metrolist.music.constants.UpdateNotificationsEnabledKey
-import com.metrolist.music.constants.UseNewMiniPlayerDesignKey
 import com.metrolist.music.constants.VideoThumbnailMigrationDoneKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.SearchHistory
@@ -214,6 +214,7 @@ import com.metrolist.music.widget.MusicWidgetReceiver
 import com.metrolist.music.ui.theme.ColorSaver
 import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.component.AvatarShape
 import com.metrolist.music.ui.component.ProfileAvatar
 import com.metrolist.music.ui.theme.ThemePaletteStyle
@@ -839,8 +840,11 @@ class MainActivity : FragmentActivity() {
                 // Floating dock: a user-facing navigation style now, not a developer experiment. The
                 // preference alone decides; it no longer requires developer mode to take effect.
                 val (devFloatingDockPref) = rememberPreference(DevFloatingDockKey, defaultValue = false)
-                val useFloatingDock = devFloatingDockPref
-                val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
+                // Apple-style magnifying dock. Mutually exclusive with the notched dock: the Apple dock
+                // wins when both are stored on, so the surface is always well defined.
+                val (appleDockPref) = rememberPreference(AppleDockNavKey, defaultValue = false)
+                val appleDockActive = appleDockPref
+                val useFloatingDock = devFloatingDockPref && !appleDockActive
                 val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.HOME.name)
                 val defaultOpenTab = remember(defaultOpenTabInt) {
                     try {
@@ -922,10 +926,14 @@ class MainActivity : FragmentActivity() {
                 // Same live spec the bar draws with, so the space reserved here matches pixel for
                 // pixel even after the geometry is retuned in developer settings.
                 val dockHeight = rememberFloatingNotchSpec().reservedHeight
+                // The Apple dock is taller than either stock bar (raised tile + label), so it reserves
+                // its own height rather than reusing the notched spec.
+                val appleDockHeight = 68.dp + Spacing.small + 8.dp
 
                 val navPadding =
                     if (shouldShowNavigationBar && !showRail) {
                         when {
+                            appleDockActive -> appleDockHeight
                             dockActive -> dockHeight
                             slimNav -> SlimNavBarHeight
                             else -> NavigationBarHeight
@@ -946,7 +954,10 @@ class MainActivity : FragmentActivity() {
                         collapsedBound =
                             bottomInset +
                                 (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
-                                (if (useNewMiniPlayerDesign) MiniPlayerBottomSpacing else 0.dp) +
+                                // Both remaining mini-player styles float above the nav bar, so the
+                                // gap is unconditional — the retired stacked bar was the only one that
+                                // sat flush.
+                                MiniPlayerBottomSpacing +
                                 MiniPlayerHeight,
                         expandedBound = maxHeight,
                     )
@@ -1295,6 +1306,7 @@ class MainActivity : FragmentActivity() {
                                         onItemClick = onNavItemClick,
                                         slimNav = slimNav,
                                         floatingDock = dockActive,
+                                        appleDock = appleDockActive && !showRail,
                                         onSearchLongClick = onSearchLongClick,
                                         onHomeLongHold = { showAccountDialog = true },
                                         modifier =
@@ -1331,9 +1343,7 @@ class MainActivity : FragmentActivity() {
                                                 .graphicsLayer {
                                                     val progress = playerBottomSheetState.progress
                                                     alpha =
-                                                        if (progress > 0f ||
-                                                            (useNewMiniPlayerDesign && !shouldShowNavigationBar)
-                                                        ) {
+                                                        if (progress > 0f || !shouldShowNavigationBar) {
                                                             0f
                                                         } else {
                                                             1f
@@ -1360,7 +1370,7 @@ class MainActivity : FragmentActivity() {
                                             .graphicsLayer {
                                                 val progress = playerBottomSheetState.progress
                                                 alpha =
-                                                    if (progress > 0f || (useNewMiniPlayerDesign && !shouldShowNavigationBar)) 0f else 1f
+                                                    if (progress > 0f || !shouldShowNavigationBar) 0f else 1f
                                             }.background(baseBg),
                                 )
                             }

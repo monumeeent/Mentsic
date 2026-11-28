@@ -323,6 +323,28 @@ fun CapsuleMiniPlayer(
                 scanline = scheme.primary.copy(alpha = 0.10f),
             )
 
+            // Progress line: bottom-left to right, filling as the track plays. It reads
+            // `progressState.progress` inside the Canvas draw lambda, so position ticks repaint this
+            // 2dp strip and never recompose the capsule (the title, sprites and row stay untouched).
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val progress = progressState.progress
+                if (progress <= 0f) return@Canvas
+                // Stepped, pixel-sized blocks rather than a smooth bar: the capsule reads as hardware,
+                // and a stepped fill matches the scanline that runs along the same edge.
+                val step = Pixel.toPx()
+                val y = size.height - step
+                val filled = size.width * progress
+                var x = step
+                while (x < filled) {
+                    drawRect(
+                        color = scheme.primary.copy(alpha = 0.85f),
+                        topLeft = Offset(x, y),
+                        size = Size(step * 0.62f, step * 0.5f),
+                    )
+                    x += step
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxSize().padding(horizontal = Pixel, vertical = Pixel),
                 verticalAlignment = Alignment.CenterVertically,

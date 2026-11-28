@@ -145,9 +145,23 @@ fun AppNavigationBar(
     slimNav: Boolean = false,
     // Developer experiment: swaps this bar for the floating expandable dock.
     floatingDock: Boolean = false,
+    // Alternate surface: the Apple-style magnifying dock.
+    appleDock: Boolean = false,
     onSearchLongClick: (() -> Unit)? = null,
     onHomeLongHold: (() -> Unit)? = null,
 ) {
+    if (appleDock) {
+        AppleDockNavigationBar(
+            navigationItems = navigationItems,
+            currentRoute = currentRoute,
+            onItemClick = onItemClick,
+            modifier = modifier,
+            onSearchLongClick = onSearchLongClick,
+            onHomeLongHold = onHomeLongHold,
+        )
+        return
+    }
+
     if (floatingDock) {
         AppFloatingDockNavigationBar(
             navigationItems = navigationItems,

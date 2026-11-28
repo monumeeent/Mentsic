@@ -109,6 +109,41 @@ import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.round
 
+/**
+ * Blueprint of the player "More" sheet (full player → three dots).
+ *
+ * The sheet is an ordered list of sections; the enum is the contract, and the `LazyColumn` below adds
+ * exactly these in this order. Keeping the order in one place means a redesign can be discussed against
+ * a written structure instead of traced through 900 lines of composition, and any section that is
+ * conditionally hidden (Listen Together, queue-only entries) still leaves no orphaned spacer behind.
+ *
+ * ```
+ * ┌───────────────────────────────┐
+ * │ Volume (or Cast device row)   │  HEADER
+ * ├───────────────────────────────┤  divider
+ * │ Start radio · Playlist · Copy │  QUICK ACTIONS (grid, 3 or 2 columns)
+ * │ Artist · Album · Library · Pin│  ENTITY (vertical group)
+ * │ Download                      │  DOWNLOAD
+ * │ Listen Together  [REDESIGN]   │  LISTEN_TOGETHER  (hidden unless dev / unlocked / in room)
+ * │ Details · Equalizer · Sync    │  DETAILS
+ * │ Sleep timer · Speed · Pitch   │  PLAYBACK
+ * │ Go to album · Queue           │  NAVIGATION
+ * └───────────────────────────────┘
+ * ```
+ */
+enum class PlayerMenuSection {
+    HEADER,
+    QUICK_ACTIONS,
+    ENTITY,
+    DOWNLOAD,
+
+    /** Scheduled for a redesign — see the block in [PlayerMenu]. */
+    LISTEN_TOGETHER,
+    DETAILS,
+    PLAYBACK,
+    NAVIGATION,
+}
+
 @Composable
 fun PlayerMenu(
     mediaMetadata: MediaMetadata?,
@@ -326,6 +361,7 @@ fun PlayerMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
+        // ── PlayerMenuSection.QUICK_ACTIONS ──────────────────────────────────
         item {
             val startingRadioText = stringResource(R.string.starting_radio)
             NewActionGrid(
@@ -396,6 +432,7 @@ fun PlayerMenu(
             )
         }
 
+        // ── PlayerMenuSection.ENTITY ─────────────────────────────────────────
         item {
             // Check if this is a podcast episode (album ID doesn't start with MPREb_)
             val isPodcast = mediaMetadata.album?.let { !it.id.startsWith("MPREb_") } ?: false
@@ -532,6 +569,7 @@ fun PlayerMenu(
 
         item { Spacer(modifier = Modifier.height(12.dp)) }
 
+        // ── PlayerMenuSection.DOWNLOAD ───────────────────────────────────────
         item {
             Material3MenuGroup(
                 items =
@@ -673,12 +711,12 @@ fun PlayerMenu(
         item { Spacer(modifier = Modifier.height(12.dp)) }
     }
 
-    // ── Details group ────────────────────────────────────────────────────────
+    // ── PlayerMenuSection.DETAILS ────────────────────────────────────────
     item {
-            Material3MenuGroup(
-                items =
-                    buildList {
-                        add(
+        Material3MenuGroup(
+            items =
+                buildList {
+                    add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.details)) },
                                 description = { Text(text = stringResource(R.string.details_desc)) },
@@ -696,6 +734,9 @@ fun PlayerMenu(
                             ),
                         )
 
+                        // ── PlayerMenuSection.PLAYBACK ──────────────────────────
+                        // The remaining rows in this group (equalizer, system EQ, advanced,
+                        // speed/pitch) are playback shaping rather than track metadata.
                         if (isQueueTrigger != true) {
                             add(
                                 Material3MenuItemData(
@@ -951,6 +992,10 @@ fun ListenTogetherDialog(
     val context = LocalContext.current
     val listenTogetherManager = com.metrolist.music.LocalListenTogetherManager.current
     val joiningRoomTemplate = stringResource(R.string.joining_room)
+    // Hosting is a developer-only capability: without Developer Mode there is no Create Room button
+    // anywhere in the app (this dialog, the Listen Together screen, the settings page). Joining a room
+    // someone else hosts stays available, so the feature is still usable by everyone.
+    val (developerMode) = rememberPreference(DeveloperModeKey, defaultValue = false)
 
     // Handle case where manager is not available
     if (listenTogetherManager == null) {
@@ -2022,37 +2067,41 @@ fun ListenTogetherDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        // Create Room button (left side)
-                        Button(
-                            onClick = {
-                                val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
-                                val finalUsername = username.trim()
-                                if (finalUsername.isNotBlank()) {
-                                    savedUsername = finalUsername
-                                    Toast.makeText(context, R.string.creating_room, Toast.LENGTH_SHORT).show()
-                                    isCreatingRoom = true
-                                    isJoiningRoom = false
-                                    joinErrorMessage = null
-                                    listenTogetherManager.connect()
-                                    listenTogetherManager.createRoom(finalUsername)
-                                } else {
-                                    Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            enabled = (usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()),
-                            colors =
-                                ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                ),
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.add),
-                                contentDescription = null,
-                                modifier = Modifier.size(IconSizes.Small),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.create_room), fontWeight = FontWeight.SemiBold)
+                        // Create Room button (left side). Developer-only: hosting a room is a
+                        // capability reserved for Developer Mode, so without it the Join button takes
+                        // the full width rather than leaving an empty slot.
+                        if (developerMode) {
+                            Button(
+                                onClick = {
+                                    val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
+                                    val finalUsername = username.trim()
+                                    if (finalUsername.isNotBlank()) {
+                                        savedUsername = finalUsername
+                                        Toast.makeText(context, R.string.creating_room, Toast.LENGTH_SHORT).show()
+                                        isCreatingRoom = true
+                                        isJoiningRoom = false
+                                        joinErrorMessage = null
+                                        listenTogetherManager.connect()
+                                        listenTogetherManager.createRoom(finalUsername)
+                                    } else {
+                                        Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = (usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()),
+                                colors =
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                    ),
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.add),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(IconSizes.Small),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.create_room), fontWeight = FontWeight.SemiBold)
+                            }
                         }
 
                         // Join Room button (right side - only visible when room code is complete)

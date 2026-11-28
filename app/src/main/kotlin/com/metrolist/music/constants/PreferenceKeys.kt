@@ -146,6 +146,15 @@ val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 // Developer-only alternate navigation bar: a floating, expandable dock instead of the stock bar.
 val DevFloatingDockKey = booleanPreferencesKey("devFloatingDock")
 
+/** Apple-style dock: magnifying, rounded icon shelf used instead of the stock bottom bar. */
+val AppleDockNavKey = booleanPreferencesKey("appleDockNav")
+
+/** Personal Space cards get the tilt/perspective treatment. Toggled from the Tactical Hub settings. */
+val PersonalSpaceTiltKey = booleanPreferencesKey("personalSpaceTilt")
+
+/** Strength of the tilt, in degrees of max rotation at the card's edge. */
+val PersonalSpaceTiltFactorKey = floatPreferencesKey("personalSpaceTiltFactor")
+
 // Orb geometry of the floating notched bar, in dp. Floats so the sliders can move in 1dp steps; the
 // bar reads them through `rememberFloatingNotchSpec()`. The rest of the frame (bar height, notch
 // width/depth, corner radius) is fixed in `FloatingNotchSpec` and is intentionally not persisted.
@@ -157,11 +166,36 @@ val SquigglySliderKey = booleanPreferencesKey("squigglySlider")
 val SwipeToSongKey = booleanPreferencesKey("SwipeToSong")
 val SwipeToRemoveSongKey = booleanPreferencesKey("SwipeToRemoveSong")
 val UseNewPlayerDesignKey = booleanPreferencesKey("useNewPlayerDesign")
+
+/**
+ * Mini-player style, as a single choice.
+ *
+ * It replaces the old pair of switches (`useNewMiniPlayerDesign` + `miniPlayerCapsule`), which allowed
+ * contradictory states — the capsule on with the new design off, or both off — and that is exactly
+ * why the background-style row used to grey itself out. One enum, one row, no impossible combinations.
+ */
+val MiniPlayerStyleKey = stringPreferencesKey("miniPlayerStyle")
+
+/** Legacy key, read once to migrate an existing choice to [MiniPlayerStyle]. */
 val UseNewMiniPlayerDesignKey = booleanPreferencesKey("useNewMiniPlayerDesign")
 
-// Third mini-player design: the pixel capsule (album art, LCD-style title/artist, slim level metre
-// and sprite controls). User-facing, off by default.
+/** Legacy key, read once to migrate an existing choice to [MiniPlayerStyle]. */
 val MiniPlayerCapsuleKey = booleanPreferencesKey("miniPlayerCapsule")
+
+/**
+ * Retired: the original stacked mini player (circular art + text on a plain bar).
+ *
+ * It is no longer selectable — [MiniPlayerStyle] has two entries — but its old preference value is
+ * still migrated: `useNewMiniPlayerDesign = false` lands on [MiniPlayerStyle.STANDARD], which is the
+ * rounded design, so nobody is left with an unrenderable choice.
+ */
+enum class MiniPlayerStyle {
+    /** The rounded, blurred/gradient backdrop player (the former "new" design). */
+    STANDARD,
+
+    /** The pixel capsule with the LCD readout, sprite controls and a progress line. */
+    CAPSULE,
+}
 val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val CropAlbumArtKey = booleanPreferencesKey("cropAlbumArt")
 val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")

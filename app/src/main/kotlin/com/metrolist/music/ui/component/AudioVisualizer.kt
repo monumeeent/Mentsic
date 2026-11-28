@@ -70,10 +70,10 @@ private const val REST_HEIGHT = 0.045f
  * Overall height budget for the analysed bands.
  *
  * The analyser publishes 0..1, but a bar at full canvas height for ordinary music is what made soft
- * tracks look like a hard beat. 0.85 leaves a visible ceiling: only a genuine peak reaches the top of
- * the field, and the default intensity stays readable without every preset looking saturated.
+ * tracks look like a hard beat. 0.94 leaves a sliver of ceiling for genuine peaks while letting the
+ * field use most of the space it is given — the older 0.85 read as undersized on a tall canvas.
  */
-private const val FIELD_GAIN = 0.85f
+private const val FIELD_GAIN = 0.94f
 
 /**
  * Onset lift added on top of the bands, before [FIELD_GAIN].
@@ -82,7 +82,16 @@ private const val FIELD_GAIN = 0.85f
  * high as a loud one. This lift is multiplied by the bar's own band energy, so it stays a relative
  * bump: silence adds nothing, a quiet band peeks up slightly, a loud one punches.
  */
-private const val PULSE_LIFT = 0.16f
+private const val PULSE_LIFT = 0.22f
+
+/**
+ * How long a single beat's travelling highlight takes to cross the field, in seconds.
+ *
+ * This is the "rhythm starting from a random bar" effect: every onset stamps an impulse on one bar
+ * (see [OnsetSweep]), and that impulse then walks outward bar by bar. ~1.1 s is slow enough to read as
+ * a deliberate ripple and fast enough that a 120 bpm track does not pile sweeps on top of each other.
+ */
+private const val SWEEP_SECONDS = 1.1f
 
 /**
  * True when the OS asks for reduced motion ("Remove animations" / Animator duration scale = 0).
@@ -159,13 +168,51 @@ fun AudioVisualizer(
     // see [nextDisplay]. Plain array, allocated once per bar count, because nothing draws it.
     val barAge = remember(barCount) { FloatArray(barCount) }
 
+    // Active travelling beats (see [OnsetSweep]). A small fixed-size mutable list: beats are added a
+    // few times a second and retired as soon as they leave the field, so nothing grows unbounded.
+    val sweeps = remember(barCount) { ArrayList<OnsetSweep>(8) }
+
     LaunchedEffect(barCount, enabled, style) {
         // Fresh bars start from the resting line, not from the tail of the previous layout.
         barAge.fill(3f)
+        sweeps.clear()
         var elapsed = 0f
+        var sweepSeed = barCount * 7919
         while (isActive) {
             val live = VisualizerState.frame.value
             val silent = !enabled || live.silent
+
+            // Every time the onset envelope rises sharply, start one travelling beat from a bar
+            // picked at random. This is what makes the rhythm begin somewhere new on each beat and
+            // then run bar by bar toward one side, instead of every bar jumping together.
+            val onset = live.pulse
+            if (!silent && onset > 0.55f && barCount > 0) {
+                sweepSeed = sweepSeed * 1103515245 + 12345
+                val origin = (sweepSeed ushr 16).mod(barCount)
+                // Alternate the travel direction so consecutive beats mirror each other.
+                val direction = if ((sweepSeed ushr 8) and 1 == 0) 1 else -1
+                sweeps.add(
+                    OnsetSweep(
+                        origin = origin,
+                        direction = direction,
+                        bornAt = elapsed,
+                        strength = onset.coerceIn(0f, 1f),
+                    ),
+                )
+                // Keep the list bounded if the audio is dense; the oldest beat is the least visible.
+                if (sweeps.size > 8) sweeps.removeAt(0)
+            }
+
+            // Retire beats that have crossed the whole field.
+            sweeps.removeAll { elapsed - it.bornAt > SWEEP_SECONDS }
+
+            val sweepBoost =
+                if (silent) {
+                    FloatArray(0)
+                } else {
+                    sweepContribution(sweeps, barCount, elapsed)
+                }
+
             val targets =
                 if (!silent) {
                     expandBands(
@@ -173,6 +220,7 @@ fun AudioVisualizer(
                         count = barCount,
                         pulse = live.pulse,
                         intensity = intensity,
+                        sweep = sweepBoost,
                     )
                 } else {
                     List(barCount) { REST_HEIGHT }
@@ -203,7 +251,8 @@ fun AudioVisualizer(
             modifier
                 .fillMaxWidth()
                 .height(height)
-                .padding(horizontal = 16.dp)
+                // No horizontal inset here: callers position the field, and an inset inside the
+                // canvas only stole width from the bars. Height is the caller's budget too.
                 // Double tap anywhere on the beating bars cycles the preset — the most direct place
                 // to change it, since that is where the user is already looking.
                 .then(
@@ -336,6 +385,7 @@ private fun expandBands(
     count: Int,
     pulse: Float,
     intensity: Float,
+    sweep: FloatArray = FloatArray(0),
 ): List<Float> {
     if (bands.isEmpty() || count <= 0) return emptyList()
 
@@ -356,10 +406,71 @@ private fun expandBands(
         // the *timing* of the lift is what varies between bars, not its size.
         val flare = pulse * PULSE_LIFT * bandValue
 
-        val value = (bandValue + flare) * intensity * FIELD_GAIN
+        // Travelling beat contribution for this specific bar (0 when no sweep is crossing it).
+        val beat = if (i < sweep.size) sweep[i] else 0f
+
+        val value = (bandValue + flare) * intensity * FIELD_GAIN + beat
         result.add(value.coerceIn(0f, 1f))
     }
     return result
+}
+
+/**
+ * One travelling beat: a highlight born on [origin] that walks outward bar by bar.
+ *
+ * @param origin index of the bar the beat started on (chosen pseudo-randomly per onset).
+ * @param direction +1 walks toward the right edge, -1 toward the left.
+ * @param bornAt sampler time (seconds) the beat appeared, used to place and retire it.
+ * @param strength onset envelope at birth, 0..1 — a hard hit sweeps brighter than a soft one.
+ */
+private data class OnsetSweep(
+    val origin: Int,
+    val direction: Int,
+    val bornAt: Float,
+    val strength: Float,
+)
+
+/**
+ * Converts every active [OnsetSweep] into a per-bar additive lift.
+ *
+ * Each beat has a *head* (the brightest bar) and a *tail* of trailing bars behind it, so the walk reads
+ * as a comet crossing the field rather than a single blinking cell. As the head moves, the bars it
+ * passed fade out over a short trail — which is what produces the left- or right-running rhythm.
+ *
+ * Work is O(active beats × trail length), independent of bar count.
+ */
+private fun sweepContribution(
+    sweeps: List<OnsetSweep>,
+    barCount: Int,
+    elapsed: Float,
+): FloatArray {
+    if (sweeps.isEmpty() || barCount <= 0) return FloatArray(0)
+    val lift = FloatArray(barCount)
+    // Trail length in bars: a fifth of the field, capped so tiny placements still show a tail.
+    val trail = maxOf(3, barCount / 5)
+
+    for (sweep in sweeps) {
+        val age = elapsed - sweep.bornAt
+        if (age < 0f) continue
+        val progress = (age / SWEEP_SECONDS).coerceIn(0f, 1f)
+        // The head advances one bar at a time; `travelled` is in bars, not a fraction.
+        val travelled = progress * barCount
+        val head = sweep.origin + (travelled * sweep.direction).toInt()
+
+        // Envelope: the beat fades over its whole life, so the last bars of the field get a dimmer
+        // visit than the first ones — energy is spent as it travels.
+        val life = 1f - progress
+        val amplitude = sweep.strength * life * 0.42f
+
+        for (k in 0..trail) {
+            val index = head - k * sweep.direction
+            if (index < 0 || index >= barCount) continue
+            // Head is full, the tail falls off quadratically.
+            val weight = 1f - k.toFloat() / (trail + 1)
+            lift[index] = maxOf(lift[index], amplitude * weight * weight)
+        }
+    }
+    return lift
 }
 
 /** Dispatches to the selected preset. Pure draw code — no state reads, no allocation per bar. */

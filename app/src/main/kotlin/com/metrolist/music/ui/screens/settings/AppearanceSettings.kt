@@ -90,6 +90,8 @@ import com.metrolist.music.constants.LyricsTextSizeKey
 import com.metrolist.music.constants.MiniPlayerBackgroundStyle
 import com.metrolist.music.constants.MiniPlayerBackgroundStyleKey
 import com.metrolist.music.constants.MiniPlayerCapsuleKey
+import com.metrolist.music.constants.MiniPlayerStyle
+import com.metrolist.music.constants.MiniPlayerStyleKey
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerButtonsStyle
@@ -113,7 +115,6 @@ import com.metrolist.music.constants.SwipeSensitivityKey
 import com.metrolist.music.constants.SwipeThumbnailKey
 import com.metrolist.music.constants.SwipeToRemoveSongKey
 import com.metrolist.music.constants.SwipeToSongKey
-import com.metrolist.music.constants.UseNewMiniPlayerDesignKey
 import com.metrolist.music.constants.UseNewPlayerDesignKey
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.EnumDialog
@@ -212,11 +213,19 @@ fun AppearanceSettings(
         }
 
     var showMiniPlayerBackgroundDialog by rememberSaveable { mutableStateOf(false) }
+    var showMiniPlayerStyleDialog by rememberSaveable { mutableStateOf(false) }
 
-    val (useNewMiniPlayerDesign, onUseNewMiniPlayerDesignChange) =
-        rememberPreference(
-            UseNewMiniPlayerDesignKey,
-            defaultValue = true,
+    // Legacy capsule flag, read only to seed the new single-choice preference below.
+    val (useCapsuleMiniPlayerLegacy) =
+        rememberPreference(MiniPlayerCapsuleKey, defaultValue = false)
+    // Single mini-player choice (STANDARD | CAPSULE). Replaces the old pair of switches, which could
+    // contradict each other and left the background-style row permanently disabled.
+    val (miniPlayerStyle, onMiniPlayerStyleChange) =
+        rememberEnumPreference(
+            MiniPlayerStyleKey,
+            // Migration: an existing user who had the capsule on keeps the capsule; everyone else
+            // lands on the rounded STANDARD design (the retired stacked bar is gone).
+            defaultValue = if (useCapsuleMiniPlayerLegacy) MiniPlayerStyle.CAPSULE else MiniPlayerStyle.STANDARD,
         )
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) =
         rememberPreference(
@@ -621,6 +630,25 @@ fun AppearanceSettings(
                     PlayerBackgroundStyle.GRADIENT -> stringResource(R.string.gradient)
                     PlayerBackgroundStyle.BLUR -> stringResource(R.string.player_background_blur)
                     PlayerBackgroundStyle.GLASS -> "Glass"
+                }
+            },
+        )
+    }
+
+    if (showMiniPlayerStyleDialog) {
+        EnumDialog(
+            onDismiss = { showMiniPlayerStyleDialog = false },
+            onSelect = {
+                onMiniPlayerStyleChange(it)
+                showMiniPlayerStyleDialog = false
+            },
+            title = stringResource(R.string.choose_mini_player_style),
+            current = miniPlayerStyle,
+            values = MiniPlayerStyle.entries,
+            valueText = {
+                when (it) {
+                    MiniPlayerStyle.STANDARD -> stringResource(R.string.mini_player_style_standard)
+                    MiniPlayerStyle.CAPSULE -> stringResource(R.string.mini_player_style_capsule)
                 }
             },
         )
@@ -1266,102 +1294,45 @@ fun AppearanceSettings(
                 defaultValue = false,
             )
 
-        // Third mini-player layout. User-facing, so it lives in this group rather than behind
-        // developer mode; it takes precedence over the new/legacy rows below when switched on.
-        val (capsuleMiniPlayer, onCapsuleMiniPlayerChange) =
-            rememberPreference(MiniPlayerCapsuleKey, defaultValue = false)
-
+        // One row decides which mini player is drawn; the background-style row below is always
+        // available because every style is now rendered by both designs.
         Material3SettingsGroup(
             title = stringResource(id = R.string.mini_player),
             items =
                 buildList {
-                    if (developerMode) add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.nav_bar),
-                            title = { Text(stringResource(R.string.new_mini_player_design)) },
-                            isDeveloperOnly = true,
-                            trailingContent = {
-                                Switch(
-                                    checked = useNewMiniPlayerDesign,
-                                    onCheckedChange = onUseNewMiniPlayerDesignChange,
-                                    thumbContent = {
-                                        Icon(
-                                            painter =
-                                                painterResource(
-                                                    id = if (useNewMiniPlayerDesign) R.drawable.check else R.drawable.close,
-                                                ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                                        )
-                                    },
-                                )
-                            },
-                            onClick = { onUseNewMiniPlayerDesignChange(!useNewMiniPlayerDesign) },
-                        ),
-                    )
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.queue_music),
-                            title = { Text(stringResource(R.string.mini_player_capsule)) },
-                            description = { Text(stringResource(R.string.mini_player_capsule_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = capsuleMiniPlayer,
-                                    onCheckedChange = onCapsuleMiniPlayerChange,
-                                    thumbContent = {
-                                        Icon(
-                                            painter =
-                                                painterResource(
-                                                    id = if (capsuleMiniPlayer) R.drawable.check else R.drawable.close,
-                                                ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                                        )
+                            title = { Text(stringResource(R.string.choose_mini_player_style)) },
+                            description = {
+                                Text(
+                                    when (miniPlayerStyle) {
+                                        MiniPlayerStyle.STANDARD -> stringResource(R.string.mini_player_style_standard_desc)
+                                        MiniPlayerStyle.CAPSULE -> stringResource(R.string.mini_player_style_capsule_desc)
                                     },
                                 )
                             },
-                            onClick = { onCapsuleMiniPlayerChange(!capsuleMiniPlayer) },
+                            onClick = { showMiniPlayerStyleDialog = true },
                         ),
                     )
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.gradient),
-                            title = {
-                                Text(
-                                    text = stringResource(R.string.mini_player_background_style),
-                                    color =
-                                        if (!useNewMiniPlayerDesign || capsuleMiniPlayer) {
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        },
-                                )
-                            },
+                            title = { Text(stringResource(R.string.mini_player_background_style)) },
                             description = {
                                 Text(
                                     text =
-                                        if (!useNewMiniPlayerDesign || capsuleMiniPlayer) {
-                                            stringResource(R.string.mini_player_background_not_available)
-                                        } else {
-                                            when (miniPlayerBackground) {
-                                                MiniPlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
-                                                MiniPlayerBackgroundStyle.TRANSPARENT -> stringResource(R.string.transparent)
-                                                MiniPlayerBackgroundStyle.BLUR -> stringResource(R.string.player_background_blur)
-                                                MiniPlayerBackgroundStyle.GRADIENT -> stringResource(R.string.gradient)
-                                                MiniPlayerBackgroundStyle.PURE_BLACK -> stringResource(R.string.pure_black)
-                                            }
+                                        when (miniPlayerBackground) {
+                                            MiniPlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
+                                            MiniPlayerBackgroundStyle.TRANSPARENT -> stringResource(R.string.transparent)
+                                            MiniPlayerBackgroundStyle.BLUR -> stringResource(R.string.player_background_blur)
+                                            MiniPlayerBackgroundStyle.GRADIENT -> stringResource(R.string.gradient)
+                                            MiniPlayerBackgroundStyle.PURE_BLACK -> stringResource(R.string.pure_black)
                                         },
-                                    color =
-                                        if (!useNewMiniPlayerDesign || capsuleMiniPlayer) {
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        },
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             },
-                            onClick = {
-                                if (useNewMiniPlayerDesign && !capsuleMiniPlayer) showMiniPlayerBackgroundDialog = true
-                            },
+                            onClick = { showMiniPlayerBackgroundDialog = true },
                         ),
                     )
                 },

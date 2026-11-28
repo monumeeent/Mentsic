@@ -2134,6 +2134,8 @@ fun BottomSheetPlayer(
                             colors = visualizerColors,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                // The caller already supplies the player's horizontal padding; a second
+                                // 16dp inset inside the canvas would shrink the usable field.
                                 .padding(horizontal = PlayerHorizontalPadding),
                             // `enabled` gates whether the analyzer runs at all, so it must stay true
                             // while composed. Pause flattens the drawing through VisualizerState's
@@ -2147,10 +2149,11 @@ fun BottomSheetPlayer(
                             // change it.
                             onCycleStyle = cycleVisualizerStyle,
                         )
-                        Spacer(Modifier.height(8.dp))
+                        // The gap under the visualizer is now part of the visualizer's own budget:
+                        // the bars get the height, not the empty space beneath them.
                     }
 
-                    Spacer(Modifier.height(if (showInlineLyrics) 12.dp else 30.dp))
+                    Spacer(Modifier.height(if (showInlineLyrics) 8.dp else 16.dp))
                 }
             }
         }

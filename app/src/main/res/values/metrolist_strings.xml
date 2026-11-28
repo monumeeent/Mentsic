@@ -167,6 +167,16 @@
     <string name="visualizer_mirror_wave">Mirrored wave \u2014 a line reflected with a soft fill</string>
     <string name="mini_player_capsule">Capsule mini player</string>
     <string name="mini_player_capsule_desc">A pixel capsule with the album art, a two-line LCD readout, a slim level metre and hand-drawn pixel controls.</string>
+    <string name="choose_mini_player_style">Choose the mini player style</string>
+    <string name="mini_player_style_standard">Standard</string>
+    <string name="mini_player_style_standard_desc">Rounded card with a circular artwork, play-progress ring, subscribe and like buttons.</string>
+    <string name="mini_player_style_capsule">Capsule</string>
+    <string name="mini_player_style_capsule_desc">Pixel capsule: album art, two-line LCD readout, sprite controls and a progress line along the bottom.</string>
+    <string name="apple_dock_navbar">Apple-style dock</string>
+    <string name="apple_dock_navbar_desc">A frosted shelf of rounded icon tiles; the active tab is raised and its neighbours swell slightly.</string>
+    <string name="personal_space_tilt">Tilt Personal Space cards</string>
+    <string name="personal_space_tilt_desc">The cards lean toward your finger and spring back flat, like a physical tile.</string>
+    <string name="personal_space_tilt_strength">Tilt strength</string>
     <string name="auto_playlists">Auto playlists</string>
     <string name="show_liked_playlist">Show Liked playlist</string>
     <string name="show_downloaded_playlist">Show Downloaded playlist</string>

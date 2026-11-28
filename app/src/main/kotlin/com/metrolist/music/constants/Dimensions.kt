@@ -38,15 +38,14 @@ val ThumbnailCornerRadius = 3.dp
 val PlayerHorizontalPadding = 32.dp
 
 /** Visualizer height in the full player. */
-val PlayerVisualizerHeight = 96.dp
+val PlayerVisualizerHeight = 118.dp
 
 /**
  * Visualizer height while the inline lyrics pane is open.
  *
- * Equal to [PlayerVisualizerHeight] rather than shorter: the bars were noticeably squashed in lyrics
- * mode, which made the visualizer read as "less" than in the normal player. The reclaimed space is
- * taken from the lyrics pane itself (see `InlineLyricsView`), so the field keeps its normal presence
- * while the text still has the rest of the screen.
+ * Equal to [PlayerVisualizerHeight]: the bars used to be squashed to a thin strip in lyrics mode,
+ * which made the visualizer read as *less* than in the normal player. The space is reclaimed from the
+ * lyrics pane itself (see `InlineLyricsView`), so the field keeps its full presence.
  */
 val LyricsVisualizerHeight = PlayerVisualizerHeight
 

@@ -318,15 +318,25 @@ fun CurrentWeekHeatmap(
         // letter was crammed into the leftover height of the fixed-height Personal Space card and got
         // clipped at the card's bottom edge; on top it shares the row with the cells' own width, stays
         // inside the card, and still aligns 1:1 with each date.
+        //
+        // The text is forced onto a single tight line: `labelSmall` carries a line box taller than the
+        // glyph itself, so with default line height the letters sat half in the gap and looked as if the
+        // cell below was overlapping them. Pinning lineHeight to the font size removes that air, and
+        // `heightIn` keeps the row a fixed 14dp whatever the user's font scale is doing to the grid.
+        val captionLineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.05f
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
+            verticalAlignment = Alignment.Bottom,
         ) {
             days.forEach { date ->
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.weight(1f).height(14.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Text(
                         text = date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelSmall.copy(lineHeight = captionLineHeight),
                         color =
                             if (date == today) {
                                 MaterialTheme.colorScheme.primary
@@ -335,12 +345,13 @@ fun CurrentWeekHeatmap(
                             },
                         maxLines = 1,
                         softWrap = false,
+                        overflow = TextOverflow.Clip,
                     )
                 }
             }
         }
 
-        Spacer(Modifier.height(Spacing.tiny))
+        Spacer(Modifier.height(Spacing.small))
 
         Row(
             modifier = Modifier.fillMaxWidth(),

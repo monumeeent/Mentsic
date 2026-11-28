@@ -97,6 +97,7 @@ import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.CurrentWeekHeatmap
 import com.metrolist.music.ui.component.GlassCard
 import com.metrolist.music.ui.component.MonthlyPlayHeatmap
+import com.metrolist.music.ui.component.TiltCard
 import com.metrolist.music.ui.component.NavigationTitle
 import com.metrolist.music.ui.component.TacticalCollapsibleHeatmapHeader
 import com.metrolist.music.ui.component.title
@@ -122,6 +123,8 @@ import com.metrolist.music.constants.HomeShowPersonalSpaceKey
 import com.metrolist.music.constants.HomeShowShufflesKey
 import com.metrolist.music.constants.HomeShowSpeedDialKey
 import com.metrolist.music.constants.HomeShowTopListenedKey
+import com.metrolist.music.constants.PersonalSpaceTiltKey
+import com.metrolist.music.constants.PersonalSpaceTiltFactorKey
 import com.metrolist.music.constants.HomeShowTrendingKey
 import com.metrolist.music.constants.ShuffleColumnsKey
 import com.metrolist.music.constants.ShuffleRowsKey
@@ -1286,16 +1289,26 @@ private fun PeriodChip(label: String, selected: Boolean, onClick: () -> Unit) {
 /** Shared card chrome for a Personal Space page. */
 @Composable
 private fun PersonalSpaceSlide(respond: () -> Unit, content: @Composable () -> Unit) {
-    GlassCard(
-        modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.large).clickable { respond() },
-        shape = MaterialTheme.shapes.large,
-        style = GlassTokens.Elevated,
+    // Tilt is a purely visual treatment, toggled from the Tactical Hub settings. It wraps the glass
+    // card rather than living inside it, so the card's clip/shape and the clickable stay untouched.
+    val (tiltEnabled) = rememberPreference(PersonalSpaceTiltKey, defaultValue = true)
+    val (tiltFactor) = rememberPreference(PersonalSpaceTiltFactorKey, defaultValue = 8f)
+    TiltCard(
+        modifier = Modifier.fillMaxSize(),
+        enabled = tiltEnabled,
+        rotationFactor = tiltFactor.coerceIn(0f, 20f),
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize().padding(Spacing.large),
-            contentAlignment = Alignment.CenterStart,
+        GlassCard(
+            modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.large).clickable { respond() },
+            shape = MaterialTheme.shapes.large,
+            style = GlassTokens.Elevated,
         ) {
-            content()
+            Box(
+                modifier = Modifier.fillMaxSize().padding(Spacing.large),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                content()
+            }
         }
     }
 }
