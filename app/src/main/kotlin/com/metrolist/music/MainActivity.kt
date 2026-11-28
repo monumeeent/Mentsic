@@ -938,19 +938,17 @@ class MainActivity : FragmentActivity() {
                 val isTablet = configuration.containerDpSize.width >= 600.dp
 
                 val showRail = !forceBottomNav && (isLandscape || isTablet) && !inSearchScreen
-                // The floating dock has no rail form; keep the rail for landscape/tablet.
-                // Only the notched bar needs its live spec; the others reserve fixed heights.
+                // Only the notched bar needs its live spec; the others reserve the stock height.
                 val dockHeight = rememberFloatingNotchSpec().reservedHeight
-                // Each alternate surface reserves its own height; the stock bar keeps its constants.
-                // Each alternate surface reserves its own height. Apple dock = the stock NavigationBarHeight
-                // so switching styles does not move content; see AppleDockSpec.
-                val appleDockHeight = AppleDockNavHeight
 
+                // Every alternate surface reserves exactly the stock bar height, so switching styles
+                // never changes the gap above the navigation area (which is what made the gradient and
+                // pill bars look like they had a bigger gap to the mini player).
                 val navPadding =
                     if (shouldShowNavigationBar && !showRail) {
                         when (navBarStyle) {
                             NavBarStyle.ORB -> dockHeight
-                            NavBarStyle.APPLE -> appleDockHeight
+                            NavBarStyle.APPLE -> AppleDockNavHeight
                             NavBarStyle.PILL -> PillNavBarHeight
                             NavBarStyle.GRADIENT -> GradientNavBarHeight
                             NavBarStyle.STANDARD -> if (slimNav) SlimNavBarHeight else NavigationBarHeight

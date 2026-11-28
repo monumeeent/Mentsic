@@ -35,9 +35,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.playback.audio.VisualizerState
 import android.provider.Settings
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.isActive
 
 /**
@@ -151,6 +153,15 @@ fun AudioVisualizer(
     // easing below smooths the *display*, so this canvas is never recomposed by playback.
     val frame by VisualizerState.frame.collectAsStateWithLifecycle()
 
+    // Pause signal. The analyser only sees audio that is actually being decoded, so on pause it stops
+    // publishing and the last frame stays in the flow forever. Two independent guards handle that:
+    //  - this flow gives an *instant* pause, the moment the button is pressed;
+    //  - [VisualizerState.isFrameLive] covers stalls the flag does not describe (buffering, sink
+    //    teardown, a service that died with the player still reporting "playing").
+    val playerConnection = LocalPlayerConnection.current
+    val isPlaying by (playerConnection?.isPlaying ?: remember { flowOf(true) })
+        .collectAsStateWithLifecycle(initialValue = true)
+
     // Ask the analyser for data only while a visualizer is actually composed and enabled. The
     // processor sits in the hot audio path, so leaving it on with nothing to draw would burn CPU
     // for every song the user never opens the player over.
@@ -189,6 +200,8 @@ fun AudioVisualizer(
     val pulseEased = remember { mutableFloatStateOf(0f) }
     val bloomEased = remember { mutableFloatStateOf(0f) }
 
+    // Keys deliberately exclude `isPlaying`: the loop reads the state each tick, so restarting the
+    // effect on every play/pause would reset the fade progress and re-arm all bar ages mid-dissolve.
     LaunchedEffect(barCount, enabled, style) {
         // Fresh bars start from the resting line, not from the tail of the previous layout.
         barAge.fill(3f)
@@ -197,7 +210,14 @@ fun AudioVisualizer(
         var sweepSeed = barCount * 7919
         while (isActive) {
             val live = VisualizerState.frame.value
-            val silent = !enabled || live.silent
+            // `isFrameLive()` is what actually fixes the paused-visualizer glitch: pausing stops the
+            // audio pipeline, so no new frames are published and `live` would otherwise stay at its
+            // last value forever — the sampler kept spawning travelling beats from that stale pulse
+            // and the bars kept moving while the music was silent. A stale frame is treated as
+            // silence, so the field fades to rest and stays there.
+            val pausedByPlayer = isPlaying == false
+            val silent =
+                !enabled || live.silent || pausedByPlayer || !VisualizerState.isFrameLive()
 
             // Every time the onset envelope rises sharply, start one travelling beat from a bar
             // picked at random. This is what makes the rhythm begin somewhere new on each beat and

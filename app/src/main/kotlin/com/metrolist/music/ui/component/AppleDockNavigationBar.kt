@@ -69,13 +69,17 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.metrolist.music.constants.NavigationBarHeight
 import com.metrolist.music.ui.screens.Screens
 import com.metrolist.music.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
-/** Height the Apple-style dock reserves. Equals the stock bar height so switching styles is seamless. */
-val AppleDockNavHeight = 48.dp + Spacing.small
+/**
+ * Height the Apple-style dock reserves. Equals the stock bar height, so switching styles never moves
+ * the mini player or the content above the navigation area.
+ */
+val AppleDockNavHeight = NavigationBarHeight
 
 /** Geometry of the dock. Kept in one object so the reserved height and the drawing cannot disagree. */
 private object AppleDockSpec {
@@ -83,10 +87,11 @@ private object AppleDockSpec {
     val tileSize = 44.dp
 
     /**
-     * Shelf body height — the same 48dp as the stock bar, so switching styles does not shift the
-     * content above the navigation area. The dock used to be 68dp, which made the whole feed jump.
+     * Shelf body height. Slightly shorter than the reserved [AppleDockNavHeight] and bottom-aligned, so
+     * the dock keeps its floating look while occupying exactly the same navigation footprint as the
+     * stock bar.
      */
-    val shelfHeight = 48.dp
+    val shelfHeight = 56.dp
 
     val shelfCorner = 22.dp
     val sideMargin = Spacing.medium
@@ -101,12 +106,6 @@ private object AppleDockSpec {
 
     /** Neighbour tile scale — the gentle falloff that sells the magnification. */
     const val NeighbourScale = 1.03f
-
-    /** Label shown under the selected tile. */
-    val labelGap = 2.dp
-
-    /** Total height the dock reserves, identical to the stock bar so layouts do not shift. */
-    val reservedHeight = shelfHeight + bottomGap
 }
 
 /**
@@ -135,10 +134,11 @@ fun AppleDockNavigationBar(
         }
 
     Box(
+        // The caller reserves bottomInset + AppleDockNavHeight; fill that box and bottom-align the
+        // shelf inside it, rather than hard-coding the height here (which shifted the whole bar).
         modifier =
             modifier
-                .fillMaxWidth()
-                .height(AppleDockSpec.reservedHeight)
+                .fillMaxSize()
                 .padding(horizontal = AppleDockSpec.sideMargin),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -147,7 +147,10 @@ fun AppleDockNavigationBar(
                 Modifier
                     .fillMaxWidth()
                     .height(AppleDockSpec.shelfHeight)
-                    .padding(bottom = AppleDockSpec.bottomGap),
+                    .padding(bottom = AppleDockSpec.bottomGap)
+                    // Bottom-aligned inside the reserved NavigationBarHeight box: the reserved space is
+                    // what has to match the stock bar, the shelf is free to look shorter.
+                    .align(Alignment.BottomCenter),
         ) {
             // Frosted shelf: a translucent surface plus a soft top-edge highlight, which is what makes
             // the dock read as glass sitting above the content rather than a painted bar.

@@ -52,8 +52,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -66,17 +68,27 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.metrolist.music.constants.NavigationBarHeight
 import com.metrolist.music.ui.screens.Screens
 import com.metrolist.music.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
 
-/** Height the pill surface reserves, callers use it for `navPadding`. */
-val PillNavBarHeight = 72.dp
+/**
+ * Height the pill surface reserves.
+ *
+ * Every alternate bar reserves exactly [NavigationBarHeight] so switching styles never moves the
+ * mini player or the content above it. The visible body is shorter and bottom-aligned inside this
+ * box — the reserved space is what has to match, not the painted shape.
+ */
+val PillNavBarHeight = NavigationBarHeight
 
-/** Height the gradient button group reserves. */
-val GradientNavBarHeight = 64.dp
+/** Height the gradient button group reserves. Matches the stock bar for the same reason. */
+val GradientNavBarHeight = NavigationBarHeight
+
+/** Inner body height shared by the floating surfaces, so their proportions agree. */
+private val DockBodyHeight = 56.dp
 
 /** Resolved selected index for a dock; shared by all alternate surfaces. */
 private fun selectedDockIndex(
@@ -109,13 +121,16 @@ fun PillNavigationBar(
     }
 
     Box(
-        modifier = modifier.fillMaxWidth().height(PillNavBarHeight),
+        // See the gradient bar: the caller owns the height (bottom inset + reserved nav height), so
+        // this fills that box instead of imposing its own.
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Row(
             modifier =
                 Modifier
                     .padding(bottom = Spacing.small)
+                    .height(DockBodyHeight)
                     .clip(RoundedCornerShape(percent = 50))
                     .background(
                         Brush.verticalGradient(
@@ -215,15 +230,21 @@ fun GradientButtonGroupNavigationBar(
     )
 
     Box(
-        modifier = modifier.fillMaxWidth().height(GradientNavBarHeight),
+        // `fillMaxSize`, not a hard `.height(...)`: MainActivity sizes this bar to the system bottom
+        // inset plus the reserved navigation height, and a fixed height here would override that box
+        // and push the bar out of place (or clip the body on gesture-nav devices).
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
         BoxWithConstraints(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.small, vertical = Spacing.small)
-                    .height(48.dp),
+                    .padding(horizontal = Spacing.small)
+                    // Bottom-aligned inside the reserved NavigationBarHeight box, like the pill: the
+                    // reserved space matches the stock bar, the body keeps a comfortable 56dp.
+                    .height(DockBodyHeight)
+                    .align(Alignment.BottomCenter),
         ) {
             val slotWidthPx = constraints.maxWidth.toFloat() / navigationItems.size
             val railCorner =
@@ -231,12 +252,48 @@ fun GradientButtonGroupNavigationBar(
                     androidx.compose.ui.geometry.CornerRadius(16.dp.toPx(), 16.dp.toPx())
                 }
 
-            // 1. Rail.
+            // 1. Rail + 2. gradient pill, in ONE canvas.
+            //
+            // They used to be two sibling layers, and the pill was invisible: the rail `Canvas` and the
+            // pill `Box` both filled the same bounds, and the tab `Row` that followed painted an
+            // opaque hit-area over the pill's corner. Drawing rail-then-pill in a single draw pass makes
+            // the order explicit and impossible to break, and the pill is read from `highlight` /
+            // `shift` inside the draw lambda, so it animates without recomposing.
             Canvas(modifier = Modifier.fillMaxSize()) {
+                // Rail body.
                 drawRoundRect(
                     color = scheme.surfaceContainer,
                     cornerRadius = railCorner,
                 )
+
+                // Gradient pill under the active segment.
+                val pillWidth = 64.dp.toPx()
+                val pillHeight = size.height - 16.dp.toPx()
+                val left = slotWidthPx * (highlight + 0.5f) - pillWidth / 2f
+                val top = (size.height - pillHeight) / 2f
+
+                // The gradient's window slides with `shift`, so the colour travels through the pill
+                // instead of the pill merely changing colour.
+                val stops =
+                    listOf(
+                        scheme.primary,
+                        scheme.tertiary,
+                        scheme.secondary,
+                        scheme.primary,
+                    )
+                drawRoundRect(
+                    brush =
+                        Brush.horizontalGradient(
+                            colors = stops,
+                            startX = left - pillWidth * (0.2f + shift),
+                            endX = left + pillWidth * (1.8f + shift),
+                        ),
+                    topLeft = Offset(left, top),
+                    size = Size(pillWidth, pillHeight),
+                    cornerRadius = CornerRadius(pillHeight / 2f),
+                )
+
+                // Hairline outline, drawn last so it sits over both fills.
                 drawRoundRect(
                     color = scheme.outlineVariant.copy(alpha = 0.35f),
                     cornerRadius = railCorner,
@@ -244,66 +301,30 @@ fun GradientButtonGroupNavigationBar(
                 )
             }
 
-            // 2. Animated gradient pill under the active segment.
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val pillWidth = with(LocalDensity.current) { 64.dp.toPx() }
-                val pillHeight = with(LocalDensity.current) { 38.dp.toPx() }
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .drawBehind {
-                                val left = slotWidthPx * (highlight + 0.5f) - pillWidth / 2f
-                                val top = (size.height - pillHeight) / 2f
-                                val corner = androidx.compose.ui.geometry.CornerRadius(pillHeight / 2f)
-
-                                // The gradient's window slides with `shift`, so the colour travels
-                                // through the pill instead of the pill changing colour.
-                                val stops =
-                                    listOf(
-                                        scheme.primary,
-                                        scheme.tertiary,
-                                        scheme.secondary,
-                                        scheme.primary,
-                                    )
-                                drawRoundRect(
-                                    brush =
-                                        Brush.horizontalGradient(
-                                            colors = stops,
-                                            startX = left - pillWidth * (0.2f + shift),
-                                            endX = left + pillWidth * (1.8f + shift),
-                                        ),
-                                    topLeft = androidx.compose.ui.geometry.Offset(left, top),
-                                    size = androidx.compose.ui.geometry.Size(pillWidth, pillHeight),
-                                    cornerRadius = corner,
-                                )
+            // 3. Segments on top of the painted layers.
+            Row(modifier = Modifier.fillMaxSize()) {
+                navigationItems.forEachIndexed { index, screen ->
+                    val isSelected = index == selectedIndex
+                    SimpleDockTab(
+                        label = stringResource(screen.titleId),
+                        iconRes = if (isSelected) screen.iconIdActive else screen.iconIdInactive,
+                        isSelected = isSelected,
+                        onClick = { onItemClick(screen, isSelected) },
+                        onLongClick =
+                            when (screen) {
+                                Screens.Search -> onSearchLongClick
+                                Screens.Home -> onHomeLongHold
+                                else -> null
                             },
-                )
-
-                Row(modifier = Modifier.fillMaxSize()) {
-                    navigationItems.forEachIndexed { index, screen ->
-                        val isSelected = index == selectedIndex
-                        SimpleDockTab(
-                            label = stringResource(screen.titleId),
-                            iconRes = if (isSelected) screen.iconIdActive else screen.iconIdInactive,
-                            isSelected = isSelected,
-                            onClick = { onItemClick(screen, isSelected) },
-                            onLongClick =
-                                when (screen) {
-                                    Screens.Search -> onSearchLongClick
-                                    Screens.Home -> onHomeLongHold
-                                    else -> null
-                                },
-                            wellSize = 38.dp,
-                            iconSize = 20.dp,
-                            // The gradient pill is the highlight; the tab adds no second well.
-                            selectedWell = Color.Transparent,
-                            unselectedWell = Color.Transparent,
-                            selectedTint = scheme.onPrimary,
-                            unselectedTint = scheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+                        wellSize = 38.dp,
+                        iconSize = 20.dp,
+                        // The gradient pill is the highlight; the tab adds no second well.
+                        selectedWell = Color.Transparent,
+                        unselectedWell = Color.Transparent,
+                        selectedTint = scheme.onPrimary,
+                        unselectedTint = scheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }

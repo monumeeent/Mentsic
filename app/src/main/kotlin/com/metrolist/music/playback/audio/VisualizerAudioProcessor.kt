@@ -74,10 +74,34 @@ object VisualizerState {
     /** Bands the UI receives. Eight is enough for the mirrored styles to read as a spectrum. */
     const val BandCount = 8
 
+    /**
+     * How long a published frame is considered live, in milliseconds.
+     *
+     * Pausing stops the audio pipeline, so **no new buffers reach the analyzer** — the flow keeps
+     * its last value forever. Without this guard the UI sampler kept re-driving motion from that
+     * stale frame (new travelling beats kept spawning off its pulse), which is exactly the "bars move
+     * while paused" glitch. Two publish intervals (~33 ms) plus slack is comfortably longer than the
+     * normal gap between frames, so playing audio never looks stale.
+     */
+    private const val FrameTtlMillis = 220L
+
     private val _frame = MutableStateFlow(VisualizerFrame.resting())
 
     /** Latest analysed frame. Hot: the UI just collects it. */
     val frame: StateFlow<VisualizerFrame> = _frame.asStateFlow()
+
+    /** Wall-clock time of the last publish, used by [isFrameLive]. */
+    @Volatile
+    private var lastPublishAt: Long = 0L
+
+    /**
+     * True when [frame] was refreshed recently enough to be trusted.
+     *
+     * The sampler checks this every tick: a stale frame is treated exactly like silence, so the
+     * visualizer fades to rest and stays there instead of animating a frozen snapshot.
+     */
+    fun isFrameLive(): Boolean =
+        isActive && System.currentTimeMillis() - lastPublishAt < FrameTtlMillis
 
     /**
      * Reference count of visualizers currently on screen.
@@ -108,11 +132,13 @@ object VisualizerState {
     }
 
     internal fun publish(frame: VisualizerFrame) {
+        lastPublishAt = System.currentTimeMillis()
         _frame.value = frame
     }
 
     /** Drop back to the resting state — called on pause, stop, track change and service teardown. */
     fun reset() {
+        lastPublishAt = 0L
         _frame.value = VisualizerFrame.resting()
     }
 }
