@@ -258,7 +258,7 @@ private fun <T> MarqueeCard(
             model = thumbnailUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize().blur((1f - appear) * 8.dp),
+            modifier = Modifier.fillMaxSize().blur(8.dp * (1f - appear)),
         )
         // Bottom scrim so the rounded edge stays visible over bright artwork.
         Box(
