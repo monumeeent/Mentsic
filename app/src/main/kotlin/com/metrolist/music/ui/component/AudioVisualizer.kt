@@ -183,6 +183,11 @@ fun AudioVisualizer(
     // attacked/decayed here, in the sampler, so the wash *fades in* on a beat and *fades out* after it.
     val washAlpha = remember { mutableFloatStateOf(0f) }
     val washHeadEased = remember { mutableFloatStateOf(0f) }
+    // Eased onset/bloom used by the draw pass. Same reasoning as the wash: the raw frame values drop
+    // to zero the instant the track pauses, which made the highlight vanish while the bars were still
+    // fading. These decay smoothly instead, so the whole visualizer dissolves as one.
+    val pulseEased = remember { mutableFloatStateOf(0f) }
+    val bloomEased = remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(barCount, enabled, style) {
         // Fresh bars start from the resting line, not from the tail of the previous layout.
@@ -255,6 +260,19 @@ fun AudioVisualizer(
             if (washAlpha.value < 0.004f) washAlpha.value = 0f
             washHeadEased.value = washHeadEased.value + (sweepHead.value - washHeadEased.value) * 0.22f
 
+            // Ease the beat highlight and the loudness bloom the same way. During playback they track
+            // the frame closely (fast attack); after a pause they decay over ~0.5 s instead of
+            // snapping off, so nothing flickers away ahead of the bars.
+            val targetPulse = if (!silent) live.pulse.coerceIn(0f, 1f) else 0f
+            val pulseRate = if (targetPulse > pulseEased.value) 0.5f else 0.10f
+            pulseEased.value += (targetPulse - pulseEased.value) * pulseRate
+            if (pulseEased.value < 0.004f) pulseEased.value = 0f
+
+            val targetBloom =
+                if (!silent) 0.35f + 0.65f * live.level.coerceIn(0f, 1f) else 0f
+            bloomEased.value += (targetBloom - bloomEased.value) * 0.10f
+            if (bloomEased.value < 0.004f) bloomEased.value = 0f
+
             val targets =
                 if (!silent) {
                     expandBands(
@@ -269,18 +287,19 @@ fun AudioVisualizer(
                 }
 
             display =
-                if (reduceMotion) {
-                    // Accessibility: no motion at all, just the analysed shape.
-                    targets
-                } else {
-                    nextDisplay(
-                        previous = display,
-                        targets = targets,
-                        ages = barAge,
-                        level = if (silent) 0f else live.level.coerceIn(0f, 1f),
-                        silent = silent,
-                        elapsed = elapsed,
-                    )
+                when {
+                    // Reduced motion: snap to the analysed shape while playing, but still fade out on
+                    // pause — an abrupt collapse to a flat line is more jarring than the fade itself.
+                    reduceMotion && !silent -> targets
+                    else ->
+                        nextDisplay(
+                            previous = display,
+                            targets = targets,
+                            ages = barAge,
+                            level = if (silent) 0f else live.level.coerceIn(0f, 1f),
+                            silent = silent,
+                            elapsed = elapsed,
+                        )
                 }
 
             elapsed += FRAME_MS / 1000f
@@ -310,10 +329,10 @@ fun AudioVisualizer(
                 ),
     ) {
         // Read in the draw scope only, so per-frame motion repaints without recomposing.
-        val live = frame
-        val pulse = if (enabled && !live.silent) live.pulse else 0f
-        // Peak brightness follows the frame's loudness, so a quiet song blooms less than a loud one.
-        val bloom = if (enabled && !live.silent) 0.35f + 0.65f * live.level.coerceIn(0f, 1f) else 0f
+        // Pulse and bloom come from the eased copies, not the raw frame: on pause the frame drops them
+        // to zero instantly, and painting that would cut the highlight off while the bars fade.
+        val pulse = if (enabled) pulseEased.value else 0f
+        val bloom = if (enabled) bloomEased.value else 0f
 
         // The travelling beat's colour wash. Its head position and strength are read here (draw
         // phase) so the wash follows the rhythm without recomposing the visualizer.
@@ -373,13 +392,27 @@ private fun nextDisplay(
     val count = targets.size
     if (count == 0) return targets
 
-    // Silence: no new targets, only a gentle return to the resting line, so pausing fades out
-    // instead of freezing or dropping like a stone.
+    // Silence / pause: no new targets. Every bar returns to the resting line on its own time
+    // constant, so the field **fades away** rather than freezing mid-beat or dropping like a stone.
+    //
+    // The decay is per-bar (each uses its own `personality`) and time-based (`dt`, in seconds), so the
+    // fade takes the same wall-clock time regardless of the sampling rate. Tall bars take longer to
+    // fall than short ones, which is what makes the dissolve look natural instead of a uniform
+    // shrink. A floor on the fade rate guarantees the field always reaches rest, even for a bar that
+    // happens to be at full height.
     if (silent) {
         ages.fill(0f)
+        val dt = FRAME_MS / 1000f
         return List(count) { i ->
             val from = previous.getOrElse(i) { REST_HEIGHT }
-            (from + (REST_HEIGHT - from) * 0.14f).coerceIn(0f, 1f)
+            if (from <= REST_HEIGHT + 0.001f) return@List REST_HEIGHT
+            val personality = 0.55f + 0.45f * kotlin.math.abs(kotlin.math.sin(i * 1.7f))
+            // Exponential decay toward REST_HEIGHT: ~1.1 s for a full-height bar, ~0.7 s for a short one.
+            val tau = 0.30f + 0.10f * personality
+            val k = 1f - kotlin.math.exp(-dt / tau)
+            val next = from + (REST_HEIGHT - from) * k
+            // Snap once it is visually at rest, so the loop can settle on a flat line.
+            if (next - REST_HEIGHT < 0.004f) REST_HEIGHT else next.coerceIn(REST_HEIGHT, 1f)
         }
     }
 

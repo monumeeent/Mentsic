@@ -185,6 +185,9 @@ fun GradientButtonGroupNavigationBar(
 ) {
     if (navigationItems.isEmpty()) return
     val scheme = MaterialTheme.colorScheme
+    // A `Density` receiver is required for `Dp.toPx()`; at the layout level (outside a draw scope)
+    // there is none in scope, so it is captured once here.
+    val density = LocalDensity.current
     val selectedIndex =
         remember(currentRoute, navigationItems) {
             selectedDockIndex(navigationItems, currentRoute)
@@ -223,7 +226,10 @@ fun GradientButtonGroupNavigationBar(
                     .height(48.dp),
         ) {
             val slotWidthPx = constraints.maxWidth.toFloat() / navigationItems.size
-            val railCorner = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx(), 16.dp.toPx())
+            val railCorner =
+                with(density) {
+                    androidx.compose.ui.geometry.CornerRadius(16.dp.toPx(), 16.dp.toPx())
+                }
 
             // 1. Rail.
             Canvas(modifier = Modifier.fillMaxSize()) {
